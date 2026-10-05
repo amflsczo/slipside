@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+/* daisyUI: light by default, dark when the phone/computer prefers it.
+   A manual toggle (data-theme on <html>) comes with the Settings screen. */
+@plugin 'daisyui' {
+	themes:
+		light --default,
+		dark --prefersdark;
+}
