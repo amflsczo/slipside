@@ -19,6 +19,8 @@
 		"auth:schema": "auth generate --cwd scripts/auth-schema --config auth.ts --adapter drizzle --dialect postgresql --output ../../src/lib/server/db/auth.schema.ts --yes"
 	},
 	"devDependencies": {
+		"@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+		"@lucide/svelte": "^1.52.0",
 		"@neondatabase/serverless": "^1.1.0",
 		"@sveltejs/adapter-vercel": "^7.0.0",
 		"@sveltejs/kit": "^3.0.0",
@@ -27,6 +29,7 @@
 		"@types/node": "^24",
 		"auth": "^1.6.24",
 		"better-auth": "^1.6.24",
+		"clsx": "^2.1.1",
 		"daisyui": "^5.7.47",
 		"drizzle-kit": "^0.31.10",
 		"drizzle-orm": "^0.45.2",
@@ -35,6 +38,7 @@
 		"prettier-plugin-tailwindcss": "^0.8.0",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.6.0",
+		"tailwind-merge": "^3.7.0",
 		"tailwindcss": "^4.3.0",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.0"

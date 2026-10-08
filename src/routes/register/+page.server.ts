@@ -35,6 +35,7 @@ export const actions: Actions = {
 			return authFailure(error, 'Registration failed', values);
 		}
 
-		redirect(303, '/');
+		// New accounts start with the setup screen.
+		redirect(303, '/settings');
 	}
 };
