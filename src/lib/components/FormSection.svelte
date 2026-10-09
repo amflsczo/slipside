@@ -17,13 +17,14 @@
 </script>
 
 <section class="form-surface rounded-3xl bg-card p-4 shadow-soft sm:p-6">
-	<div class="mb-4 flex items-start gap-3">
+	<!-- Numbered like a ledger entry: 01, 02… -->
+	<div class="mb-4 flex items-start gap-3 border-b border-dashed border-rule pb-3.5">
 		<span
-			class="grid size-7 shrink-0 place-items-center rounded-full bg-sidebar-active/10 text-xs font-bold text-sidebar-active"
-			aria-hidden="true">{step}</span
+			class="mt-0.5 shrink-0 font-mono text-xs font-semibold text-sidebar-active tabular-nums"
+			aria-hidden="true">{String(step).padStart(2, '0')}</span
 		>
 		<div class="min-w-0 flex-1">
-			<h2 class="text-[0.95rem] leading-tight font-semibold text-ink">{title}</h2>
+			<h2 class="font-display text-lg leading-tight font-semibold text-ink">{title}</h2>
 			{#if description}<p class="mt-1 text-sm text-ink-muted">{description}</p>{/if}
 		</div>
 		{@render action?.()}

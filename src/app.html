@@ -17,6 +17,13 @@
 								: 'light';
 					document.documentElement.setAttribute('data-theme', mode);
 				} catch (e) {}
+				// Lets the server work out "this week" in the user's time zone (src/lib/dates.ts).
+				try {
+					var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+					if (tz)
+						document.cookie =
+							'tz=' + encodeURIComponent(tz) + ';path=/;max-age=31536000;samesite=lax';
+				} catch (e) {}
 			})();
 		</script>
 		%sveltekit.head%

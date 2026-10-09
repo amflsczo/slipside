@@ -8,6 +8,7 @@
 		optional = false,
 		error,
 		hint,
+		id: fixedId,
 		children
 	}: {
 		label: string;
@@ -15,11 +16,14 @@
 		optional?: boolean;
 		error?: string;
 		hint?: string;
+		/** Use this id for the control instead of a generated one (e.g. to focus it later). */
+		id?: string;
 		/** Receives the id to put on the control. */
 		children: Snippet<[string]>;
 	} = $props();
 
-	const id = $props.id();
+	const autoId = $props.id();
+	const id = $derived(fixedId ?? autoId);
 </script>
 
 <div class="flex flex-col gap-1.5">

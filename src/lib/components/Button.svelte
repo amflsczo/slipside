@@ -25,7 +25,7 @@
 
 	const VARIANTS: Record<Variant, string> = {
 		primary: 'bg-sidebar-active text-sidebar-active-ink hover:brightness-110',
-		accent: 'bg-positive text-positive-ink hover:brightness-110',
+		accent: 'bg-ink text-card hover:bg-ink/88',
 		secondary: 'border border-base-300 bg-card text-ink hover:bg-base-200',
 		ghost: 'text-ink-muted hover:bg-base-200 hover:text-ink',
 		danger: 'bg-error text-white hover:brightness-110'

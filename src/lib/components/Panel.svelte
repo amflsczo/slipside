@@ -21,7 +21,7 @@
 	{#if title || action}
 		<div class="mb-4 flex items-start justify-between gap-3">
 			<div class="min-w-0">
-				{#if title}<h2 class="text-base font-bold">{title}</h2>{/if}
+				{#if title}<h2 class="font-display text-lg font-semibold">{title}</h2>{/if}
 				{#if subtitle}<p class="mt-0.5 text-sm text-ink-muted">{subtitle}</p>{/if}
 			</div>
 			{@render action?.()}

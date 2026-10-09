@@ -1,0 +1,58 @@
+// Calendar dates as plain "YYYY-MM-DD" strings. The maths runs in UTC so a date never
+// shifts by a day because of the server's or the browser's time zone.
+export type IsoDate = string;
+
+const toUtc = (iso: IsoDate) => new Date(`${iso}T00:00:00Z`);
+const toIso = (date: Date): IsoDate => date.toISOString().slice(0, 10);
+
+export const isIsoDate = (value: unknown): value is IsoDate =>
+	typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && toIso(toUtc(value)) === value;
+
+/** Today's date in the given time zone (from the tz cookie); UTC when unknown. */
+export function todayIn(timeZone?: string, now = new Date()): IsoDate {
+	try {
+		// en-CA formats as YYYY-MM-DD.
+		return new Intl.DateTimeFormat('en-CA', {
+			timeZone,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit'
+		}).format(now);
+	} catch {
+		return toIso(now);
+	}
+}
+
+export function addDays(iso: IsoDate, days: number): IsoDate {
+	const date = toUtc(iso);
+	date.setUTCDate(date.getUTCDate() + days);
+	return toIso(date);
+}
+
+/** 0 = Sunday ... 6 = Saturday, like Settings' week start day. */
+export const weekdayOf = (iso: IsoDate) => toUtc(iso).getUTCDay();
+
+/** The first day of the pay week that contains `iso`. */
+export const weekStartFor = (iso: IsoDate, startDay: number) =>
+	addDays(iso, -((weekdayOf(iso) - startDay + 7) % 7));
+
+export const weekDates = (start: IsoDate) => Array.from({ length: 7 }, (_, i) => addDays(start, i));
+
+const rangeFormat = new Intl.DateTimeFormat('en', {
+	month: 'short',
+	day: 'numeric',
+	year: 'numeric',
+	timeZone: 'UTC'
+});
+
+/** "Oct 6 – 12, 2026", "Sep 29 – Oct 5, 2026", "Dec 29, 2025 – Jan 4, 2026". */
+export const formatRange = (start: IsoDate, end: IsoDate) =>
+	rangeFormat.formatRange(toUtc(start), toUtc(end));
+
+const weekdayFormat = new Intl.DateTimeFormat('en', { weekday: 'short', timeZone: 'UTC' });
+
+/** { weekday: "Mon", day: 6 } for the hours grid. */
+export const dayLabel = (iso: IsoDate) => ({
+	weekday: weekdayFormat.format(toUtc(iso)),
+	day: toUtc(iso).getUTCDate()
+});

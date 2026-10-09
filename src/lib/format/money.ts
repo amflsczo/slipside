@@ -34,8 +34,21 @@ export function fromMinor(minor: number, digits: number): string {
 	return `${minor < 0 ? '-' : ''}${whole}${fraction}`;
 }
 
-/** 1250, 'GBP' → "£12.50". */
-export function formatMoney(minor: number, currency: string, locale?: string): string {
+/** 'GBP' → "£", 'PHP' → "₱", for the prefix on money inputs. */
+export function currencySymbol(currency: string): string {
+	try {
+		return (
+			new Intl.NumberFormat('en', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' })
+				.formatToParts(0)
+				.find((part) => part.type === 'currency')?.value ?? currency
+		);
+	} catch {
+		return currency;
+	}
+}
+
+/** 1250, 'GBP' → "£12.50". Fixed "en" by default so server and browser render the same. */
+export function formatMoney(minor: number, currency: string, locale = 'en'): string {
 	const digits = minorDigits(currency);
 	return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
 		minor / 10 ** digits
@@ -43,6 +56,6 @@ export function formatMoney(minor: number, currency: string, locale?: string): s
 }
 
 /** The hourly rate is kept unrounded in the maths and rounded only here, for display. */
-export function formatRate(minorPerHour: number, currency: string, locale?: string): string {
+export function formatRate(minorPerHour: number, currency: string, locale = 'en'): string {
 	return formatMoney(Math.round(minorPerHour), currency, locale);
 }

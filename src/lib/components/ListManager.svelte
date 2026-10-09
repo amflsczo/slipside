@@ -1,13 +1,16 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, type SubmitFunction } from '$app/forms';
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
+	import Eye from '@lucide/svelte/icons/eye';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
 	import Layers from '@lucide/svelte/icons/layers';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Button from './Button.svelte';
 	import EmptyState from './EmptyState.svelte';
 	import { feedback } from '#lib/formFeedback.ts';
+	import { toast } from '#lib/toast.svelte.ts';
 
 	type Item = {
 		id: number;
@@ -33,6 +36,30 @@
 	let editing = $state<number | null>(null);
 	let pending = $state(false);
 	const setPending = (p: boolean) => (pending = p);
+
+	// Hide/show updates the row straight away and saves in the background; if the save
+	// fails the row goes back. Keyed by id until the refreshed list arrives.
+	let shownActive = $state<Record<number, boolean>>({});
+	const isActive = (item: Item) => shownActive[item.id] ?? item.active;
+
+	const toggle =
+		(item: Item): SubmitFunction =>
+		() => {
+			const next = !isActive(item);
+			shownActive[item.id] = next;
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					toast.show(String(result.data?.message ?? (next ? 'Shown.' : 'Hidden.')));
+					await update();
+				} else {
+					const message = result.type === 'failure' ? result.data?.error : undefined;
+					toast.show(String(message ?? "Couldn't save just now. Please try again."), 'error');
+				}
+				// The list now matches the server (or the change failed): drop the override,
+				// unless another click on this row has replaced it meanwhile.
+				if (shownActive[item.id] === next) delete shownActive[item.id];
+			};
+		};
 
 	const kindLabel = { per_day: 'per day', per_week: 'per week' } as const;
 
@@ -135,17 +162,6 @@
 							{@render extraInputs(item)}
 						</div>
 						<div class="flex flex-wrap justify-end gap-2">
-							<Button
-								variant="ghost"
-								class="mr-auto"
-								formaction="?/toggle"
-								name="active"
-								value={String(!item.active)}
-								disabled={pending}
-								formnovalidate
-							>
-								{item.active ? 'Hide' : 'Show again'}
-							</Button>
 							<Button type="button" variant="secondary" onclick={() => (editing = null)}>
 								Cancel
 							</Button>
@@ -157,10 +173,12 @@
 						<div class="min-w-0 flex-1 pl-1">
 							<div class="flex items-center gap-2">
 								<span
-									class="truncate text-sm font-medium {item.active ? 'text-ink' : 'text-ink-muted'}"
-									>{item.name}</span
+									class="truncate text-sm font-medium {isActive(item)
+										? 'text-ink'
+										: 'text-ink-muted'}">{item.name}</span
 								>
-								{#if !item.active}<span class="badge badge-ghost badge-sm font-medium">Hidden</span
+								{#if !isActive(item)}<span class="badge badge-ghost badge-sm font-medium"
+										>Hidden</span
 									>{/if}
 							</div>
 							{#if details(item)}
@@ -186,6 +204,23 @@
 								aria-label="Move {item.name} down"
 								title="Move down"><ArrowDown size={16} aria-hidden="true" /></button
 							>
+						</form>
+						<form method="post" action="?/toggle" class="contents" use:enhance={toggle(item)}>
+							<input type="hidden" name="list" value={list} />
+							<input type="hidden" name="id" value={item.id} />
+							<button
+								class={iconButton}
+								name="active"
+								value={String(!isActive(item))}
+								aria-label="{isActive(item) ? 'Hide' : 'Show'} {item.name}"
+								title={isActive(item) ? 'Hide' : 'Show again'}
+							>
+								{#if isActive(item)}
+									<EyeOff size={16} aria-hidden="true" />
+								{:else}
+									<Eye size={16} aria-hidden="true" />
+								{/if}
+							</button>
 						</form>
 						<button
 							type="button"

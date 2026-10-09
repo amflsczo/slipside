@@ -1,11 +1,24 @@
 // User-scoped data access (PLAN.md section 6). There is no row-level security, so every
 // query in the app goes through `forUser(userId)`, which always filters by that user.
 // Multi-statement operations use db.batch(): one HTTP round trip, run as a transaction.
-import { and, asc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { and, asc, between, eq, inArray, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import { db } from './db';
-import { deductionTypes, expenseCategories, extraTypes, otRates, settings } from './db/schema';
+import {
+	deductionTypes,
+	expenseCategories,
+	extraTypes,
+	otRates,
+	settings,
+	weekDays,
+	weekDeductions,
+	weekExtras,
+	weekOt,
+	weeks
+} from './db/schema';
+import { addDays, type IsoDate } from '#lib/dates.ts';
 import { TEMPLATES, type ExtraKind, type TemplateId } from '#lib/templates.ts';
+import type { SavedWeek, WeekRecord } from '#lib/week/form.ts';
 
 export const LISTS = {
 	deductions: deductionTypes,
@@ -95,7 +108,137 @@ export function forUser(userId: string) {
 			});
 	}
 
+	const activeList = (table: AnyList) =>
+		db
+			.select()
+			.from(table)
+			.where(and(eq(table.userId, userId), eq(table.active, true)))
+			.orderBy(...byOrder(table));
+
+	// The id of this user's week starting on `weekStart`, as a subquery, so a save can
+	// write the week and its rows in one batch without waiting for the id.
+	const weekIdOf = (weekStart: IsoDate) =>
+		sql<number>`(select ${weeks.id} from ${weeks} where ${weeks.userId} = ${userId} and ${weeks.weekStart} = ${weekStart})`;
+
 	return {
+		/**
+		 * Everything the This Week screen needs, in one round trip: settings, the active list
+		 * items, and any saved week that could contain `anchor` (it starts within the 6 days
+		 * before it). The caller picks the week once it knows the week start day.
+		 */
+		async loadWeekPage(anchor: IsoDate) {
+			const range = between(weeks.weekStart, addDays(anchor, -6), anchor);
+			const weekIds = db
+				.select({ id: weeks.id })
+				.from(weeks)
+				.where(and(eq(weeks.userId, userId), range));
+			const active = <T extends typeof extraTypes | typeof otRates>(table: T) =>
+				and(eq(table.userId, userId), eq(table.active, true));
+
+			const [
+				[general],
+				deductions,
+				extras,
+				ot,
+				saved,
+				days,
+				savedOt,
+				savedDeductions,
+				savedExtras
+			] = await db.batch([
+				db.select().from(settings).where(eq(settings.userId, userId)).limit(1),
+				activeList(deductionTypes),
+				db
+					.select()
+					.from(extraTypes)
+					.where(active(extraTypes))
+					.orderBy(...byOrder(extraTypes)),
+				db
+					.select()
+					.from(otRates)
+					.where(active(otRates))
+					.orderBy(...byOrder(otRates)),
+				db
+					.select()
+					.from(weeks)
+					.where(and(eq(weeks.userId, userId), range)),
+				db.select().from(weekDays).where(inArray(weekDays.weekId, weekIds)),
+				db
+					.select()
+					.from(weekOt)
+					.where(inArray(weekOt.weekId, weekIds))
+					.orderBy(asc(weekOt.sortOrder)),
+				db
+					.select()
+					.from(weekDeductions)
+					.where(inArray(weekDeductions.weekId, weekIds))
+					.orderBy(asc(weekDeductions.sortOrder)),
+				db
+					.select()
+					.from(weekExtras)
+					.where(inArray(weekExtras.weekId, weekIds))
+					.orderBy(asc(weekExtras.sortOrder))
+			]);
+
+			const toSaved = (week: typeof weeks.$inferSelect): SavedWeek => ({
+				currency: week.currency,
+				netPay: week.netPay,
+				notes: week.notes,
+				updatedAt: week.updatedAt.toISOString(),
+				days: days.filter((d) => d.weekId === week.id),
+				deductions: savedDeductions.filter((d) => d.weekId === week.id),
+				ot: savedOt.filter((o) => o.weekId === week.id),
+				extras: savedExtras.filter((e) => e.weekId === week.id)
+			});
+
+			return {
+				general: general ?? null,
+				types: { deductions, extras, otRates: ot },
+				saved: new Map(saved.map((week) => [week.weekStart, toSaved(week)]))
+			};
+		},
+
+		/** Saves a week and all its rows in one transaction (one round trip). */
+		async saveWeek(record: WeekRecord) {
+			const weekId = weekIdOf(record.weekStart);
+			const children = [
+				[weekDays, record.days],
+				[weekDeductions, record.deductions],
+				[weekOt, record.ot],
+				[weekExtras, record.extras]
+			] as const;
+
+			await batch([
+				db
+					.insert(weeks)
+					.values({ ...record.summary, userId, weekStart: record.weekStart })
+					.onConflictDoUpdate({
+						target: [weeks.userId, weeks.weekStart],
+						set: { ...record.summary, updatedAt: sql`now()` }
+					}),
+				// Replace the rows: simplest way to handle added, changed and removed lines.
+				...children.map(([table]) => db.delete(table).where(eq(table.weekId, weekId))),
+				...children
+					.filter(([, rows]) => rows.length > 0)
+					.map(([table, rows]) =>
+						db
+							.insert(table)
+							.values(
+								rows.map((row) => ({ ...row, weekId })) as unknown as (typeof table.$inferInsert)[]
+							)
+					)
+			]);
+		},
+
+		/** Returns false if there was no saved week (or it isn't this user's). */
+		async deleteWeek(weekStart: IsoDate) {
+			const rows = await db
+				.delete(weeks)
+				.where(and(eq(weeks.userId, userId), eq(weeks.weekStart, weekStart)))
+				.returning({ id: weeks.id });
+			return rows.length > 0;
+		},
+
 		/** Everything the Settings screen needs, in one round trip. */
 		async loadSettingsPage() {
 			const [[general], deductions, extras, ot, categories] = await db.batch([

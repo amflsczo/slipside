@@ -42,11 +42,13 @@
 	{/if}
 	<div class="min-w-0 flex-1">
 		{#if eyebrow !== undefined}
-			<p class="mb-0.5 min-h-4 text-[0.7rem] font-semibold tracking-wider text-ink-muted uppercase">
+			<p
+				class="mb-1 min-h-4 font-mono text-[0.7rem] font-medium tracking-wider text-ink-muted uppercase"
+			>
 				{eyebrow}
 			</p>
 		{/if}
-		<h1 class="text-xl leading-tight font-extrabold text-ink sm:text-2xl">{title}</h1>
+		<h1 class="font-display text-2xl leading-tight font-semibold text-ink sm:text-3xl">{title}</h1>
 		{#if subtitle}<p class="mt-0.5 line-clamp-2 text-sm text-ink-muted">{subtitle}</p>{/if}
 	</div>
 	{@render action?.()}

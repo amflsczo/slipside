@@ -26,7 +26,10 @@
 	>
 		<Icon size={22} aria-hidden="true" />
 	</div>
-	<svelte:element this={level ? `h${level}` : 'p'} class="text-base font-bold text-ink">
+	<svelte:element
+		this={level ? `h${level}` : 'p'}
+		class="font-display text-lg font-semibold text-ink"
+	>
 		{title}
 	</svelte:element>
 	{#if hint}<p class="mt-1 max-w-xs text-sm text-ink-muted">{hint}</p>{/if}

@@ -1,6 +1,6 @@
 # Design system
 
-A calm, card-based UI for internal business apps: forms people file, records they track, and queues reviewers work through. It runs the same on desktop, tablet and phone, in light and dark mode, with one fixed accent colour (brand blue `#0F59AC`).
+A calm, card-based UI for a personal payslip and expense tracker, styled like a paper ledger: warm paper canvas, serif figures, and payslips that look printed. It runs the same on desktop, tablet and phone, in light and dark mode, with one fixed accent colour (banknote green `#1F6B4F`).
 
 This guide is written so you can copy it into another project. The class names are **Tailwind CSS v4 + daisyUI v5** utilities, the components are **Svelte 5**, and the icons are **Lucide**. The ideas carry over to other stacks; the exact classes only work with these tools.
 
@@ -9,12 +9,13 @@ This guide is written so you can copy it into another project. The class names a
 ## 1. Principles
 
 1. **One accent colour.** Every neutral surface takes a small share of the accent, so the whole app feels built around it. The accent itself is the only saturated colour on screen, used for "you are here" and "do this".
-2. **Cards on a tinted canvas.** The page background is a soft blue (`#DEE7F5`). Content sits on white (in dark mode, raised) cards with a soft shadow. There are no hard borders between sections.
-3. **Rounded and soft.** Large radii (cards `rounded-3xl`, controls `rounded-full` or `rounded-xl`), one soft shadow, and short transitions of 150–200 ms.
-4. **Status is colour-coded everywhere.** A record's state (Draft, Pending, Approved, Rejected…) always has the same colour, in pills, card washes and callouts.
-5. **Phone first, desktop roomier.** Layouts stack on phones and spread out from `sm` and `lg` up. Action bars stick to the bottom on phones, within thumb reach.
-6. **Explain, don't just block.** If something can't be done, a short note says why and what to do instead.
-7. **Usable by everyone.** Every screen follows the four POUR principles (Perceivable, Operable, Understandable, Robust) of WCAG 2.2 at level AA. See [§11](#11-accessibility-the-four-pour-principles) for the rules.
+2. **Cards on a paper canvas.** The page background is warm paper (`#F1EDE3`). Content sits on off-white (in dark mode, raised charcoal) cards with a soft shadow. There are no hard borders between sections. Inside a card, dashed hairlines (`border-dashed border-rule`) divide it like a ledger.
+3. **Money reads like money.** Figures are set in the serif display face, with lining tabular numerals. Payslip lines are monospaced, with dotted leaders, a single rule above the totals and a double rule under net pay. Money going out (deductions, expenses) is `text-negative`, with a `−` sign.
+4. **Rounded and soft.** Large radii (cards `rounded-3xl`, controls `rounded-full` or `rounded-xl`), one soft shadow, and short transitions of 150–200 ms.
+5. **Status is colour-coded everywhere.** A record's state (Draft, Pending, Approved, Rejected…) always has the same colour, in pills, card washes and callouts.
+6. **Phone first, desktop roomier.** Layouts stack on phones and spread out from `sm` and `lg` up. Action bars stick to the bottom on phones, within thumb reach.
+7. **Explain, don't just block.** If something can't be done, a short note says why and what to do instead.
+8. **Usable by everyone.** Every screen follows the four POUR principles (Perceivable, Operable, Understandable, Robust) of WCAG 2.2 at level AA. See [§11](#11-accessibility-the-four-pour-principles) for the rules.
 
 ---
 
@@ -23,7 +24,7 @@ This guide is written so you can copy it into another project. The class names a
 | Concern | Choice |
 |---|---|
 | Styling | Tailwind CSS v4 (`@tailwindcss/vite`), daisyUI v5 as a plugin |
-| Font | Plus Jakarta Sans Variable (`@fontsource-variable/plus-jakarta-sans`) |
+| Font | Plus Jakarta Sans Variable for body text (`@fontsource-variable/plus-jakarta-sans`), Fraunces for headings and figures (`@fontsource-variable/fraunces/soft.css`), JetBrains Mono for payslip lines (`@fontsource-variable/jetbrains-mono`) |
 | Icons | `@lucide/svelte`, imported one by one: `import Plane from '@lucide/svelte/icons/plane'` |
 | Class merging | `clsx` + `tailwind-merge`, wrapped in a `cn()` helper |
 
@@ -56,12 +57,14 @@ Tokens are defined in `@theme`, so each becomes a Tailwind colour (`bg-card`, `t
 | Token | Role |
 |---|---|
 | `sidebar-active` | **The accent.** Primary buttons, active nav and tabs, focus rings, selection, icon chips |
-| `sidebar-active-ink` | Text on the accent (always white) |
-| `positive` / `positive-ink` | The "go" colour: submit buttons, success, healthy progress |
-| `surface` | Page background (canvas) |
+| `sidebar-active-ink` | Text on the accent (white in light mode, near-black on the lighter dark-mode green) |
+| `positive` / `positive-ink` | Money in and success: gross pay, "adds up" checks |
+| `negative` | Money out: deductions and expenses |
+| `surface` | Page background (paper canvas) |
 | `card` | Card background |
-| `ink` | Body text and headings: navy `#0E1A30` in light mode |
-| `navy` | `#0E1A30`. Light-mode text, and the dark end of brand gradients |
+| `rule` | Hairlines on the payslip: dashed dividers, dotted leaders, total rules |
+| `ink` | Body text and headings: `ledger` in light mode |
+| `ledger` | `#16201B`, a near-black green. Light-mode text, the strong (`accent`) button, the dark end of the auth hero |
 | `ink-muted` | Secondary text, labels, captions (not tinted) |
 | `sidebar`, `sidebar-hover`, `sidebar-border`, `sidebar-ink`, `sidebar-muted` | Side navigation panel |
 
@@ -72,61 +75,113 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 @plugin 'daisyui';
 
 @theme {
-	--color-sidebar: #ffffff;
-	--color-sidebar-hover: color-mix(in oklch, #f4f5f9 85%, var(--color-sidebar-active) 15%);
-	--color-sidebar-active: #0f59ac; /* brand blue, fixed */
+	--color-sidebar: #fffdf8;
+	--color-sidebar-hover: color-mix(in oklch, #f3efe5 85%, var(--color-sidebar-active) 15%);
+	--color-sidebar-active: #1f6b4f; /* banknote green */
 	--color-sidebar-active-ink: #ffffff;
-	--color-sidebar-muted: #6b7280;
-	--color-sidebar-border: color-mix(in oklch, #e8eaf0 90%, var(--color-sidebar-active) 10%);
-	--color-navy: #0e1a30;
-	--color-sidebar-ink: var(--color-navy);
-	--color-surface: #dee7f5; /* soft blue canvas */
-	--color-ink: var(--color-navy);
-	--color-ink-muted: #5c6275; /* ≥ 4.5:1 on the canvas and on cards */
-	--color-card: #ffffff;
+	--color-sidebar-muted: #67635a;
+	--color-sidebar-border: color-mix(in oklch, #e6e0d2 90%, var(--color-sidebar-active) 10%);
+	--color-ledger: #16201b; /* near-black green: dark panels and the strong button */
+	--color-sidebar-ink: var(--color-ledger);
+	--color-surface: #f1ede3; /* warm paper canvas */
+	--color-ink: var(--color-ledger);
+	--color-ink-muted: #5f5b52; /* ≥ 4.5:1 on the canvas and on cards */
+	--color-card: #fffdf8;
+	/* Hairlines on the payslip (rules, dotted leaders). */
+	--color-rule: color-mix(in oklch, var(--color-ink) 24%, transparent);
 
-	--color-positive: oklch(0.55 0.12 164);
+	--color-positive: oklch(0.52 0.11 158);
 	--color-positive-ink: #ffffff;
+	/* Money going out: deductions, expenses. */
+	--color-negative: oklch(0.5 0.13 35);
 
-	--font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-sans:
+		'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	/* Headings and the big figures. */
+	--font-display: 'Fraunces Variable', ui-serif, Georgia, 'Times New Roman', serif;
+	/* Payslip lines, like a printed slip. */
+	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
 	/* A notch more compact than Tailwind's defaults. */
-	--text-xs: 0.75rem;     /* 12px — never smaller for labels */
-	--text-sm: 0.8125rem;   /* 13px — body text */
+	--text-xs: 0.75rem; /* 12px — never smaller for labels */
+	--text-sm: 0.8125rem; /* 13px — body text */
 	--text-base: 0.9375rem; /* 15px */
-	--text-lg: 1.0625rem;   /* 17px */
-	--text-xl: 1.1875rem;   /* 19px */
-	--text-2xl: 1.375rem;   /* 22px */
-	--text-3xl: 1.625rem;   /* 26px */
-	--text-4xl: 2rem;       /* 32px */
+	--text-lg: 1.0625rem; /* 17px */
+	--text-xl: 1.1875rem; /* 19px */
+	--text-2xl: 1.375rem; /* 22px */
+	--text-3xl: 1.625rem; /* 26px */
+	--text-4xl: 2rem; /* 32px */
+	--text-5xl: 2.5rem; /* 40px — the net pay figure */
+
+	/* Dialog entry: fade + rise (ConfirmDialog). */
+	--animate-dialog-in: dialog-in 160ms ease-out;
+	@keyframes dialog-in {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+	}
 }
 
 /* Phones: one notch smaller to fit more; body stays 13px, labels keep 12px. */
 @media (max-width: 639px) {
 	:root {
-		--text-sm: 0.8125rem;  /* 13px */
-		--text-base: 0.875rem; /* 14px */
-		--text-lg: 1rem;       /* 16px */
-		--text-xl: 1.125rem;   /* 18px */
-		--text-2xl: 1.25rem;   /* 20px */
-		--text-3xl: 1.375rem;  /* 22px */
-		--text-4xl: 1.75rem;   /* 28px */
+		--text-sm: 0.8125rem;
+		--text-base: 0.875rem;
+		--text-lg: 1rem;
+		--text-xl: 1.125rem;
+		--text-2xl: 1.25rem;
+		--text-3xl: 1.375rem;
+		--text-4xl: 1.75rem;
+		--text-5xl: 2.125rem;
 	}
 }
 
-/* Dark: the same tinting, layered on daisyUI's dark neutrals.
-   Sidebar = darkest (base-300), page = middle (base-200), cards = lightest (base-100). */
-[data-theme='dark'] {
-	--color-surface: color-mix(in oklch, var(--color-base-200) 92%, var(--color-sidebar-active) 8%);
-	--color-card: color-mix(in oklch, var(--color-base-100) 97%, var(--color-sidebar-active) 3%);
+/* Light: daisyUI's neutrals warmed to paper, so inputs, borders and hovers match the canvas. */
+:root[data-theme='light'] {
+	--color-base-100: #fffdf8;
+	--color-base-200: #f4f0e6;
+	--color-base-300: #e2dbcb;
+	--color-base-content: var(--color-ledger);
+}
+
+/* Dark: warm charcoal, like a ledger under a desk lamp.
+   Sidebar = darkest (base-300), page = middle (base-200), cards = lightest (base-100).
+   The accent is lightened so it still reads as text on dark cards. */
+:root[data-theme='dark'] {
+	--color-base-100: #201f1b;
+	--color-base-200: #191814;
+	--color-base-300: #12110e;
+	--color-base-content: #ece7db;
+
+	--color-sidebar-active: #5fb48d;
+	--color-sidebar-active-ink: #0b1d14;
+	--color-surface: var(--color-base-200);
+	--color-card: var(--color-base-100);
 	--color-ink: var(--color-base-content);
-	--color-ink-muted: color-mix(in oklch, var(--color-base-content) 60%, transparent);
-	--color-sidebar: color-mix(in oklch, var(--color-base-300) 95%, var(--color-sidebar-active) 5%);
-	--color-sidebar-hover: color-mix(in oklch, var(--color-base-200) 88%, var(--color-sidebar-active) 12%);
-	--color-sidebar-muted: color-mix(in oklch, var(--color-base-content) 60%, transparent);
-	--color-sidebar-border: color-mix(in oklch, var(--color-base-100) 85%, var(--color-sidebar-active) 15%);
+	--color-ink-muted: color-mix(in oklch, var(--color-base-content) 66%, transparent);
+	--color-sidebar: var(--color-base-300);
+	--color-sidebar-hover: color-mix(
+		in oklch,
+		var(--color-base-100) 88%,
+		var(--color-sidebar-active) 12%
+	);
+	--color-sidebar-muted: color-mix(in oklch, var(--color-base-content) 66%, transparent);
+	--color-sidebar-border: color-mix(
+		in oklch,
+		var(--color-base-100) 85%,
+		var(--color-sidebar-active) 15%
+	);
 	--color-sidebar-ink: var(--color-base-content);
-	--color-positive: oklch(0.64 0.13 164);
+	--color-positive: oklch(0.72 0.12 158);
+	--color-positive-ink: #0b1d14;
+	--color-negative: oklch(0.74 0.12 40);
+}
+
+/* daisyUI's own primary (checkboxes, radios, spinners) is the brand accent too. */
+:root[data-theme] {
+	--color-primary: var(--color-sidebar-active);
+	--color-primary-content: var(--color-sidebar-active-ink);
 }
 
 @layer base {
@@ -172,9 +227,41 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 	}
 }
 
+/* Fraunces: softened corners, lining figures that line up in columns. */
+@utility font-display {
+	font-family: var(--font-display);
+	font-variation-settings: 'SOFT' 50;
+	font-feature-settings: 'lnum', 'tnum';
+	letter-spacing: -0.02em;
+}
+
 /* The one card shadow. */
 @utility shadow-soft {
-	box-shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px -12px rgb(16 24 40 / 0.12);
+	box-shadow:
+		0 1px 2px rgb(40 32 16 / 0.05),
+		0 8px 24px -12px rgb(40 32 16 / 0.14);
+}
+
+/* Payslip: a torn, zigzag bottom edge. A mask clips box-shadow, so put drop-shadow-soft
+   on a parent instead. Leave about 1rem of bottom padding for the teeth. */
+@utility slip-edge {
+	--tooth: 14px;
+	mask:
+		linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth) / 2) no-repeat,
+		conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--tooth)
+			calc(var(--tooth) / 2) repeat-x;
+}
+@utility drop-shadow-soft {
+	filter: drop-shadow(0 1px 1px rgb(40 32 16 / 0.06)) drop-shadow(0 10px 14px rgb(40 32 16 / 0.1));
+}
+
+/* A dotted leader between a payslip label and its amount: label · · · · amount. */
+@utility leader {
+	flex: 1 1 1rem;
+	min-width: 1rem;
+	align-self: flex-end;
+	margin-bottom: 0.4em;
+	border-bottom: 1.5px dotted var(--color-rule);
 }
 
 /* Safe areas for notches and home indicators. */
@@ -192,7 +279,7 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 
 ### Accent colour (fixed)
 
-The accent is the **brand blue** `#0F59AC`, and it always takes white text (6.9:1). It is fixed: there is no accent picker, so the palette stays the same for everyone. To change it, edit `--color-sidebar-active` in `layout.css`.
+The accent is **banknote green** `#1F6B4F`, with white text (6.6:1). In dark mode it lightens to `#5FB48D` with near-black text, so it still reads as text on dark cards. There is no accent picker, so the palette is the same for everyone. To change it, edit `--color-sidebar-active` in `layout.css`.
 
 ### No flash on load
 
@@ -251,15 +338,16 @@ const KIND_TINTS = {
 
 | Use | Classes |
 |---|---|
-| Page title | `text-xl sm:text-2xl font-extrabold leading-tight text-ink` |
+| Page title | `font-display text-2xl sm:text-3xl font-semibold leading-tight text-ink` |
 | Detail title (hero) | `text-lg sm:text-xl font-bold leading-snug` |
-| Card / panel title | `text-base font-bold` (panel), `text-sm font-semibold` (detail section) |
-| Form step title | `text-[0.95rem] font-semibold leading-tight` |
+| Card / panel title | `font-display text-lg font-semibold` (panel), `text-sm font-semibold` (detail section) |
+| Form step title | `font-display text-lg font-semibold leading-tight`, numbered `01`, `02`… in `font-mono text-xs text-sidebar-active` |
 | Body | `text-sm text-ink` |
 | Secondary | `text-xs text-ink-muted` or `text-sm text-ink-muted` |
 | Field label | `text-[0.8rem] font-medium` |
-| Eyebrow / overline | `text-[0.7rem] font-semibold uppercase tracking-wider text-ink-muted` |
-| Big number | `text-3xl font-extrabold tracking-tight tabular-nums` |
+| Eyebrow / overline | `font-mono text-[0.7rem] font-medium uppercase tracking-wider text-ink-muted` |
+| Big number | `font-display text-5xl font-semibold leading-none` (net pay), `font-display text-lg font-semibold` (stat tiles) |
+| Payslip lines | `font-mono text-[0.8rem] tabular-nums`, `label <span class="leader"> amount` |
 | Numbers in tables/facts | add `tabular-nums` |
 
 Rules:
@@ -291,27 +379,29 @@ Tinted fills use opacity steps: `/[0.06]`–`/[0.08]` for callout backgrounds, `
 ## 6. App shell
 
 ```
-┌──────────┬──────────────────────────────────────────┐
-│ Side nav │  Top bar (sticky; frosted once scrolled)  │
-│ floating │──────────────────────────────────────────│
-│ panel    │  <main> page content                      │
-│ (lg+)    │                                           │
-└──────────┴──────────────────────────────────────────┘
-Phones/tablets: no side nav → brand in top bar, floating bottom nav.
+Phones (< md)              Tablets (md)            Desktops (lg+)
+┌─────────────────────┐    ┌──┬──────────────┐    ┌────────┬───────────────┐
+│ Top bar (hides on ↓)│    │▮▮│              │    │ Ledger │               │
+│                     │    │▮▮│   <main>     │    │ spine  │   <main>      │
+│ <main>              │    │▮▮│              │    │ (wide, │ max-w-[88rem] │
+│                     │    │  │              │    │ or the │               │
+│ ╭── dark dock ────╮ │    │▮▮│              │    │ rail)  │               │
+│ ╰─────────────────╯ │    └──┴──────────────┘    └────────┴───────────────┘
+└─────────────────────┘    icon rail + tooltips
 ```
 
-- **Canvas:** `bg-surface flex min-h-dvh`.
-- **Side nav (lg+):** a floating panel, `bg-sidebar shadow-soft rounded-3xl sticky top-3 my-3 ml-3 h-[calc(100dvh-1.5rem)]`. Width 264px, collapsible to 84px (icons only, remembered in `localStorage`). From top to bottom:
-  - the brand mark (an icon in an accent tile)
-  - a greeting card (avatar initials + name + role)
-  - the main links, then a "More" group with an uppercase overline
-  - a Collapse button at the bottom
-- **Nav item:** `rounded-xl min-h-10 px-3 text-sm font-medium`.
-  - Active: `bg-sidebar-active/10 text-sidebar-active font-semibold`, plus a 4px accent bar on the left edge.
+- **Canvas:** `bg-surface flex min-h-dvh`. Content is capped at `max-w-[88rem]` and centred. Each new section rises in (`fly y:8`); with reduced motion there's no animation.
+- **Side nav (md+), the "ledger spine":** a dark floating panel in both themes, `bg-sidebar text-sidebar-ink ring-1 ring-sidebar-border rounded-[1.75rem] sticky top-3 my-3 ml-3 h-[calc(100dvh-1.5rem)] z-40`.
+  - On tablets (md) it is always an 80px icon rail. From lg up it is 256px wide and can collapse to the rail (remembered in `localStorage`).
+  - In the rail, labels become `sr-only` and a tooltip (`bg-ink text-card`) shows on hover or focus.
+  - From top to bottom: the brand, the nav (a "Menu" overline, then "More"), and a footer with the user card (avatar, greeting and name), the theme toggle, Log out and Collapse.
+  - Focus rings inside it use `sidebar-ink`, because the green accent doesn't show on the dark panel.
+- **Nav item:** `rounded-2xl min-h-11 px-3 text-sm font-medium`.
+  - Active: a paper pill, `bg-sidebar-ink text-sidebar font-semibold`, with a small green dot on the right in the wide mode.
   - Inactive: `text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink`.
-- **Top bar:** `sticky top-0 h-16 px-4 lg:px-8 pt-safe`. Once the page scrolls past 4px it frosts: `bg-surface/80 backdrop-blur-md shadow-[0_1px_0_rgb(16_24_40/0.06)]`. On the right are the theme toggle (round `size-10 bg-card shadow-soft` button) and the account pill (avatar + name + chevron), which opens a menu.
-- **Bottom nav (< lg):** fixed, floating above the home indicator: `bg-card/92 backdrop-blur-lg rounded-2xl border p-1.5 max-w-lg mx-auto`. Use only 4–5 "primary" items, with the icon above a short label (`text-[0.66rem] font-semibold`). The active item is `bg-sidebar-active/10 text-sidebar-active` with a heavier icon stroke.
-- **Main:** `px-4 pt-2 pb-28 lg:px-8 lg:pb-10`. The large bottom padding on phones keeps content clear of the bottom nav.
+- **Top bar (phones only):** `sticky top-0 h-14 px-4 pt-safe md:hidden`. It holds the brand, the theme toggle and the account menu. It slides away (`-translate-y-full`) while you scroll down past 72px, and comes back when you scroll up or while it has focus. Once scrolled it frosts: `bg-surface/80 backdrop-blur-md`.
+- **Dock (phones only):** a dark floating bar, `fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] max-w-md rounded-[1.75rem] bg-sidebar p-1.5`. It holds the 4–5 "primary" items, each an icon over a label (`text-[0.7rem] font-semibold`). A paper pill (`bg-sidebar-ink`) slides to the current tab with a slight overshoot.
+- **Main:** `px-4 pt-2 pb-32 sm:px-6 md:pt-6 md:pb-10 lg:px-10 lg:pt-8`. The bottom padding on phones keeps content clear of the dock. Sticky action bars sit at `bottom-[calc(5.5rem+env(safe-area-inset-bottom))]` on phones and `md:bottom-4` from md up.
 - **Single nav source:** one `navItems` array (label, href, icon, `visible(user)`, `primary`, `group`) drives the side nav, the bottom nav, and the rule for which pages show a back arrow.
 - **Print:** the shell hides itself with `print:hidden!`, and `<main>` drops its padding with `print:p-0!`.
 
@@ -325,7 +415,7 @@ Phones/tablets: no side nav → brand in top bar, floating bottom nav.
 ### Login
 
 A two-column page on `lg`.
-- **Left:** a hero card, `rounded-[2rem] p-10 text-white`, with the background `linear-gradient(145deg, var(--color-sidebar-active), var(--color-navy))` (blue to navy). It holds large faint circles (`bg-white/10`), a headline, and glassy feature chips (`bg-white/15 backdrop-blur-sm rounded-2xl`).
+- **Left:** a hero card, `rounded-[2rem] p-10 text-white`, with the fixed background `linear-gradient(160deg, #1f6b4f, #16201b 75%)` (green to ledger), so it looks the same in both themes. It holds a decorative sample payslip, tilted slightly with a torn edge, a serif headline, and outlined feature pills (`rounded-full border-white/20 bg-white/10`).
 - **Right:** the form. On phones, only the form is shown.
 
 ---
@@ -340,7 +430,7 @@ Variants map to intent:
 | Variant | Use | Classes |
 |---|---|---|
 | `primary` | main action | `bg-sidebar-active text-sidebar-active-ink hover:brightness-110` |
-| `accent` | **submit / go** | `bg-positive text-positive-ink hover:brightness-110` |
+| `accent` | **submit / go** (Save week) | `bg-ink text-card hover:bg-ink/88` (ledger ink) |
 | `secondary` | other actions (print, edit) | `border border-base-300 text-ink hover:bg-base-200` |
 | `ghost` | low-emphasis | `text-ink-muted hover:bg-base-200 hover:text-ink` |
 | `danger` | destructive confirm | `bg-error text-white hover:brightness-110` |
