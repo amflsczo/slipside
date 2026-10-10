@@ -4,7 +4,8 @@ import { buildForm } from './form.ts';
 
 const types = { deductions: [{ name: 'Tax' }], extras: [], otRates: [] };
 const owner = 'sam@example.com';
-const key = (start: string) => `slipside:week-draft:${owner}:${start}`;
+const key = (start: string) => `slipside:payslip-draft:${owner}:${start}`;
+const oldKey = (start: string) => `slipside:week-draft:${owner}:${start}`;
 
 describe('drafts on this device', () => {
 	beforeEach(() => {
@@ -33,13 +34,24 @@ describe('drafts on this device', () => {
 		const form = buildForm({ start: '2026-10-05', end: '2026-10-11' }, 'GBP', types, null);
 		const { start, end, ...rest } = form;
 		const legacy = { ...rest, weekStart: start, net: '500' };
-		localStorage.setItem(key('2026-10-05'), JSON.stringify({ savedAt: 'then', form: legacy }));
+		localStorage.setItem(oldKey('2026-10-05'), JSON.stringify({ savedAt: 'then', form: legacy }));
 
 		const draft = readDraft(owner, '2026-10-05');
 		expect(draft?.form.start).toBe('2026-10-05');
 		expect(draft?.form.end).toBe(end);
 		expect(draft?.form.net).toBe('500');
 		expect(draft?.savedAt).toBe('then');
+	});
+
+	it('moves a draft from the old storage key on the next save, and clears both', () => {
+		const form = buildForm({ start: '2026-10-05', end: '2026-10-11' }, 'GBP', types, null);
+		localStorage.setItem(oldKey('2026-10-05'), JSON.stringify({ savedAt: 'then', form }));
+		writeDraft(owner, '2026-10-05', { ...form, net: '1' });
+		expect(localStorage.getItem(oldKey('2026-10-05'))).toBeNull();
+		expect(readDraft(owner, '2026-10-05')?.form.net).toBe('1');
+		localStorage.setItem(oldKey('2026-10-05'), JSON.stringify({ savedAt: 'then', form }));
+		clearDraft(owner, '2026-10-05');
+		expect(readDraft(owner, '2026-10-05')).toBeNull();
 	});
 
 	it('keeps new dates typed on a saved payslip, under its saved start', () => {

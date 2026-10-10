@@ -21,8 +21,8 @@ Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather th
 | 4 | Queries, server, `?period=` URLs, overlap checks | ✅ Committed |
 | 5 | Payslip page UI: date sheet, calendar hours grid, "Payslip" wording | ✅ Committed |
 | 6 | Settings: "How often are you usually paid?" replaces the week start day; migration 0004 drops `week_start_day` (dev branch only) | ✅ Committed |
-| 7 | Docs and naming cleanup | ⏳ Next |
-| 8 | Release: back up, migrate production, push | ⏳ |
+| 7 | Docs and naming cleanup: payslip names in the code, PLAN.md and DESIGN.md updated | ✅ Committed |
+| 8 | Release: back up, migrate production, push | ⏳ Next (needs decision 5) |
 
 > ⚠️ **Don't push `main` until Phase 8.** Local `main` has unpushed commits (check with `git log origin/main..main`), and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
 
@@ -97,14 +97,6 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 
 - **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. History and Expenses will each need a guide, and the "coming in a later update" answer will need removing.
 
-- **Phase 7 renames:**
-  - `WeekForm`/`ParsedWeek`/`SavedWeek`/`WeekRecord` → payslip names.
-  - The `src/lib/week/` folder.
-  - `WeekEditor.svelte` and `WeekPicker.svelte`.
-  - `parseWeek`/`toWeekRecord`.
-  - The draft storage key prefix (`slipside:week-draft:`), which needs a fallback read of the old key.
-- **PLAN.md** still describes weeks (screens, data model, phases). Update it to pay periods in Phase 7.
-- **Duplicate-name errors:** `isDuplicateName` treats *any* unique-constraint error as "That name is already in this list". The payslip save catches its own clashes first, but a narrower check by constraint name would be safer.
 - **Line endings:** Git warns "LF will be replaced by CRLF" on every commit. A `.gitattributes` with `* text=auto eol=lf` would make it consistent.
 - **Local `npm run build` fails on Windows** at the final Vercel step (`EPERM` creating a symlink). Turning on Windows Developer Mode fixes it. Vercel's own builds aren't affected.
 - **Migration 0003 is hand-written.** drizzle-kit can't generate renames without its interactive prompt. Future migrations generate normally (the snapshot was checked).
@@ -130,3 +122,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. One topic shows at a time (a topic list beside it on desktop, a "Topic" dropdown on phones and tablets), guides have Previous / Next, and `/help#<topic>` opens a topic directly. |
 | 2026-10-10 | Smaller type scale used everywhere (body 12.5px; new `text-2xs` for overlines); Help is the 5th item in the phone dock; every clickable control shows the pointer cursor. |
 | 2026-10-10 | The action bar (status + Save) is the last card of the form, in the page flow, not a sticky floating bar. |
+| 2026-10-10 | Code uses payslip names (PayslipEditor, PeriodPicker, PayslipForm, parsePayslip, `src/lib/payslip/`); drafts move to a `slipside:payslip-draft:` key and old-key drafts are still read. The stored `per_week` value and the legacy `?week=` link stay. |

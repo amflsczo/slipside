@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { balances, checkRate, reversePayslip, type WeekInput } from './reversePayslip.ts';
+import { balances, checkRate, reversePayslip, type PayslipInput } from './reversePayslip.ts';
 import { toMinor } from '../format/money.ts';
 
-const week = (overrides: Partial<WeekInput>): WeekInput => ({
+const input = (overrides: Partial<PayslipInput>): PayslipInput => ({
 	net: 0,
 	deductions: [],
 	dayHours: [],
@@ -14,7 +14,7 @@ const week = (overrides: Partial<WeekInput>): WeekInput => ({
 describe('reversePayslip', () => {
 	it('works out a normal week with deductions, OT and a per-day extra', () => {
 		const result = reversePayslip(
-			week({
+			input({
 				net: 50000,
 				deductions: [
 					{ name: 'Tax', amount: 8000 },
@@ -43,7 +43,7 @@ describe('reversePayslip', () => {
 
 	it('handles a week with no OT', () => {
 		const result = reversePayslip(
-			week({ net: 40000, deductions: [{ name: 'Tax', amount: 5000 }], dayHours: [8, 8, 8, 8, 8] })
+			input({ net: 40000, deductions: [{ name: 'Tax', amount: 5000 }], dayHours: [8, 8, 8, 8, 8] })
 		);
 
 		expect(result.gross).toBe(45000);
@@ -55,7 +55,7 @@ describe('reversePayslip', () => {
 
 	it('takes extras off gross before working out the rate', () => {
 		const result = reversePayslip(
-			week({
+			input({
 				net: 30000,
 				dayHours: [10, 10],
 				extras: [
@@ -73,7 +73,7 @@ describe('reversePayslip', () => {
 
 	it('flags a week that is extras only, with no hours', () => {
 		const result = reversePayslip(
-			week({
+			input({
 				net: 10000,
 				extras: [{ name: 'Bonus', kind: 'bonus', unitAmount: 10000, quantity: 1 }]
 			})
@@ -87,7 +87,7 @@ describe('reversePayslip', () => {
 
 	it('returns no rate, not a crash, when there are zero hours', () => {
 		const result = reversePayslip(
-			week({ net: 50000, dayHours: [0, 0], ot: [{ name: 'OT', multiplier: 1.5, hours: 0 }] })
+			input({ net: 50000, dayHours: [0, 0], ot: [{ name: 'OT', multiplier: 1.5, hours: 0 }] })
 		);
 
 		expect(result.weightedHours).toBe(0);
@@ -99,7 +99,7 @@ describe('reversePayslip', () => {
 
 	it('warns when extras are larger than gross pay', () => {
 		const result = reversePayslip(
-			week({
+			input({
 				net: 10000,
 				dayHours: [10],
 				extras: [{ name: 'Allowance', kind: 'per_day', unitAmount: 5000, quantity: 3 }]
@@ -112,13 +112,13 @@ describe('reversePayslip', () => {
 	});
 
 	it('flags negative values', () => {
-		const result = reversePayslip(week({ net: -100, dayHours: [8] }));
+		const result = reversePayslip(input({ net: -100, dayHours: [8] }));
 		expect(result.issues).toContain('negative-value');
 	});
 
 	it('puts the rounding difference on regular pay so the lines add back to net', () => {
 		const result = reversePayslip(
-			week({
+			input({
 				net: 10000,
 				dayHours: [1],
 				ot: [
@@ -136,7 +136,7 @@ describe('reversePayslip', () => {
 
 	it('puts the rounding difference on the largest OT line when there are no regular hours', () => {
 		const result = reversePayslip(
-			week({
+			input({
 				net: 10000,
 				ot: [
 					{ name: 'OT A', multiplier: 1, hours: 1 },
@@ -155,7 +155,7 @@ describe('reversePayslip', () => {
 	it('works in a currency with no decimals (JPY)', () => {
 		const net = toMinor('200000.00', 0)!;
 		const result = reversePayslip(
-			week({ net, deductions: [{ name: 'Tax', amount: 30000 }], dayHours: [8, 8, 8, 8, 8] })
+			input({ net, deductions: [{ name: 'Tax', amount: 30000 }], dayHours: [8, 8, 8, 8, 8] })
 		);
 
 		expect(result.gross).toBe(230000);

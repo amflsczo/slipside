@@ -21,12 +21,12 @@ This guide is written so you can copy it into another project. The class names a
 
 ## 2. Stack and setup
 
-| Concern | Choice |
-|---|---|
-| Styling | Tailwind CSS v4 (`@tailwindcss/vite`), daisyUI v5 as a plugin |
-| Font | Plus Jakarta Sans Variable for body text (`@fontsource-variable/plus-jakarta-sans`), Fraunces for headings and figures (`@fontsource-variable/fraunces/soft.css`), JetBrains Mono for payslip lines (`@fontsource-variable/jetbrains-mono`) |
-| Icons | `@lucide/svelte`, imported one by one: `import Plane from '@lucide/svelte/icons/plane'` |
-| Class merging | `clsx` + `tailwind-merge`, wrapped in a `cn()` helper |
+| Concern       | Choice                                                                                                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Styling       | Tailwind CSS v4 (`@tailwindcss/vite`), daisyUI v5 as a plugin                                                                                                                                                                               |
+| Font          | Plus Jakarta Sans Variable for body text (`@fontsource-variable/plus-jakarta-sans`), Fraunces for headings and figures (`@fontsource-variable/fraunces/soft.css`), JetBrains Mono for payslip lines (`@fontsource-variable/jetbrains-mono`) |
+| Icons         | `@lucide/svelte`, imported one by one: `import Plane from '@lucide/svelte/icons/plane'`                                                                                                                                                     |
+| Class merging | `clsx` + `tailwind-merge`, wrapped in a `cn()` helper                                                                                                                                                                                       |
 
 ```ts
 // $lib/utils.ts
@@ -54,19 +54,19 @@ Tokens are defined in `@theme`, so each becomes a Tailwind colour (`bg-card`, `t
 
 > The accent is named `sidebar-active` for historical reasons. It is used for much more than the sidebar. Keep the name if you copy components from this app, or rename it everywhere at once. Don't call it `accent`, because that clashes with daisyUI's `accent`.
 
-| Token | Role |
-|---|---|
-| `sidebar-active` | **The accent.** Primary buttons, active nav and tabs, focus rings, selection, icon chips |
-| `sidebar-active-ink` | Text on the accent (white in light mode, near-black on the lighter dark-mode green) |
-| `positive` / `positive-ink` | Money in and success: gross pay, "adds up" checks |
-| `negative` | Money out: deductions and expenses |
-| `surface` | Page background (paper canvas) |
-| `card` | Card background |
-| `rule` | Hairlines on the payslip: dashed dividers, dotted leaders, total rules |
-| `ink` | Body text and headings: `ledger` in light mode |
-| `ledger` | `#16201B`, a near-black green. Light-mode text, the strong (`accent`) button, the dark end of the auth hero |
-| `ink-muted` | Secondary text, labels, captions (not tinted) |
-| `sidebar`, `sidebar-hover`, `sidebar-border`, `sidebar-ink`, `sidebar-muted` | Side navigation panel |
+| Token                                                                        | Role                                                                                                        |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `sidebar-active`                                                             | **The accent.** Primary buttons, active nav and tabs, focus rings, selection, icon chips                    |
+| `sidebar-active-ink`                                                         | Text on the accent (white in light mode, near-black on the lighter dark-mode green)                         |
+| `positive` / `positive-ink`                                                  | Money in and success: gross pay, "adds up" checks                                                           |
+| `negative`                                                                   | Money out: deductions and expenses                                                                          |
+| `surface`                                                                    | Page background (paper canvas)                                                                              |
+| `card`                                                                       | Card background                                                                                             |
+| `rule`                                                                       | Hairlines on the payslip: dashed dividers, dotted leaders, total rules                                      |
+| `ink`                                                                        | Body text and headings: `ledger` in light mode                                                              |
+| `ledger`                                                                     | `#16201B`, a near-black green. Light-mode text, the strong (`accent`) button, the dark end of the auth hero |
+| `ink-muted`                                                                  | Secondary text, labels, captions (not tinted)                                                               |
+| `sidebar`, `sidebar-hover`, `sidebar-border`, `sidebar-ink`, `sidebar-muted` | Side navigation panel                                                                                       |
 
 Paste this into your global stylesheet (`layout.css` / `app.css`):
 
@@ -186,7 +186,10 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 }
 
 @layer base {
-	html, body { height: 100%; }
+	html,
+	body {
+		height: 100%;
+	}
 	body {
 		background-color: var(--color-surface);
 		color: var(--color-ink);
@@ -196,7 +199,11 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 		@apply antialiased;
 		overscroll-behavior-y: none; /* keeps a fixed bottom nav glued on iOS */
 	}
-	h1, h2, h3 { letter-spacing: -0.015em; }
+	h1,
+	h2,
+	h3 {
+		letter-spacing: -0.015em;
+	}
 	:focus-visible {
 		outline: 2px solid var(--color-sidebar-active);
 		outline-offset: 2px;
@@ -210,7 +217,14 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 
 /* daisyUI controls follow the type scale on larger screens. */
 @media (min-width: 640px) {
-	:is(.input, .select, .textarea):not(.input-xs, .input-sm, .select-xs, .select-sm, .textarea-xs, .textarea-sm) {
+	:is(.input, .select, .textarea):not(
+		.input-xs,
+		.input-sm,
+		.select-xs,
+		.select-sm,
+		.textarea-xs,
+		.textarea-sm
+	) {
 		font-size: var(--text-sm);
 	}
 }
@@ -220,7 +234,9 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 
 /* Reduced motion: CSS transitions and animations finish instantly. */
 @media (prefers-reduced-motion: reduce) {
-	*, *::before, *::after {
+	*,
+	*::before,
+	*::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;
@@ -266,15 +282,24 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 }
 
 /* Safe areas for notches and home indicators. */
-@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-@utility pt-safe { padding-top: env(safe-area-inset-top); }
+@utility pb-safe {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pt-safe {
+	padding-top: env(safe-area-inset-top);
+}
 @utility min-h-safe-screen {
 	min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
 @media print {
-	@page { margin: 12mm; }
-	body, .bg-surface { background: #fff; }
+	@page {
+		margin: 12mm;
+	}
+	body,
+	.bg-surface {
+		background: #fff;
+	}
 }
 ```
 
@@ -291,9 +316,12 @@ Put this in `app.html` (or `index.html`) `<head>` so the saved theme applies **b
 	(function () {
 		try {
 			var stored = localStorage.getItem('app-theme');
-			var mode = stored === 'light' || stored === 'dark'
-				? stored
-				: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+			var mode =
+				stored === 'light' || stored === 'dark'
+					? stored
+					: window.matchMedia('(prefers-color-scheme: dark)').matches
+						? 'dark'
+						: 'light';
 			document.documentElement.setAttribute('data-theme', mode);
 		} catch (e) {}
 	})();
@@ -306,17 +334,17 @@ The theme toggle sets `data-theme="light" | "dark"` on `<html>` and saves the ch
 
 Use the same mapping in every place a status appears:
 
-| Status | Pill (daisyUI badge) | Wash / tone colour |
-|---|---|---|
-| Approved | `badge-success` | `--color-positive` |
-| Pending | `badge-warning` | `--color-warning` |
-| Received | `badge-warning` | `--color-warning` |
-| Submitted | `badge-info` | `--color-info` |
-| In review (intermediate approval) | `badge-info` | `--color-info` |
-| Rejected | `badge-error` | `--color-error` |
-| Draft | `badge-neutral` | `--color-ink-muted` |
-| Cancelled | `badge-ghost` | `--color-ink-muted` |
-| Archived | `bg-base-300 text-ink-muted` chip with an archive icon | `--color-ink-muted` |
+| Status                            | Pill (daisyUI badge)                                   | Wash / tone colour  |
+| --------------------------------- | ------------------------------------------------------ | ------------------- |
+| Approved                          | `badge-success`                                        | `--color-positive`  |
+| Pending                           | `badge-warning`                                        | `--color-warning`   |
+| Received                          | `badge-warning`                                        | `--color-warning`   |
+| Submitted                         | `badge-info`                                           | `--color-info`      |
+| In review (intermediate approval) | `badge-info`                                           | `--color-info`      |
+| Rejected                          | `badge-error`                                          | `--color-error`     |
+| Draft                             | `badge-neutral`                                        | `--color-ink-muted` |
+| Cancelled                         | `badge-ghost`                                          | `--color-ink-muted` |
+| Archived                          | `bg-base-300 text-ink-muted` chip with an archive icon | `--color-ink-muted` |
 
 ### Category tints
 
@@ -337,21 +365,22 @@ const KIND_TINTS = {
 
 ## 4. Typography
 
-| Use | Classes |
-|---|---|
-| Page title | `font-display text-2xl sm:text-3xl font-semibold leading-tight text-ink` |
-| Detail title (hero) | `text-lg sm:text-xl font-bold leading-snug` |
-| Card / panel title | `font-display text-lg font-semibold` (panel), `text-sm font-semibold` (detail section) |
-| Form step title | `font-display text-lg font-semibold leading-tight`, numbered `01`, `02`… in `font-mono text-xs text-sidebar-active` |
-| Body | `text-sm text-ink` |
-| Secondary | `text-xs text-ink-muted` or `text-sm text-ink-muted` |
-| Field label | `text-xs font-medium` |
-| Eyebrow / overline | `font-mono text-2xs font-medium uppercase tracking-wider text-ink-muted` |
-| Big number | `font-display text-5xl font-semibold leading-none` (net pay), `font-display text-lg font-semibold` (stat tiles) |
-| Payslip lines | `font-mono text-xs tabular-nums`, `label <span class="leader"> amount` |
-| Numbers in tables/facts | add `tabular-nums` |
+| Use                     | Classes                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Page title              | `font-display text-2xl sm:text-3xl font-semibold leading-tight text-ink`                                            |
+| Detail title (hero)     | `text-lg sm:text-xl font-bold leading-snug`                                                                         |
+| Card / panel title      | `font-display text-lg font-semibold` (panel), `text-sm font-semibold` (detail section)                              |
+| Form step title         | `font-display text-lg font-semibold leading-tight`, numbered `01`, `02`… in `font-mono text-xs text-sidebar-active` |
+| Body                    | `text-sm text-ink`                                                                                                  |
+| Secondary               | `text-xs text-ink-muted` or `text-sm text-ink-muted`                                                                |
+| Field label             | `text-xs font-medium`                                                                                               |
+| Eyebrow / overline      | `font-mono text-2xs font-medium uppercase tracking-wider text-ink-muted`                                            |
+| Big number              | `font-display text-5xl font-semibold leading-none` (net pay), `font-display text-lg font-semibold` (stat tiles)     |
+| Payslip lines           | `font-mono text-xs tabular-nums`, `label <span class="leader"> amount`                                              |
+| Numbers in tables/facts | add `tabular-nums`                                                                                                  |
 
 Rules:
+
 - Labels never go below 12px (`text-xs`), except overlines, badges and dock labels (`text-2xs`, 11px).
 - **Use only the scale** (`text-2xs` … `text-5xl`). No one-off `text-[…]` sizes, so every page matches.
 - **Clickable things show the hand cursor.** A base rule in `layout.css` covers buttons, tabs, menu items, `summary`, `select`, checkbox and radio labels; disabled controls keep the arrow.
@@ -362,18 +391,18 @@ Rules:
 
 ## 5. Shape, depth, motion
 
-| | Value |
-|---|---|
-| Card radius | `rounded-3xl` (big cards), `rounded-2xl` (callouts, bars, menus, dialogs) |
-| Control radius | `rounded-full` (pills, search, tabs, icon buttons), `rounded-xl` (nav items, choice cards), `rounded-lg` (buttons) |
-| Icon chip | `grid place-items-center rounded-full` or `rounded-xl`/`rounded-2xl`, sizes `size-7`–`size-12` |
-| Card shadow | `shadow-soft` (the only card shadow) |
-| Hover lift | `hover:shadow-[0_12px_32px_-14px_rgb(16_24_40/0.3)]` |
-| Floating bars and menus | `shadow-[0_8px_30px_-12px_rgb(0_0_0/0.25)]` + `bg-card/90 backdrop-blur-md` |
-| Dialog | `shadow-[0_20px_60px_-15px_rgb(0_0_0/0.45)]`, backdrop `bg-black/40 backdrop-blur-[2px]` |
-| Hairline | `border-base-300/70` |
-| Transitions | `duration-150` (controls), `duration-200` (tabs, shadows); press feedback `active:scale-[0.98]` |
-| Layout springs | critically damped (`stiffness 0.25, damping 1`), and instant when `prefers-reduced-motion` is on |
+|                         | Value                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Card radius             | `rounded-3xl` (big cards), `rounded-2xl` (callouts, bars, menus, dialogs)                                          |
+| Control radius          | `rounded-full` (pills, search, tabs, icon buttons), `rounded-xl` (nav items, choice cards), `rounded-lg` (buttons) |
+| Icon chip               | `grid place-items-center rounded-full` or `rounded-xl`/`rounded-2xl`, sizes `size-7`–`size-12`                     |
+| Card shadow             | `shadow-soft` (the only card shadow)                                                                               |
+| Hover lift              | `hover:shadow-[0_12px_32px_-14px_rgb(16_24_40/0.3)]`                                                               |
+| Floating bars and menus | `shadow-[0_8px_30px_-12px_rgb(0_0_0/0.25)]` + `bg-card/90 backdrop-blur-md`                                        |
+| Dialog                  | `shadow-[0_20px_60px_-15px_rgb(0_0_0/0.45)]`, backdrop `bg-black/40 backdrop-blur-[2px]`                           |
+| Hairline                | `border-base-300/70`                                                                                               |
+| Transitions             | `duration-150` (controls), `duration-200` (tabs, shadows); press feedback `active:scale-[0.98]`                    |
+| Layout springs          | critically damped (`stiffness 0.25, damping 1`), and instant when `prefers-reduced-motion` is on                   |
 
 Tinted fills use opacity steps: `/[0.06]`–`/[0.08]` for callout backgrounds, `/10`–`/12` for icon chips and active nav, `/30` for callout borders.
 
@@ -410,14 +439,15 @@ Phones (< md)              Tablets (md)            Desktops (lg+)
 
 ### Page widths
 
-| Page type | Container |
-|---|---|
-| Lists, dashboards | full width: `flex flex-col gap-4` |
+| Page type             | Container                                               |
+| --------------------- | ------------------------------------------------------- |
+| Lists, dashboards     | full width: `flex flex-col gap-4`                       |
 | Detail and form pages | `mx-auto w-full max-w-3xl flex flex-col gap-4 sm:gap-5` |
 
 ### Login
 
 A two-column page on `lg`.
+
 - **Left:** a hero card, `rounded-[2rem] p-10 text-white`, with the fixed background `linear-gradient(160deg, #1f6b4f, #16201b 75%)` (green to ledger), so it looks the same in both themes. It holds a decorative sample payslip, tilted slightly with a torn edge, a serif headline, and outlined feature pills (`rounded-full border-white/20 bg-white/10`).
 - **Right:** the form. On phones, only the form is shown.
 
@@ -428,23 +458,27 @@ A two-column page on `lg`.
 Each component lists what it is and its key classes.
 
 ### Button
+
 Variants map to intent:
 
-| Variant | Use | Classes |
-|---|---|---|
-| `primary` | main action | `bg-sidebar-active text-sidebar-active-ink hover:brightness-110` |
-| `accent` | **submit / go** (Save week) | `bg-ink text-card hover:bg-ink/88` (ledger ink) |
-| `secondary` | other actions (print, edit) | `border border-base-300 text-ink hover:bg-base-200` |
-| `ghost` | low-emphasis | `text-ink-muted hover:bg-base-200 hover:text-ink` |
-| `danger` | destructive confirm | `bg-error text-white hover:brightness-110` |
+| Variant     | Use                            | Classes                                                          |
+| ----------- | ------------------------------ | ---------------------------------------------------------------- |
+| `primary`   | main action                    | `bg-sidebar-active text-sidebar-active-ink hover:brightness-110` |
+| `accent`    | **submit / go** (Save payslip) | `bg-ink text-card hover:bg-ink/88` (ledger ink)                  |
+| `secondary` | other actions (print, edit)    | `border border-base-300 text-ink hover:bg-base-200`              |
+| `ghost`     | low-emphasis                   | `text-ink-muted hover:bg-base-200 hover:text-ink`                |
+| `danger`    | destructive confirm            | `bg-error text-white hover:brightness-110`                       |
 
 Base: `inline-flex items-center justify-center gap-1.5 rounded-lg font-medium active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none`. Sizes: `sm` = `px-3 py-1.5 text-xs`, `md` = `px-4 py-2 text-sm`. A button with `href` renders as `<a>`. `loading` shows a daisyUI `loading-spinner loading-xs` and disables the button. Icons go before the label, at size 16.
 
 ### Panel
+
 A generic card: `bg-card shadow-soft rounded-3xl p-4 sm:p-6`. It can have a header row with a `text-base font-bold` title and an action on the right.
 
 ### PageHeader
+
 A list or section page header. From left to right:
+
 - a round back button (`size-10 bg-card shadow-soft rounded-full`, calls `history.back()`), shown only on pages that aren't top-level nav destinations
 - an accent icon tile, `size-11 rounded-2xl bg-sidebar-active/12 text-sidebar-active`, hidden on phones
 - the title and a subtitle (`line-clamp-2`)
@@ -452,10 +486,13 @@ A list or section page header. From left to right:
 An optional action sits on the right, e.g. a "New" button as `rounded-full`.
 
 ### Back link (detail pages)
+
 A text link above the content: `inline-flex w-fit items-center gap-1.5 text-sm text-ink-muted hover:text-ink`, with `ArrowLeft` at size 16 and a label naming the destination ("My applications", "Travel order TO-0012"). See §9 for where it points.
 
 ### StatTile
+
 A headline number:
+
 - a tinted round icon chip and a muted label
 - the big number (`text-3xl font-extrabold tabular-nums`) with an optional unit
 - an optional thin progress bar (`h-1.5 rounded-full bg-base-200`) and a one-line hint
@@ -463,33 +500,42 @@ A headline number:
 Tones: accent, error, positive, warning, info, success. With `href` it becomes a link with the hover lift.
 
 ### Filter tiles (count cards)
+
 A grid of tiles (`grid-cols-4 lg:grid-cols-7 gap-2.5`), each showing an icon chip, a count and a label. Tapping a tile filters to that kind; tapping it again clears the filter. The selected tile gets `outline-2 outline-sidebar-active` and `aria-pressed`.
 
 ### SegmentedTabs
+
 Pill tabs or filters inside a container: `bg-card border border-base-300/70 rounded-full p-1`.
+
 - Active: `bg-sidebar-active text-sidebar-active-ink`. Inactive: `text-ink-muted hover:bg-base-200/60`.
 - Optional icon and count bubble.
 - On phones the tabs wrap and stretch evenly. From `sm` up they stay on one row and scroll sideways, keeping the active tab in view.
 - Each tab is a link (`role="tab"`) or a button (`aria-pressed`).
 
 ### SearchField
+
 A rounded pill: `h-9 rounded-full border bg-card px-3.5`. It has a search icon, an input and a clear (×) button. On focus: `focus-within:border-sidebar-active focus-within:ring-3 ring-sidebar-active/15`.
 
 ### Toolbar (list filters)
+
 A card holding search + filters: `bg-card shadow-soft rounded-3xl p-3 sm:p-4 lg:flex-row lg:items-end`.
+
 - **Phones:** the filters hide behind a "Filters" ghost button with a count badge of active filters.
 - **Selects:** `select select-bordered select-sm rounded-full`, each with an `text-xs text-ink-muted` label above.
 
 ### Lists and tables
+
 - **Phones:** a card list. Each row is an `<a>` with `-mx-2 flex items-center gap-3 rounded-2xl p-2 hover:bg-base-200/60`: icon chip, title + meta, a status pill, then a chevron.
 - **md+:** a table. Header row `text-xs text-ink-muted border-b`; rows `divide-y divide-base-300`; cells `py-2.5 pr-4`. The actions column holds `btn btn-ghost btn-xs btn-square` icon links (view, edit, print), each with `aria-label` and `title`.
 - **Pagination:** "Showing 1–10 of 42", plus previous/next and page-number buttons. Ten rows per page.
 - **Empty rows:** one centred muted line, e.g. "No applications match this filter." (§8).
 
 ### StatusPill
+
 A daisyUI `badge font-medium` with the status class from §3, `badge-sm` by default.
 
 ### Detail page anatomy (top to bottom)
+
 1. **Back link** (§9)
 2. **Status note** (only when relevant): a neutral callout explaining Draft / Archived / "can't withdraw" (`rounded-2xl border border-base-300 bg-base-200/60 px-4 py-3` + icon).
 3. **DetailHero:** a card whose background is a diagonal **wash in the status colour**: `linear-gradient(135deg, color-mix(in oklch, <status colour> 11%, var(--color-card)) 0%, var(--color-card) 65%)`. It contains:
@@ -503,14 +549,18 @@ A daisyUI `badge font-medium` with the status class from §3, `badge-sm` by defa
 7. **DetailActions:** the action bar (below).
 
 ### Action bar (forms and details)
+
 `rounded-3xl bg-card p-4 sm:px-6 shadow-soft`: the **last card of the form**, in the page flow. It doesn't float or stick.
+
 - **Form version:** a short summary on the left ("3 employees · 12 hrs"). On the right, "Save as draft" (secondary) and **Submit** (accent).
 - **Detail version:** the buttons stretch to fill the row on phones (`min-w-[9rem] flex-1`) and align right on desktop. The bar hides itself if it has no buttons.
 - While working, button labels change to "Submitting…" / "Saving…".
 
 ### FormSection
+
 One numbered step of a long form: `form-surface bg-card shadow-soft rounded-3xl`.
-- The header has a round step number (`size-7 bg-sidebar-active/10 text-sidebar-active text-xs font-bold`), a title and a description, plus an optional action on the right (e.g. "Add row").
+
+- The header is numbered like a ledger entry: `01`, `02`… in `font-mono text-xs font-semibold text-sidebar-active`, then a `font-display text-lg` title and a description, plus an optional action on the right (e.g. "Add row"). A dashed hairline (`border-b border-dashed border-rule`) separates it from the fields.
 - The body stacks fields with `gap-4 sm:gap-5`.
 - `.form-surface` styles the inputs inside it:
 
@@ -519,7 +569,9 @@ One numbered step of a long form: `form-surface bg-card shadow-soft rounded-3xl`
 	.form-surface :is(.input, .select, .textarea) {
 		border-radius: 0.625rem;
 		background-color: var(--color-base-100);
-		transition: border-color 150ms, box-shadow 150ms;
+		transition:
+			border-color 150ms,
+			box-shadow 150ms;
 	}
 	.form-surface :is(.input, .select, .textarea):is(:focus, :focus-within):not(:disabled) {
 		outline: none;
@@ -531,57 +583,103 @@ One numbered step of a long form: `form-surface bg-card shadow-soft rounded-3xl`
 		color: var(--color-ink);
 		opacity: 0.85;
 	}
-	.form-surface .textarea { resize: vertical; line-height: 1.5; }
-	.form-surface :is(.input, .textarea)::placeholder { color: var(--color-ink-muted); opacity: 0.7; }
+	.form-surface .textarea {
+		resize: vertical;
+		line-height: 1.5;
+	}
+	.form-surface :is(.input, .textarea)::placeholder {
+		color: var(--color-ink-muted);
+		opacity: 0.7;
+	}
 	@media (max-width: 639px) {
-		.form-surface :is(.input, .select, .textarea):not(.input-sm, .select-sm, .textarea-sm) { font-size: 1rem; }
+		.form-surface :is(.input, .select, .textarea):not(.input-sm, .select-sm, .textarea-sm) {
+			font-size: 1rem;
+		}
 	}
 }
 ```
 
 ### Field
+
 A label on top: required fields get a red `*`, optional ones get "Optional" on the right. Then the control, then **either** the error (`text-error text-xs` with an alert icon, `role="alert"`) **or** a hint, never both, so the space under the field doesn't jump.
 
 ### ChoiceGroup
+
 For 2–6 options, use tappable radio cards instead of a dropdown: a grid of `rounded-xl border px-3 py-2.5` cards.
+
 - Selected: `border-sidebar-active bg-sidebar-active/[0.07]`, an inset accent ring, and a check bubble in the corner.
 - Each card has a label and an optional one-line description.
 - Keyboard focus shows a ring through `has-[:focus-visible]`.
 
 ### Callouts
+
 `flex items-start gap-3 rounded-2xl border px-4 py-3`:
 
-| Tone | Classes |
-|---|---|
-| Neutral / info note | `border-base-300 bg-base-200/60`, icon `text-ink-muted` |
-| Success | `border-positive/30 bg-positive/[0.07] text-positive` |
-| Warning | `border-warning/40 bg-warning/[0.08] text-warning` |
-| Error / remarks | `border-error/30 bg-error/[0.06]`, icon chip `bg-error/10 text-error` |
+| Tone                | Classes                                                               |
+| ------------------- | --------------------------------------------------------------------- |
+| Neutral / info note | `border-base-300 bg-base-200/60`, icon `text-ink-muted`               |
+| Success             | `border-positive/30 bg-positive/[0.07] text-positive`                 |
+| Warning             | `border-warning/40 bg-warning/[0.08] text-warning`                    |
+| Error / remarks     | `border-error/30 bg-error/[0.06]`, icon chip `bg-error/10 text-error` |
 
 The title is bold `text-ink`, with a muted sentence after it.
 
 ### EmptyState
+
 A dashed card, `rounded-2xl border border-dashed border-base-300/70 bg-card px-6 py-14 text-center`. It holds an accent icon in a soft circle, one bold line and an optional short hint (`max-w-xs`), plus an optional action. Use it for "not found" and "nothing yet".
 
 ### ConfirmDialog
+
 For actions that can't be undone. It uses the native `<dialog>` with `showModal()`, so focus stays inside it and Escape or a backdrop click cancels.
+
 - **Layout:** centred, `max-w-sm rounded-2xl`, with an error-tinted icon circle, a title and a message. Cancel (secondary) and Confirm (danger) sit side by side.
 - **While confirming:** the dialog stays open with a spinner until the action finishes.
 - **Entry animation:** fade + rise in 160 ms.
 
+### Period picker
+
+A pill above the payslip: `rounded-full bg-card p-1 shadow-soft`, with ‹ and › links either side and the **dates as a button** in the middle (`font-display` range, a pencil icon, and a `font-mono text-2xs uppercase` line such as "7 days · includes today"). Tapping the dates opens the date sheet. › is shown but disabled when the next payslip would start after today, so the layout doesn't shift. A "Go to latest" secondary button appears beside it when you're not on the next payslip to fill in.
+
+### Date sheet (PeriodSheet)
+
+A native `<dialog>` like ConfirmDialog: a **bottom sheet on phones** (`max-sm:mb-0 max-sm:w-full max-sm:rounded-b-none`, safe-area padding), a centred `max-w-md` card from `sm` up.
+
+- **Quick picks** as pill buttons with `aria-pressed` (selected = accent fill), then **Start** and **End** date inputs side by side.
+- A live line under the inputs shows the range and day count, or the problem in `text-error` (bad dates, too long, starts after today, overlaps a saved payslip by name).
+- If the new dates drop days that have hours, a warning Callout lists them and the button becomes **Remove hours and apply**.
+- Apply (accent) is disabled while there's a problem or nothing changed.
+
+### Payslip panel (the printed slip)
+
+The reverse payslip looks printed: `drop-shadow-soft` on the wrapper, `slip-edge` (a torn zigzag bottom, via a mask) on a `rounded-t-3xl bg-card` card.
+
+- Header: "PAYSLIP" in `font-mono tracking-[0.2em] uppercase`, the period under it, and a soft accent "Updates as you type" pill.
+- **Net pay** in `font-display text-5xl`, then a row of three StatTiles (Gross, Rate, Hours) on `bg-base-200/70`.
+- Lines in `font-mono text-xs tabular-nums`: `label · · · · amount` with the `leader` utility; deductions in `text-negative` with a minus sign; a rule above Gross, and a single rule above plus a double rule under Net pay (accounting style).
+- Before net pay is entered, faded placeholder lines and one hint.
+
+### Help page
+
+One topic at a time. From `lg`: a sticky grouped list (Guides, Reference) beside the topic card, as ARIA tabs with arrow keys. Below `lg`: a native "Topic" `<select>` with `<optgroup>`s. The open topic is the URL hash (`/help#dates`). Guides show "Guide N of 7", numbered steps (accent circles) with on-screen words in **bold**, an optional note, and Previous / Next at the bottom. Keep every step one short sentence.
+
 ### Review panel
+
 For whoever has to make the decision: a card naming the step ("Waiting for your final approval"), one line of context, and decision buttons (approve / return / reject / cancel). Each button opens a confirm dialog. Remarks are required, optional or not asked for, depending on the decision.
 
 ### Toasts
+
 Top-centre, `max-w-sm`, daisyUI `alert alert-success|error|info|warning`, each with an icon and a Dismiss button. They slide in with `fly y:-16`. They stay 3.5 s, warnings 6 s.
 
 ### Menus / popovers
+
 `absolute mt-2 w-56 rounded-2xl border bg-card p-1.5`, with the shadow `0 16px 40px -12px rgb(16 24 40 / .25)`. Items are `rounded-xl p-2.5 text-sm hover:bg-base-200`. A destructive item uses `text-error hover:bg-error/10`. The menu closes on Escape or when focus leaves it.
 
 ### Avatars
+
 Initials in an accent circle: `bg-sidebar-active text-sidebar-active-ink rounded-full text-xs font-bold`, sizes 8–10.
 
 ### Loading
+
 - **Pages:** a skeleton block, `bg-base-200 animate-pulse rounded-2xl` (e.g. `h-56` for a detail page, a few `h-20` rows for a list).
 - **App boot:** a centred `loading loading-spinner loading-lg text-sidebar-active`.
 
@@ -603,6 +701,7 @@ Initials in an accent circle: `bg-sidebar-active text-sidebar-active-ink rounded
 ## 9. Navigation patterns
 
 ### Back link goes where you came from
+
 A detail page usually has an obvious parent list, but it can be opened from many places: another record, a dashboard widget, an activity log, a reviewer's queue. Links to it therefore carry the current page as `?from=<path+query>`:
 
 - **The back link** uses `from` when present and names it ("Trip ticket TT-0003", "My applications"). Otherwise it falls back to the page's usual parent.
@@ -613,6 +712,7 @@ A detail page usually has an obvious parent list, but it can be opened from many
 A reference implementation is `src/lib/back-link.ts` (`linkFrom(href, page.url)`, `backLink(page.url, fallback)`).
 
 ### List state belongs in the URL
+
 - Filters, search, tab and page number go in the **query string**: `?view=archived&kind=Leave&status=Pending&page=2&q=cebu`.
 - **Default values are left out**, so an unfiltered list is just the bare path.
 - **Update with `goto(url, { replaceState: true, keepFocus: true, noScroll: true })`**, so filter changes don't fill up browser history.
@@ -624,6 +724,7 @@ A reference implementation is `src/lib/back-link.ts` (`linkFrom(href, page.url)`
 A reference implementation is `src/lib/services/application-filters.ts`.
 
 ### Page-level rules
+
 - Top-level nav pages have **no** back arrow. Pages you drill into do.
 - After a destructive or hand-off action that removes the record from the viewer's queue (return, reassign), go back to the queue.
 - A form's success goes to the new record's detail page, or to the list when several records were created at once.
@@ -632,14 +733,15 @@ A reference implementation is `src/lib/services/application-filters.ts`.
 
 ## 10. Responsive rules
 
-| Breakpoint | Behaviour |
-|---|---|
-| < 640 (`sm`) | single column; 13px body; 16px inputs; filters behind a button; card lists instead of tables; full-width action-bar buttons |
-| ≥ 640 | two-column info grids; tabs on one row; controls follow the 13px scale |
-| ≥ 768 (`md`) | tables replace card lists |
-| ≥ 1024 (`lg`) | side nav replaces bottom nav; sticky bars sit at `bottom-4`; toolbars go horizontal |
+| Breakpoint    | Behaviour                                                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| < 640 (`sm`)  | single column; 13px body; 16px inputs; filters behind a button; card lists instead of tables; full-width action-bar buttons |
+| ≥ 640         | two-column info grids; tabs on one row; controls follow the 13px scale                                                      |
+| ≥ 768 (`md`)  | tables replace card lists                                                                                                   |
+| ≥ 1024 (`lg`) | side nav replaces bottom nav; sticky bars sit at `bottom-4`; toolbars go horizontal                                         |
 
 Always:
+
 - Use `min-w-0` on flex children that hold text.
 - No horizontal page scroll. Wide tables scroll inside `overflow-x-auto`.
 - Touch targets are at least 40px (`min-h-10`, `size-10`).
@@ -653,7 +755,7 @@ The app targets **WCAG 2.2 level AA**. WCAG groups every rule under four princip
 
 ### P: Perceivable
 
-*People must be able to see or hear everything on screen, whatever their eyesight, screen size or settings.*
+_People must be able to see or hear everything on screen, whatever their eyesight, screen size or settings._
 
 - **Contrast.** Body text and secondary text reach at least 4.5:1 against both the canvas and cards. Large text (18px+, or 14px+ bold) and icons that carry meaning reach 3:1. That's why `ink-muted` is `#5c6275` and not anything lighter. Don't fade text with opacity (`text-ink-muted/70`, `opacity-60`), and that includes placeholders. Re-check contrast whenever you add a token or tint.
 - **Not by colour alone.** Status pills always carry their word. Errors pair the red with an icon and a message, and the active tab or nav item also has a shape (a fill or an underline).
@@ -663,7 +765,7 @@ The app targets **WCAG 2.2 level AA**. WCAG groups every rule under four princip
 
 ### O: Operable
 
-*People must be able to use every control, with a mouse, touch, keyboard or switch device.*
+_People must be able to use every control, with a mouse, touch, keyboard or switch device._
 
 - **Keyboard.** Everything clickable is a real `<a>` or `<button>`. Never put `onclick` on a `div` or `span`, and never put a button inside another button. Tab order follows reading order, Enter/Space activate, and Escape closes menus, pickers and dialogs.
 - **Visible focus.** A 2px accent outline (global `:focus-visible`). A component that removes it must draw its own ring (`focus-within:ring-3 ring-sidebar-active/15`).
@@ -674,7 +776,7 @@ The app targets **WCAG 2.2 level AA**. WCAG groups every rule under four princip
 
 ### U: Understandable
 
-*People must be able to understand the information and how to use the app.*
+_People must be able to understand the information and how to use the app._
 
 - **Page titles.** Every route has a tab title, `"<Screen> · HRMIS"`, set in one place (`titleFor()` in `src/routes/+layout.svelte`). SvelteKit announces it to screen readers after each navigation. Add new top-level routes to `SECTION_TITLES` there.
 - **Language.** `<html lang="en">`.
@@ -684,7 +786,7 @@ The app targets **WCAG 2.2 level AA**. WCAG groups every rule under four princip
 
 ### R: Robust
 
-*The app must work with browsers and assistive tech (screen readers, voice control) today and later.*
+_The app must work with browsers and assistive tech (screen readers, voice control) today and later._
 
 - **Native first.** Use the native element (`<button>`, `<a href>`, `<dialog>`, `<input>`, `<select>`) before adding ARIA.
 - **Name, role, value.** Custom widgets expose them:

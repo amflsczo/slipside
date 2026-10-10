@@ -163,7 +163,7 @@
 			{:else if tab === 'deductions'}
 				<Panel
 					title="Deductions"
-					subtitle="The deductions on your payslip, e.g. tax, insurance, pension. Shown in this order on This Week."
+					subtitle="The deductions on your payslip, e.g. tax, insurance, pension. Shown in this order on each payslip."
 					class="form-surface"
 				>
 					<ListManager list="deductions" items={data.lists.deductions} singular="deduction" />

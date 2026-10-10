@@ -17,7 +17,7 @@
 	import NumberInput from './NumberInput.svelte';
 	import PayslipPanel from './PayslipPanel.svelte';
 	import PeriodSheet from './PeriodSheet.svelte';
-	import WeekPicker from './WeekPicker.svelte';
+	import PeriodPicker from './PeriodPicker.svelte';
 	import { reversePayslip } from '#lib/calc/reversePayslip.ts';
 	import { dayLabel, formatRange, type IsoDate } from '#lib/dates.ts';
 	import type { Period } from '#lib/period.ts';
@@ -30,8 +30,14 @@
 		toMinor
 	} from '#lib/format/money.ts';
 	import { toast } from '#lib/toast.svelte.ts';
-	import { carried, clearDraft, readDraft, writeDraft } from '#lib/week/draft.ts';
-	import { mergeDraft, parseWeek, toInput, withPeriod, type WeekForm } from '#lib/week/form.ts';
+	import { carried, clearDraft, readDraft, writeDraft } from '#lib/payslip/draft.ts';
+	import {
+		mergeDraft,
+		parsePayslip,
+		toInput,
+		withPeriod,
+		type PayslipForm
+	} from '#lib/payslip/form.ts';
 
 	let {
 		initial,
@@ -46,7 +52,7 @@
 		homeHref
 	}: {
 		/** The payslip as saved (or a new one from Settings). The parent remounts on change. */
-		initial: WeekForm;
+		initial: PayslipForm;
 		/** Whose device draft this is (the account email). */
 		owner: string;
 		saved: boolean;
@@ -68,7 +74,7 @@
 		const query = page.url.searchParams.toString();
 		return `?${query ? `${query}&` : ''}/${name}`;
 	};
-	const clone = (value: WeekForm): WeekForm => JSON.parse(JSON.stringify(value));
+	const clone = (value: PayslipForm): PayslipForm => JSON.parse(JSON.stringify(value));
 	const initialJson = untrack(() => JSON.stringify(initial));
 	/**
 	 * Where this payslip lives: its saved start, or a new payslip's start. Keys the device draft,
@@ -145,7 +151,7 @@
 	 * its dates, so the page moves there, carrying what was typed (also kept as a draft there).
 	 */
 	function changeDates(period: Period) {
-		const next = withPeriod($state.snapshot(form) as WeekForm, period);
+		const next = withPeriod($state.snapshot(form) as PayslipForm, period);
 		if (saved) {
 			form = next;
 			return;
@@ -159,9 +165,9 @@
 	}
 
 	// --- Live calculation ---
-	const parsed = $derived(parseWeek(form));
+	const parsed = $derived(parsePayslip(form));
 	const errors = $derived(parsed.ok ? {} : parsed.errors);
-	const payslip = $derived(parsed.ok ? reversePayslip(toInput(parsed.week)) : null);
+	const payslip = $derived(parsed.ok ? reversePayslip(toInput(parsed.value)) : null);
 	const dirty = $derived(JSON.stringify(form) !== initialJson);
 
 	/** A field's error. A blank net pay only counts once Save has been pressed. */
@@ -183,7 +189,7 @@
 	const fmtHours = (n: number) => `${Number(n.toFixed(2))} ${n === 1 ? 'hr' : 'hrs'}`;
 
 	/** "= £20.00" next to an extra, while typing. */
-	function extraAmount(row: WeekForm['extras'][number]) {
+	function extraAmount(row: PayslipForm['extras'][number]) {
 		const unit = toMinor(row.unitAmount.replace(/[\s,]/g, ''), digits);
 		const quantity =
 			row.kind === 'per_day' ? Number(row.quantity) || 0 : Number(row.quantity === '1');
@@ -266,7 +272,7 @@
 		'mt-6.5 grid size-10 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-base-200 hover:text-ink';
 </script>
 
-<WeekPicker
+<PeriodPicker
 	period={form}
 	{today}
 	{previousHref}

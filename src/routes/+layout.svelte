@@ -261,7 +261,7 @@
 				class="flex-1 px-4 pt-2 pb-32 focus:outline-none sm:px-6 md:pt-6 md:pb-10 lg:px-10 lg:pt-8 print:p-0!"
 			>
 				<div class="mx-auto w-full max-w-[88rem]">
-					<!-- A short rise on each new section; week changes (same path) don't replay it. -->
+					<!-- A short rise on each new section; moving between payslips (same path) doesn't replay it. -->
 					{#key page.url.pathname}
 						<div in:fly={{ y: 8, duration: prefersReducedMotion.current ? 0 : 220 }}>
 							{@render children()}

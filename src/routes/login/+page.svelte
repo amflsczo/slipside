@@ -11,7 +11,7 @@
 	let pending = $state(false);
 </script>
 
-<AuthCard title="Log in" subtitle="Welcome back. Log in to see this week's pay.">
+<AuthCard title="Log in" subtitle="Welcome back. Log in to check your latest payslip.">
 	<form
 		method="post"
 		class="flex flex-col gap-4"

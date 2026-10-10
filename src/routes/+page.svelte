@@ -4,10 +4,10 @@
 	import Button from '#lib/components/Button.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
-	import WeekEditor from '#lib/components/WeekEditor.svelte';
+	import PayslipEditor from '#lib/components/PayslipEditor.svelte';
 	import { minorDigits, toMinor } from '#lib/format/money.ts';
 	import { clock, firstName, greeting, longDay } from '#lib/greeting.svelte.ts';
-	import { buildForm } from '#lib/week/form.ts';
+	import { buildForm } from '#lib/payslip/form.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -43,7 +43,7 @@
 	{:else}
 		<!-- Remounts (fresh form + draft check) when the period changes or after a save. -->
 		{#key `${data.period.start}:${data.period.end}:${data.saved?.updatedAt ?? 'new'}`}
-			<WeekEditor
+			<PayslipEditor
 				{initial}
 				owner={data.user?.email ?? ''}
 				saved={data.saved !== null}

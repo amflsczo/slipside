@@ -4,16 +4,16 @@ import {
 	buildForm,
 	mergeDraft,
 	withPeriod,
-	parseWeek,
+	parsePayslip,
 	toInput,
-	toWeekRecord,
-	type SavedWeek,
-	type WeekTypes
+	toPayslipRecord,
+	type SavedPayslip,
+	type PayslipTypes
 } from './form.ts';
 
 const WEEK = { start: '2026-10-05', end: '2026-10-11' };
 
-const types: WeekTypes = {
+const types: PayslipTypes = {
 	deductions: [{ name: 'Tax' }, { name: 'Insurance' }],
 	extras: [
 		{ name: 'Night shift', kind: 'per_day', defaultAmount: '10.00' },
@@ -22,7 +22,7 @@ const types: WeekTypes = {
 	otRates: [{ name: 'Overtime', multiplier: '1.500' }]
 };
 
-const saved: SavedWeek = {
+const saved: SavedPayslip = {
 	currency: 'GBP',
 	netPay: '500.00',
 	notes: 'Covered for Sam',
@@ -54,7 +54,7 @@ describe('buildForm', () => {
 	it('shows a saved week as saved, then adds Settings items it does not have', () => {
 		const form = buildForm(WEEK, 'EUR', types, saved);
 
-		expect(form.currency).toBe('GBP'); // the saved week's currency, not the current setting
+		expect(form.currency).toBe('GBP'); // the saved payslip's currency, not the current setting
 		expect(form.net).toBe('500.00');
 		expect(form.deductions).toEqual([
 			{ name: 'Tax', amount: '80.00', custom: false },
@@ -84,7 +84,7 @@ describe('buildForm', () => {
 	});
 });
 
-describe('parseWeek', () => {
+describe('parsePayslip', () => {
 	const filled = () => {
 		const form = buildForm(WEEK, 'GBP', types, null);
 		form.net = '500';
@@ -97,24 +97,24 @@ describe('parseWeek', () => {
 	};
 
 	it('turns the form into numbers the calculation can use', () => {
-		const result = parseWeek(filled());
+		const result = parsePayslip(filled());
 		expect(result.ok).toBe(true);
 		if (!result.ok) return;
 
-		const { week } = result;
-		expect(week.net).toBe(50000);
-		expect(week.deductions).toEqual([
+		const { value } = result;
+		expect(value.net).toBe(50000);
+		expect(value.deductions).toEqual([
 			{ name: 'Tax', amount: 8000 },
 			{ name: 'Insurance', amount: 3000 }
 		]);
-		expect(week.days.map((d) => d.hours)).toEqual([8, 8, 8, 8, 8, 0, 0]);
-		expect(week.ot).toEqual([{ name: 'Overtime', multiplier: 1.5, hours: 4 }]);
-		// Travel (per week) wasn't ticked, so it's left out.
-		expect(week.extras).toEqual([
+		expect(value.days.map((d) => d.hours)).toEqual([8, 8, 8, 8, 8, 0, 0]);
+		expect(value.ot).toEqual([{ name: 'Overtime', multiplier: 1.5, hours: 4 }]);
+		// Travel (per payslip) wasn't ticked, so it's left out.
+		expect(value.extras).toEqual([
 			{ name: 'Night shift', kind: 'per_day', unitAmount: 1000, quantity: 2 }
 		]);
 
-		const payslip = reversePayslip(toInput(week));
+		const payslip = reversePayslip(toInput(value));
 		expect(payslip.gross).toBe(61000);
 		expect(balances(payslip)).toBe(true);
 	});
@@ -122,8 +122,8 @@ describe('parseWeek', () => {
 	it('accepts thousands separators in amounts', () => {
 		const form = filled();
 		form.net = '1,250.50';
-		const result = parseWeek(form);
-		expect(result.ok && result.week.net).toBe(125050);
+		const result = parsePayslip(form);
+		expect(result.ok && result.value.net).toBe(125050);
 	});
 
 	it('includes a per-week extra only when ticked, and one-off bonuses', () => {
@@ -136,12 +136,14 @@ describe('parseWeek', () => {
 			quantity: '1',
 			custom: true
 		});
-		const result = parseWeek(form);
-		expect(result.ok && result.week.extras.map((e) => [e.name, e.unitAmount, e.quantity])).toEqual([
-			['Night shift', 1000, 2],
-			['Travel', 2500, 1],
-			['Christmas bonus', 5000, 1]
-		]);
+		const result = parsePayslip(form);
+		expect(result.ok && result.value.extras.map((e) => [e.name, e.unitAmount, e.quantity])).toEqual(
+			[
+				['Night shift', 1000, 2],
+				['Travel', 2500, 1],
+				['Christmas bonus', 5000, 1]
+			]
+		);
 	});
 
 	it('reports each problem against its field', () => {
@@ -153,7 +155,7 @@ describe('parseWeek', () => {
 		form.extras[0]!.quantity = '9';
 		form.deductions.push({ name: '', amount: '10', custom: true });
 
-		const result = parseWeek(form);
+		const result = parsePayslip(form);
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
 		expect(result.errors).toEqual({
@@ -169,19 +171,19 @@ describe('parseWeek', () => {
 	it('rejects decimals in a currency without them', () => {
 		const form = buildForm(WEEK, 'JPY', types, null);
 		form.net = '1000.5';
-		const result = parseWeek(form);
+		const result = parsePayslip(form);
 		expect(!result.ok && result.errors.net).toBe('Use a whole number, like 500.');
 	});
 
 	it('rejects anything that is not a week form (server input is untrusted)', () => {
-		const result = parseWeek({ start: 'nope', end: '2026-10-11', currency: 'XYZ', net: 5 });
+		const result = parsePayslip({ start: 'nope', end: '2026-10-11', currency: 'XYZ', net: 5 });
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
 		expect(Object.keys(result.errors)).toEqual(['period', 'currency', 'net']);
 	});
 });
 
-describe('toWeekRecord', () => {
+describe('toPayslipRecord', () => {
 	it('stores amounts as decimal strings and the unrounded rate', () => {
 		const form = buildForm(WEEK, 'GBP', types, null);
 		form.net = '500';
@@ -190,10 +192,10 @@ describe('toWeekRecord', () => {
 		for (const day of form.days.slice(0, 5)) day.hours = '8';
 		form.ot[0]!.hours = '4';
 		form.extras[0]!.quantity = '2';
-		const result = parseWeek(form);
-		if (!result.ok) throw new Error('expected a valid week');
+		const result = parsePayslip(form);
+		if (!result.ok) throw new Error('expected a valid payslip');
 
-		const record = toWeekRecord(result.week, reversePayslip(toInput(result.week)));
+		const record = toPayslipRecord(result.value, reversePayslip(toInput(result.value)));
 		expect(record.summary).toEqual({
 			currency: 'GBP',
 			netPay: '500.00',
@@ -313,59 +315,62 @@ describe('pay periods of any length', () => {
 	it('parses a one-day payslip', () => {
 		const form = filledFor(period('2026-10-15', '2026-10-15'));
 		form.days[0]!.hours = '9';
-		const result = parseWeek(form);
-		expect(result.ok && [result.week.start, result.week.end]).toEqual(['2026-10-15', '2026-10-15']);
-		expect(result.ok && result.week.days).toEqual([{ date: '2026-10-15', hours: 9 }]);
+		const result = parsePayslip(form);
+		expect(result.ok && [result.value.start, result.value.end]).toEqual([
+			'2026-10-15',
+			'2026-10-15'
+		]);
+		expect(result.ok && result.value.days).toEqual([{ date: '2026-10-15', hours: 9 }]);
 	});
 
 	it('scales the per-day extra limit with the period', () => {
 		const oneDay = filledFor(period('2026-10-15', '2026-10-15'));
 		oneDay.extras[0]!.quantity = '2';
-		const short = parseWeek(oneDay);
+		const short = parsePayslip(oneDay);
 		expect(!short.ok && short.errors['extras.0.quantity']).toBe('Use a number of days, 0 to 1.');
 
 		const fortnight = filledFor(period('2026-10-05', '2026-10-18'));
 		fortnight.extras[0]!.quantity = '10';
-		const long = parseWeek(fortnight);
-		expect(long.ok && long.week.extras[0]!.quantity).toBe(10);
+		const long = parsePayslip(fortnight);
+		expect(long.ok && long.value.extras[0]!.quantity).toBe(10);
 	});
 
 	it('scales the overtime hours limit with the period (24 per day)', () => {
 		const oneDay = filledFor(period('2026-10-15', '2026-10-15'));
 		oneDay.ot[0]!.hours = '25';
-		expect(parseWeek(oneDay).ok).toBe(false);
+		expect(parsePayslip(oneDay).ok).toBe(false);
 
 		const month = filledFor(period('2026-10-01', '2026-10-31'));
 		month.ot[0]!.hours = '200';
-		const result = parseWeek(month);
-		expect(result.ok && result.week.ot[0]!.hours).toBe(200);
+		const result = parsePayslip(month);
+		expect(result.ok && result.value.ot[0]!.hours).toBe(200);
 	});
 
 	it('reports bad dates against the period', () => {
 		const backwards = filledFor(period('2026-10-05', '2026-10-11'));
 		backwards.end = '2026-10-01';
-		const result = parseWeek(backwards);
+		const result = parsePayslip(backwards);
 		expect(!result.ok && result.errors.period).toBe("The end date can't be before the start date.");
 
 		const tooLong = filledFor(period('2026-08-01', '2026-10-01'));
 		tooLong.end = '2026-10-02'; // 63 days
-		const long = parseWeek(tooLong);
+		const long = parsePayslip(tooLong);
 		expect(!long.ok && long.errors.period).toBe('A payslip can cover up to 62 days.');
 	});
 
 	it('rejects a future start only when told what today is', () => {
 		const form = filledFor(period('2026-10-21', '2026-10-27'));
-		expect(parseWeek(form).ok).toBe(true); // the live payslip in the browser
-		const result = parseWeek(form, '2026-10-20'); // the server
+		expect(parsePayslip(form).ok).toBe(true); // the live payslip in the browser
+		const result = parsePayslip(form, '2026-10-20'); // the server
 		expect(!result.ok && result.errors.period).toBe("A payslip can't start after today.");
-		expect(parseWeek(form, '2026-10-21').ok).toBe(true); // a period in progress
+		expect(parsePayslip(form, '2026-10-21').ok).toBe(true); // a period in progress
 	});
 
 	it('stores the period dates on the record', () => {
 		const form = filledFor(period('2026-10-05', '2026-10-18'));
-		const result = parseWeek(form);
+		const result = parsePayslip(form);
 		if (!result.ok) throw new Error('expected a valid period');
-		const record = toWeekRecord(result.week, reversePayslip(toInput(result.week)));
+		const record = toPayslipRecord(result.value, reversePayslip(toInput(result.value)));
 		expect([record.start, record.end]).toEqual(['2026-10-05', '2026-10-18']);
 		expect(record.days).toHaveLength(14);
 	});

@@ -11,7 +11,7 @@
 		onconfirm
 	}: {
 		open?: boolean;
-		/** A question that repeats the action, e.g. "Delete this week?" */
+		/** A question that repeats the action, e.g. "Delete this payslip?" */
 		title: string;
 		/** What happens afterwards. */
 		message: string;

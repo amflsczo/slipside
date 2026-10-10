@@ -4,7 +4,7 @@
 
 export type ExtraKind = 'per_day' | 'per_week' | 'bonus';
 
-export type WeekInput = {
+export type PayslipInput = {
 	/** Net pay from the payslip, in minor units. */
 	net: number;
 	deductions: { name: string; amount: number }[];
@@ -45,7 +45,7 @@ export type Payslip = {
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
-export function reversePayslip(input: WeekInput): Payslip {
+export function reversePayslip(input: PayslipInput): Payslip {
 	const issues: PayslipIssue[] = [];
 	const values = [
 		input.net,

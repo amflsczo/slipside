@@ -5,7 +5,7 @@
 
 <ComingSoon
 	title="History"
-	subtitle="Past weeks and how your pay has changed."
-	text="Your weekly history and charts will appear here."
+	subtitle="Past payslips and how your pay has changed."
+	text="Your payslip history and charts will appear here."
 	icon={ChartLine}
 />

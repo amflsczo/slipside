@@ -1,13 +1,13 @@
 // The payslip form for one pay period, shared by the browser (live payslip) and the server (save).
 // buildForm: pay period + settings lists + saved payslip → what the form shows.
-// parseWeek: what the form holds (untrusted on the server) → clean numbers, or field errors.
-// toWeekRecord: parsed week + payslip → rows for the database.
-import type { ExtraKind, Payslip, WeekInput } from '#lib/calc/reversePayslip.ts';
+// parsePayslip: what the form holds (untrusted on the server) → clean numbers, or field errors.
+// toPayslipRecord: parsed payslip + calculation → rows for the database.
+import type { ExtraKind, Payslip, PayslipInput } from '#lib/calc/reversePayslip.ts';
 import type { IsoDate } from '#lib/dates.ts';
 import { PERIOD_MESSAGES, checkPeriod, dayCount, periodDates, type Period } from '#lib/period.ts';
 import { fromMinor, minorDigits, toMinor } from '#lib/format/money.ts';
 
-export type SavedWeek = {
+export type SavedPayslip = {
 	currency: string;
 	netPay: string;
 	notes: string | null;
@@ -18,14 +18,14 @@ export type SavedWeek = {
 	extras: { name: string; kind: ExtraKind; unitAmount: string; quantity: string }[];
 };
 
-/** The active items from Settings that make up a new week's rows. */
-export type WeekTypes = {
+/** The active items from Settings that make up a new payslip's rows. */
+export type PayslipTypes = {
 	deductions: { name: string }[];
 	extras: { name: string; kind: 'per_day' | 'per_week'; defaultAmount: string | null }[];
 	otRates: { name: string; multiplier: string }[];
 };
 
-export type WeekForm = {
+export type PayslipForm = {
 	/** The pay period, both days included. */
 	start: IsoDate;
 	end: IsoDate;
@@ -55,10 +55,10 @@ const plainNumber = (value: string) => String(Number(value));
 export function buildForm(
 	period: Period,
 	settingsCurrency: string,
-	types: WeekTypes,
-	saved: SavedWeek | null
-): WeekForm {
-	// A saved week keeps the currency it was saved in.
+	types: PayslipTypes,
+	saved: SavedPayslip | null
+): PayslipForm {
+	// A saved payslip keeps the currency it was saved in.
 	const currency = saved?.currency ?? settingsCurrency;
 	const digits = minorDigits(currency);
 	const amount = (value: string | null) => {
@@ -120,7 +120,7 @@ export function buildForm(
 }
 
 /** The form for other dates: one day per date, keeping the hours typed on dates in both. */
-export function withPeriod(form: WeekForm, period: Period): WeekForm {
+export function withPeriod(form: PayslipForm, period: Period): PayslipForm {
 	return {
 		...form,
 		start: period.start,
@@ -134,11 +134,11 @@ export function withPeriod(form: WeekForm, period: Period): WeekForm {
 
 /**
  * Puts a device draft back onto the current form. The rows come from `base` (the latest
- * Settings and saved week), so items added or unhidden since the draft still show up;
+ * Settings and saved payslip), so items added or unhidden since the draft still show up;
  * the draft only supplies what was typed. Typed rows that are no longer in the lists
  * (hidden since, or one-off rows) are kept so nothing typed is lost.
  */
-export function mergeDraft(base: WeekForm, draft: WeekForm): WeekForm {
+export function mergeDraft(base: PayslipForm, draft: PayslipForm): PayslipForm {
 	const typed = (value: string) => value.trim() !== '';
 	const match = <T extends { name: string; custom?: boolean }>(rows: T[], name: string) =>
 		rows.find((row) => !row.custom && sameName(row.name, name));
@@ -198,7 +198,7 @@ export function mergeDraft(base: WeekForm, draft: WeekForm): WeekForm {
 	};
 }
 
-export type ParsedWeek = {
+export type ParsedPayslip = {
 	start: IsoDate;
 	end: IsoDate;
 	currency: string;
@@ -242,10 +242,10 @@ function decimalText(value: unknown, places: number, max: number, message: strin
  * `today` (the user's date) rejects a period that starts in the future. The server passes it;
  * the live payslip in the browser leaves it out.
  */
-export function parseWeek(
+export function parsePayslip(
 	raw: unknown,
 	today?: IsoDate
-): { ok: true; week: ParsedWeek } | { ok: false; errors: FieldErrors } {
+): { ok: true; value: ParsedPayslip } | { ok: false; errors: FieldErrors } {
 	const errors: FieldErrors = {};
 	const at = <T>(path: string, read: () => T, fallback: T): T => {
 		try {
@@ -363,7 +363,7 @@ export function parseWeek(
 	if (Object.keys(errors).length) return { ok: false, errors };
 	return {
 		ok: true,
-		week: {
+		value: {
 			start,
 			end,
 			currency,
@@ -378,22 +378,22 @@ export function parseWeek(
 	};
 }
 
-export const toInput = (week: ParsedWeek): WeekInput => ({
-	net: week.net,
-	deductions: week.deductions,
-	dayHours: week.days.map((d) => d.hours),
-	ot: week.ot,
-	extras: week.extras
+export const toInput = (p: ParsedPayslip): PayslipInput => ({
+	net: p.net,
+	deductions: p.deductions,
+	dayHours: p.days.map((d) => d.hours),
+	ot: p.ot,
+	extras: p.extras
 });
 
-/** Database rows for a parsed week (decimal strings, as numeric columns expect). */
-export function toWeekRecord(week: ParsedWeek, payslip: Payslip) {
-	const money = (minor: number) => fromMinor(minor, week.digits);
+/** Database rows for a parsed payslip (decimal strings, as numeric columns expect). */
+export function toPayslipRecord(p: ParsedPayslip, payslip: Payslip) {
+	const money = (minor: number) => fromMinor(minor, p.digits);
 	return {
-		start: week.start,
-		end: week.end,
+		start: p.start,
+		end: p.end,
 		summary: {
-			currency: week.currency,
+			currency: p.currency,
 			netPay: money(payslip.net),
 			totalDeductions: money(payslip.totalDeductions),
 			grossPay: money(payslip.gross),
@@ -403,16 +403,16 @@ export function toWeekRecord(week: ParsedWeek, payslip: Payslip) {
 			otHours: payslip.otHours.toFixed(2),
 			// Stored in major units per hour, unrounded to 4 places.
 			hourlyRate:
-				payslip.hourlyRate === null ? null : (payslip.hourlyRate / 10 ** week.digits).toFixed(4),
-			notes: week.notes
+				payslip.hourlyRate === null ? null : (payslip.hourlyRate / 10 ** p.digits).toFixed(4),
+			notes: p.notes
 		},
-		days: week.days.map((d) => ({ date: d.date, hours: d.hours.toFixed(2) })),
-		deductions: week.deductions.map((d, sortOrder) => ({
+		days: p.days.map((d) => ({ date: d.date, hours: d.hours.toFixed(2) })),
+		deductions: p.deductions.map((d, sortOrder) => ({
 			name: d.name,
 			amount: money(d.amount),
 			sortOrder
 		})),
-		ot: week.ot.map((o, sortOrder) => ({
+		ot: p.ot.map((o, sortOrder) => ({
 			name: o.name,
 			multiplier: String(o.multiplier),
 			hours: o.hours.toFixed(2),
@@ -429,4 +429,4 @@ export function toWeekRecord(week: ParsedWeek, payslip: Payslip) {
 	};
 }
 
-export type WeekRecord = ReturnType<typeof toWeekRecord>;
+export type PayslipRecord = ReturnType<typeof toPayslipRecord>;

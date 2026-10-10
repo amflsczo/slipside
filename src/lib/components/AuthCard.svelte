@@ -88,7 +88,7 @@
 
 		<div class="relative max-w-md">
 			<h2 class="font-display text-4xl leading-tight font-semibold">
-				Check every payslip, week by week.
+				Check every payslip, however often you’re paid.
 			</h2>
 			<p class="mt-3 text-base text-white/80">
 				Log your hours, overtime and extras, and see when what you were paid doesn't add up.

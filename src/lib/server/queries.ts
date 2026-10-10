@@ -19,7 +19,7 @@ import {
 import type { IsoDate } from '#lib/dates.ts';
 import type { PayLength } from '#lib/period.ts';
 import { TEMPLATES, type ExtraKind, type TemplateId } from '#lib/templates.ts';
-import type { SavedWeek, WeekRecord } from '#lib/week/form.ts';
+import type { SavedPayslip, PayslipRecord } from '#lib/payslip/form.ts';
 
 export const LISTS = {
 	deductions: deductionTypes,
@@ -64,9 +64,13 @@ export function isPeriodClash(error: unknown): boolean {
 	return false;
 }
 
+/** A list item refused because the name is already in that list (the *_user_name_idx indexes). */
 export function isDuplicateName(error: unknown): boolean {
 	for (let e = error; e; e = (e as { cause?: unknown }).cause) {
-		if ((e as { code?: string }).code === '23505') return true;
+		const { code, constraint } = e as { code?: string; constraint?: string };
+		if (code === '23505' && (constraint === undefined || constraint.endsWith('_user_name_idx'))) {
+			return true;
+		}
 	}
 	return false;
 }
@@ -172,7 +176,7 @@ export function forUser(userId: string) {
 		periodDates: () => periodDatesQuery(),
 
 		/** One saved payslip with its rows, in one round trip; null if it's gone. */
-		async loadSavedPeriod(id: number): Promise<SavedWeek | null> {
+		async loadSavedPeriod(id: number): Promise<SavedPayslip | null> {
 			const mine = and(eq(payPeriods.userId, userId), eq(payPeriods.id, id));
 			const ids = db.select({ id: payPeriods.id }).from(payPeriods).where(mine);
 			const [[period], days, ot, deductions, extras] = await db.batch([
@@ -212,7 +216,7 @@ export function forUser(userId: string) {
 		 * the start of the saved payslip being edited (its dates may change); null for a new one.
 		 * The database refuses overlapping periods (see isPeriodClash).
 		 */
-		async savePeriod(record: WeekRecord, savedStart: IsoDate | null) {
+		async savePeriod(record: PayslipRecord, savedStart: IsoDate | null) {
 			const periodId = periodIdOf(record.start);
 			const children = [
 				[payPeriodDays, record.days],

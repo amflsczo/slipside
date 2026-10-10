@@ -19,7 +19,7 @@
 		/** null while the form can't be calculated yet. */
 		payslip: Payslip | null;
 		currency: string;
-		/** The pay week, e.g. "14 – 20 Oct 2026". */
+		/** The pay period, e.g. "Oct 14 – 20, 2026". */
 		period?: string;
 		/** Why there's no payslip yet. */
 		emptyMessage: string;

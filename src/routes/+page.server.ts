@@ -6,7 +6,7 @@ import { findOverlap } from '#lib/period.ts';
 import { defaultTarget, neighbours, periodHref, resolveTarget } from '#lib/periodNav.ts';
 import { FormError, runAction } from '#lib/server/forms.ts';
 import { forUser, isPeriodClash } from '#lib/server/queries.ts';
-import { parseWeek, toInput, toWeekRecord } from '#lib/week/form.ts';
+import { parsePayslip, toInput, toPayslipRecord } from '#lib/payslip/form.ts';
 
 export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 	// Links from before pay periods: ?week=<start> is now ?period=<start>.
@@ -65,20 +65,20 @@ export const actions: Actions = {
 			} catch {
 				throw new FormError("Couldn't read the form. Refresh the page and try again.");
 			}
-			const parsed = parseWeek(payload, today);
+			const parsed = parsePayslip(payload, today);
 			if (!parsed.ok) {
 				throw new FormError(
 					parsed.errors.period ?? 'Some fields need fixing. Check the highlighted ones.'
 				);
 			}
-			const { week } = parsed;
+			const { value: entry } = parsed;
 
 			const user = forUser(locals.user!.id);
 			const periods = await user.periodDates();
 			// The saved payslip being edited, if it still exists (it may have been deleted elsewhere).
 			const savedStart = form.get('savedStart');
 			const editing = periods.find((p) => p.start === savedStart)?.start ?? null;
-			const clash = findOverlap(week, periods, editing);
+			const clash = findOverlap(entry, periods, editing);
 			if (clash) {
 				throw new FormError(
 					`These dates overlap your ${formatRange(clash.start, clash.end)} payslip. Pick other dates, or edit that payslip.`
@@ -86,7 +86,7 @@ export const actions: Actions = {
 			}
 
 			try {
-				await user.savePeriod(toWeekRecord(week, reversePayslip(toInput(week))), editing);
+				await user.savePeriod(toPayslipRecord(entry, reversePayslip(toInput(entry))), editing);
 			} catch (e) {
 				// Another tab saved overlapping dates between the check above and this save.
 				if (isPeriodClash(e)) {
@@ -94,7 +94,7 @@ export const actions: Actions = {
 				}
 				throw e;
 			}
-			savedAt = week.start;
+			savedAt = entry.start;
 		}, 'Payslip saved.');
 
 		// Stay on the saved payslip: it lives at its start date, which differs from this page's
