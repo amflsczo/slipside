@@ -8,25 +8,16 @@
 	import WeekPicker from '#lib/components/WeekPicker.svelte';
 	import { minorDigits, toMinor } from '#lib/format/money.ts';
 	import { clock, firstName, greeting, longDay } from '#lib/greeting.svelte.ts';
-	import { addDays } from '#lib/dates.ts';
 	import { buildForm } from '#lib/week/form.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	const initial = $derived(
-		data.needsSetup
-			? null
-			: buildForm(
-					// Until this page moves to pay periods, every period is a 7-day week.
-					{ start: data.weekStart, end: addDays(data.weekStart, 6) },
-					data.currency,
-					data.types,
-					data.saved
-				)
+		data.needsSetup ? null : buildForm(data.period, data.currency, data.types, data.saved)
 	);
 
-	// The usual rate is in the Settings currency, so it only applies to weeks in that currency.
+	// The usual rate is in the Settings currency, so it only applies to payslips in that currency.
 	const usualRate = $derived(
 		!data.needsSetup && data.usualRate && initial?.currency === data.currency
 			? toMinor(data.usualRate, minorDigits(data.currency))
@@ -52,14 +43,15 @@
 		</EmptyState>
 	{:else}
 		<WeekPicker
-			weekStart={data.weekStart}
-			currentWeek={data.currentWeek}
-			previousWeek={data.previousWeek}
-			nextWeek={data.nextWeek}
+			period={data.period}
+			today={data.today}
+			previousHref={data.previousHref}
+			nextHref={data.nextHref}
+			homeHref={data.homeHref}
 		/>
 
-		<!-- Remounts (fresh form + draft check) when the week changes or after a save. -->
-		{#key `${data.weekStart}:${data.saved?.updatedAt ?? 'new'}`}
+		<!-- Remounts (fresh form + draft check) when the period changes or after a save. -->
+		{#key `${data.period.start}:${data.period.end}:${data.saved?.updatedAt ?? 'new'}`}
 			<WeekEditor
 				{initial}
 				owner={data.user?.email ?? ''}

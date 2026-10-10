@@ -54,6 +54,8 @@
 	};
 	const clone = (value: WeekForm): WeekForm => JSON.parse(JSON.stringify(value));
 	const initialJson = untrack(() => JSON.stringify(initial));
+	/** Where the saved payslip starts now, so a save can find it even after its dates change. */
+	const savedStart = untrack(() => initial.start);
 	const currency = untrack(() => initial.currency);
 	const symbol = currencySymbol(currency);
 	const digits = minorDigits(currency);
@@ -164,11 +166,15 @@
 				if (result.type === 'success') {
 					dropDraft();
 					await update({ reset: false });
-					toast.show(String(result.data?.message ?? 'Week saved.'));
+					toast.show(String(result.data?.message ?? 'Payslip saved.'));
 				} else if (result.type === 'failure') {
 					toast.show(String(result.data?.error ?? 'Something went wrong.'), 'error');
 				} else if (result.type === 'redirect') {
+					// A saved payslip whose start date changed moves to its new URL.
+					const moved = result.location.startsWith('/?period=');
+					if (moved) dropDraft();
 					await update();
+					if (moved) toast.show('Payslip saved.');
 				} else {
 					toast.show(
 						"Couldn't save just now. Your entry is kept on this device; try again.",
@@ -189,7 +195,7 @@
 					dropDraft();
 					confirmDelete = false;
 					await update();
-					toast.show(String(result.data?.message ?? 'Week deleted.'));
+					toast.show(String(result.data?.message ?? 'Payslip deleted.'));
 				} else {
 					confirmDelete = false;
 					const message =
@@ -220,6 +226,7 @@
 	class="flex flex-col gap-4 sm:gap-5"
 >
 	<input type="hidden" name="payload" value={JSON.stringify(form)} />
+	{#if saved}<input type="hidden" name="savedStart" value={savedStart} />{/if}
 
 	<div
 		class="grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_23rem] xl:items-start 2xl:grid-cols-[minmax(0,1fr)_26rem]"
@@ -568,7 +575,7 @@
 	use:enhance={submitDelete}
 	hidden
 >
-	<input type="hidden" name="weekStart" value={form.start} />
+	<input type="hidden" name="start" value={form.start} />
 </form>
 
 <ConfirmDialog

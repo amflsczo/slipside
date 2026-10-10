@@ -1,7 +1,7 @@
 // User-scoped data access (PLAN.md section 6). There is no row-level security, so every
 // query in the app goes through `forUser(userId)`, which always filters by that user.
 // Multi-statement operations use db.batch(): one HTTP round trip, run as a transaction.
-import { and, asc, between, eq, inArray, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import { db } from './db';
 import {
@@ -16,7 +16,7 @@ import {
 	payPeriodOt,
 	payPeriods
 } from './db/schema';
-import { addDays, type IsoDate } from '#lib/dates.ts';
+import type { IsoDate } from '#lib/dates.ts';
 import { TEMPLATES, type ExtraKind, type TemplateId } from '#lib/templates.ts';
 import type { SavedWeek, WeekRecord } from '#lib/week/form.ts';
 
@@ -52,6 +52,17 @@ export type ListFields = {
 };
 
 /** True when a write failed because the name already exists in that list. */
+/** A save refused because the dates overlap (or start on) another of the user's payslips. */
+export function isPeriodClash(error: unknown): boolean {
+	for (let e = error; e; e = (e as { cause?: unknown }).cause) {
+		const { code, constraint } = e as { code?: string; constraint?: string };
+		if (code === '23P01' || (code === '23505' && constraint?.startsWith('pay_periods_'))) {
+			return true;
+		}
+	}
+	return false;
+}
+
 export function isDuplicateName(error: unknown): boolean {
 	for (let e = error; e; e = (e as { cause?: unknown }).cause) {
 		if ((e as { code?: string }).code === '23505') return true;
@@ -115,37 +126,29 @@ export function forUser(userId: string) {
 			.where(and(eq(table.userId, userId), eq(table.active, true)))
 			.orderBy(...byOrder(table));
 
-	// The id of this user's week starting on `weekStart`, as a subquery, so a save can
-	// write the week and its rows in one batch without waiting for the id.
-	const weekIdOf = (weekStart: IsoDate) =>
-		sql<number>`(select ${payPeriods.id} from ${payPeriods} where ${payPeriods.userId} = ${userId} and ${payPeriods.periodStart} = ${weekStart})`;
+	// The id of this user's period starting on `start`, as a subquery, so a save can write
+	// the period and its rows in one batch without waiting for the id.
+	const periodIdOf = (start: IsoDate) =>
+		sql<number>`(select ${payPeriods.id} from ${payPeriods} where ${payPeriods.userId} = ${userId} and ${payPeriods.periodStart} = ${start})`;
+
+	/** The dates of all this user's payslips, oldest first: small (one row per payslip). */
+	const periodDatesQuery = () =>
+		db
+			.select({ id: payPeriods.id, start: payPeriods.periodStart, end: payPeriods.periodEnd })
+			.from(payPeriods)
+			.where(eq(payPeriods.userId, userId))
+			.orderBy(asc(payPeriods.periodStart));
 
 	return {
 		/**
-		 * Everything the This Week screen needs, in one round trip: settings, the active list
-		 * items, and any saved week that could contain `anchor` (it starts within the 6 days
-		 * before it). The caller picks the week once it knows the week start day.
+		 * The payslip page's first round trip: settings, the active list items, and the dates of
+		 * every saved payslip, so the caller can work out which period to show.
 		 */
-		async loadWeekPage(anchor: IsoDate) {
-			const range = between(payPeriods.periodStart, addDays(anchor, -6), anchor);
-			const weekIds = db
-				.select({ id: payPeriods.id })
-				.from(payPeriods)
-				.where(and(eq(payPeriods.userId, userId), range));
+		async loadPayslipPage() {
 			const active = <T extends typeof extraTypes | typeof otRates>(table: T) =>
 				and(eq(table.userId, userId), eq(table.active, true));
 
-			const [
-				[general],
-				deductions,
-				extras,
-				ot,
-				saved,
-				days,
-				savedOt,
-				savedDeductions,
-				savedExtras
-			] = await db.batch([
+			const [[general], deductions, extras, ot, periods] = await db.batch([
 				db.select().from(settings).where(eq(settings.userId, userId)).limit(1),
 				activeList(deductionTypes),
 				db
@@ -158,84 +161,93 @@ export function forUser(userId: string) {
 					.from(otRates)
 					.where(active(otRates))
 					.orderBy(...byOrder(otRates)),
-				db
-					.select()
-					.from(payPeriods)
-					.where(and(eq(payPeriods.userId, userId), range)),
-				db.select().from(payPeriodDays).where(inArray(payPeriodDays.periodId, weekIds)),
+				periodDatesQuery()
+			]);
+
+			return { general: general ?? null, types: { deductions, extras, otRates: ot }, periods };
+		},
+
+		/** The dates of all this user's payslips, oldest first. */
+		periodDates: () => periodDatesQuery(),
+
+		/** One saved payslip with its rows, in one round trip; null if it's gone. */
+		async loadSavedPeriod(id: number): Promise<SavedWeek | null> {
+			const mine = and(eq(payPeriods.userId, userId), eq(payPeriods.id, id));
+			const ids = db.select({ id: payPeriods.id }).from(payPeriods).where(mine);
+			const [[period], days, ot, deductions, extras] = await db.batch([
+				db.select().from(payPeriods).where(mine).limit(1),
+				db.select().from(payPeriodDays).where(inArray(payPeriodDays.periodId, ids)),
 				db
 					.select()
 					.from(payPeriodOt)
-					.where(inArray(payPeriodOt.periodId, weekIds))
+					.where(inArray(payPeriodOt.periodId, ids))
 					.orderBy(asc(payPeriodOt.sortOrder)),
 				db
 					.select()
 					.from(payPeriodDeductions)
-					.where(inArray(payPeriodDeductions.periodId, weekIds))
+					.where(inArray(payPeriodDeductions.periodId, ids))
 					.orderBy(asc(payPeriodDeductions.sortOrder)),
 				db
 					.select()
 					.from(payPeriodExtras)
-					.where(inArray(payPeriodExtras.periodId, weekIds))
+					.where(inArray(payPeriodExtras.periodId, ids))
 					.orderBy(asc(payPeriodExtras.sortOrder))
 			]);
-
-			const toSaved = (week: typeof payPeriods.$inferSelect): SavedWeek => ({
-				currency: week.currency,
-				netPay: week.netPay,
-				notes: week.notes,
-				updatedAt: week.updatedAt.toISOString(),
-				days: days.filter((d) => d.periodId === week.id),
-				deductions: savedDeductions.filter((d) => d.periodId === week.id),
-				ot: savedOt.filter((o) => o.periodId === week.id),
-				extras: savedExtras.filter((e) => e.periodId === week.id)
-			});
-
+			if (!period) return null;
 			return {
-				general: general ?? null,
-				types: { deductions, extras, otRates: ot },
-				saved: new Map(saved.map((week) => [week.periodStart, toSaved(week)]))
+				currency: period.currency,
+				netPay: period.netPay,
+				notes: period.notes,
+				updatedAt: period.updatedAt.toISOString(),
+				days,
+				deductions,
+				ot,
+				extras
 			};
 		},
 
-		/** Saves a week and all its rows in one transaction (one round trip). */
-		async saveWeek(record: WeekRecord) {
-			const weekId = weekIdOf(record.start);
+		/**
+		 * Saves a payslip and all its rows in one transaction (one round trip). `savedStart` is
+		 * the start of the saved payslip being edited (its dates may change); null for a new one.
+		 * The database refuses overlapping periods (see isPeriodClash).
+		 */
+		async savePeriod(record: WeekRecord, savedStart: IsoDate | null) {
+			const periodId = periodIdOf(record.start);
 			const children = [
 				[payPeriodDays, record.days],
 				[payPeriodDeductions, record.deductions],
 				[payPeriodOt, record.ot],
 				[payPeriodExtras, record.extras]
 			] as const;
+			const dates = { periodStart: record.start, periodEnd: record.end };
 
 			await batch([
-				db
-					.insert(payPeriods)
-					.values({ ...record.summary, userId, periodStart: record.start, periodEnd: record.end })
-					.onConflictDoUpdate({
-						target: [payPeriods.userId, payPeriods.periodStart],
-						set: { ...record.summary, periodEnd: record.end, updatedAt: sql`now()` }
-					}),
+				savedStart
+					? db
+							.update(payPeriods)
+							.set({ ...record.summary, ...dates, updatedAt: sql`now()` })
+							.where(and(eq(payPeriods.userId, userId), eq(payPeriods.periodStart, savedStart)))
+					: db.insert(payPeriods).values({ ...record.summary, ...dates, userId }),
 				// Replace the rows: simplest way to handle added, changed and removed lines.
-				...children.map(([table]) => db.delete(table).where(eq(table.periodId, weekId))),
+				...children.map(([table]) => db.delete(table).where(eq(table.periodId, periodId))),
 				...children
 					.filter(([, rows]) => rows.length > 0)
 					.map(([table, rows]) =>
 						db.insert(table).values(
 							rows.map((row) => ({
 								...row,
-								periodId: weekId
+								periodId
 							})) as unknown as (typeof table.$inferInsert)[]
 						)
 					)
 			]);
 		},
 
-		/** Returns false if there was no saved week (or it isn't this user's). */
-		async deleteWeek(weekStart: IsoDate) {
+		/** Returns false if there was no saved payslip (or it isn't this user's). */
+		async deletePeriod(start: IsoDate) {
 			const rows = await db
 				.delete(payPeriods)
-				.where(and(eq(payPeriods.userId, userId), eq(payPeriods.periodStart, weekStart)))
+				.where(and(eq(payPeriods.userId, userId), eq(payPeriods.periodStart, start)))
 				.returning({ id: payPeriods.id });
 			return rows.length > 0;
 		},
