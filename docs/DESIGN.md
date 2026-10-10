@@ -678,7 +678,7 @@ One year at a time (a native year select, plus currency when more than one was u
 - **Year breakdown:** the printed-slip look (torn edge, leaders, double rule under net) for the year's totals, with each extra and deduction added up by name.
 
 ### Charts
-Follow the dataviz rules: one series and one axis at a time (Net / Rate / Hours switch), bars at most 24px with a 4px rounded top and square base, at least 2px between bars, solid 1px gridlines in `base-300`, clean round ticks, a label on the latest value only (lifted above any bar it overlaps), a hover tooltip per bar whose hit area is the whole slot, and a "Show as a table" fallback.
+Follow the dataviz rules: one series and one axis at a time (Net / Rate / Hours switch). History uses a **line**: points placed by pay date (so gaps in time show), a 2px line with round joins over a 10% area wash, 8px dots with a 2px card-colour ring (every point up to 24 payslips; beyond that only the hovered and latest), and a break in the line where a value is missing. Gridlines are solid 1px `base-300` with clean round ticks; month labels sit at month starts (plus the first payslip's month). There is one direct label, on the latest value, placed where the line isn't. A crosshair snaps to the nearest payslip with a tooltip (the whole plot is the hit area), clicking opens that payslip, and "Show as a table" is the fallback.
 - Marks use the `chart` token: `#1e7c50` light, `#46a876` dark. These are brand-green steps that pass the palette validator (the `sidebar-active` green is too muted for a mark). Text never uses the chart colour.
 
 ### Help page

@@ -33,7 +33,7 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 | H1 | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid | ✅ Committed |
 | H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ✅ Committed |
 | H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ✅ Committed |
-| H4 | Year summary tiles; a hand-drawn SVG chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Committed |
+| H4 | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Committed |
 | H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ⏳ Next |
 
 ---
@@ -134,3 +134,4 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 | 2026-10-10 | The "Updates as you type" pill is removed. The slip has **Save image** (PNG, 2×, slip shape on paper; share sheet on phones, download elsewhere). One-off deductions and bonuses added on a payslip stay on that payslip only; they are not added to Settings. |
 | 2026-10-10 | Vercel's `DATABASE_URL` (a Sensitive variable, so its value can't be viewed) points at the Neon **production** branch: confirmed by production waking when the live site was opened. |
 | 2026-10-10 | History plan: comparisons show the change in net **and** the rate change when payslip lengths differ; payslips count in the **month they were paid** (new "Paid on" field, built first); the chart shows **net pay** first; **one year at a time**; the chart is hand-drawn SVG (no library); a year breakdown totals each deduction and extra. History reads stored totals and never recalculates. |
+| 2026-10-10 | The History chart is a **line chart** (not bars): points placed by pay date, an area wash, a crosshair tooltip. |
