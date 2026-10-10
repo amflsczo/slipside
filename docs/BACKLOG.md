@@ -10,7 +10,7 @@ _Last updated: 2026-10-10_
 
 ## Where things stand
 
-Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather than always a week.
+Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than always a week.
 
 | Phase | What | Status |
 |---|---|---|
@@ -22,9 +22,9 @@ Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather th
 | 5 | Payslip page UI: date sheet, calendar hours grid, "Payslip" wording | ✅ Committed |
 | 6 | Settings: "How often are you usually paid?" replaces the week start day; migration 0004 drops `week_start_day` (dev branch only) | ✅ Committed |
 | 7 | Docs and naming cleanup: payslip names in the code, PLAN.md and DESIGN.md updated | ✅ Committed |
-| 8 | Release: back up, migrate production, push | ⏳ Next (ready) |
+| 8 | Release: back up, migrate production, push | ✅ Released 2026-10-10 |
 
-> ⚠️ **Don't push `main` until Phase 8.** Local `main` has unpushed commits (check with `git log origin/main..main`), and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
+> ✅ **Released 2026-10-10.** Production has migrations 0003 and 0004 and `main` is deployed. Backup branch in Neon: `backup-before-pay-periods`.
 
 ---
 
@@ -64,12 +64,12 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 ## Before going live (Phase 8 checklist)
 
 - [x] Confirm Vercel's `DATABASE_URL` is the production branch (confirmed 2026-10-10: production woke when the live site was opened).
-- [ ] In Neon, create a backup branch from production, e.g. `backup-before-pay-periods`.
-- [ ] Run migrations 0003 (pay periods) and 0004 (drop `week_start_day`) on production.
-- [ ] Check production: old weeks show as 7-day periods, and an overlapping save is refused.
-- [ ] Push `main` to GitHub so Vercel deploys.
+- [x] In Neon, create a backup branch from production, e.g. `backup-before-pay-periods`.
+- [x] Run migrations 0003 (pay periods) and 0004 (drop `week_start_day`) on production.
+- [x] Check production: old weeks show as 7-day periods, and an overlapping save is refused.
+- [x] Push `main` to GitHub so Vercel deploys (54a5fbf; Vercel: "Deployment has completed").
 - [ ] On the live site: open an old payslip, save a 1-day payslip, check an old `?week=` link redirects.
-- [ ] Point local `.env` back at the dev branch, if it was switched for the migration.
+- [x] Point local `.env` back at the dev branch, if it was switched for the migration (it never was; the production address was passed only to the migrate command).
 
 ---
 
@@ -82,6 +82,8 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 - **"Twice a month" pay length** (e.g. the 15th and the last day), common in the Philippines. It doesn't fit day / week / 2 weeks / month. Would need a fifth usual length with a calendar rule. For now, change the dates per payslip.
 - **Per-template default pay length:** all templates suggest "Every week" for now. Could suggest per country once "twice a month" exists.
 - **Preview deployments use production data.** Vercel's `DATABASE_URL` is set for "Production and Preview", so preview builds read and write the live database. Consider giving Preview the Neon `dev` branch (or a separate preview branch).
+- **Delete the Neon backup branch** `backup-before-pay-periods` once the live site has been fine for a week or so.
+- **Your own address:** `slipside.vercel.app` belongs to someone else. A custom domain (or a distinct `*.vercel.app` alias) would make the app's address unambiguous.
 - **Two jobs at once:** would need overlapping payslips and a "job" field. Out of scope for now (PLAN.md §11).
 - **PWA install, offline queue, pull-to-refresh** (PLAN.md phase 8).
 - **"Also add to my list"** on one-off deduction and bonus rows, to add the item to Settings in the same step (today a one-off row stays on that payslip only).
