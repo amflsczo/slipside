@@ -10,14 +10,14 @@
 	}: { summary?: Snippet; class?: string; children: Snippet } = $props();
 </script>
 
-<!-- The form's last card. Phones: status on its own line, then a full-width row of buttons.
-     sm+: one row, status on the left and buttons on the right. It stays in the page flow. -->
+<!-- The form's last card: a short status on the left, the actions on the right, in one row.
+     It stays in the page flow. -->
 <div
 	class={cn(
-		'flex flex-col gap-3 rounded-3xl bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:px-6',
+		'flex items-center gap-3 rounded-3xl bg-card py-3 pr-3 pl-5 shadow-soft sm:py-3.5 sm:pr-4 sm:pl-6',
 		className
 	)}
 >
-	{#if summary}<div class="min-w-0 text-sm text-ink-muted sm:flex-1">{@render summary()}</div>{/if}
-	<div class="flex items-center gap-2 sm:justify-end">{@render children()}</div>
+	<div class="min-w-0 flex-1 text-sm text-ink-muted">{@render summary?.()}</div>
+	<div class="flex shrink-0 items-center gap-1.5">{@render children()}</div>
 </div>

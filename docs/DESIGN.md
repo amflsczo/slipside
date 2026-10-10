@@ -552,7 +552,7 @@ A daisyUI `badge font-medium` with the status class from §3, `badge-sm` by defa
 ### Action bar (forms and details)
 
 `rounded-3xl bg-card p-4 sm:px-6 shadow-soft`: the **last card of the form**, in the page flow. It doesn't float or stick.
-- **Phones:** the status on its own line (badge left, summary right), then a full-width button row (secondary actions, then the main button filling the rest). **sm+:** one row.
+- **Keep it minimal, one row on every screen:** a save state (a small coloured dot plus "Unsaved changes" / "Saved" / "Not saved yet", in `text-xs`) on the left; on the right, secondary actions as icon buttons (e.g. a trash icon with `aria-label`, red on hover, which still confirms) and the main button. No totals or summaries in the bar.
 - **Next to a side panel** (the payslip page from `xl`), it sits in the form's column at the form card's width; on phones it comes last, after the panel.
 
 - **Form version:** a short summary on the left ("3 employees · 12 hrs"). On the right, "Save as draft" (secondary) and **Submit** (accent).

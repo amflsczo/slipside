@@ -25,7 +25,6 @@
 	import {
 		currencySymbol,
 		formatMoney,
-		formatRate,
 		minorDigits,
 		toMinor
 	} from '#lib/format/money.ts';
@@ -687,28 +686,33 @@
 		<!-- Under the form card on wide screens (same width); last on the page on phones. -->
 		<ActionBar class="xl:col-start-1">
 			{#snippet summary()}
-				<span class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:justify-start">
-					{#if dirty}
-						<span class="badge badge-sm font-medium badge-warning">Unsaved changes</span>
-					{:else if saved}
-						<span class="badge badge-sm font-medium badge-success">Saved</span>
-					{:else}
-						<span class="badge badge-sm font-medium badge-neutral">Not saved yet</span>
-					{/if}
-					{#if payslip}
-						<span class="tabular-nums">
-							Gross {formatMoney(payslip.gross, currency)}{#if payslip.hourlyRate !== null}
-								· {formatRate(payslip.hourlyRate, currency)}/hr{/if}
-						</span>
-					{/if}
+				<!-- Just the save state: a coloured dot and a few words. -->
+				<span class="flex items-center gap-2 text-xs font-medium" role="status">
+					<span
+						class="size-2 shrink-0 rounded-full {dirty
+							? 'bg-warning'
+							: saved
+								? 'bg-positive'
+								: 'bg-base-300'}"
+						aria-hidden="true"
+					></span>
+					<span class={dirty ? 'text-ink' : 'text-ink-muted'}>
+						{dirty ? 'Unsaved changes' : saved ? 'Saved' : 'Not saved yet'}
+					</span>
 				</span>
 			{/snippet}
 			{#if saved}
-				<Button type="button" variant="ghost" onclick={() => (confirmDelete = true)}>
-					<Trash size={16} aria-hidden="true" /> Delete
-				</Button>
+				<button
+					type="button"
+					class="grid size-10 shrink-0 place-items-center rounded-full text-ink-muted transition-colors hover:bg-error/10 hover:text-error"
+					aria-label="Delete payslip"
+					title="Delete payslip"
+					onclick={() => (confirmDelete = true)}
+				>
+					<Trash size={17} aria-hidden="true" />
+				</button>
 			{/if}
-			<Button variant="accent" class="flex-1 sm:flex-none" loading={pending}>
+			<Button variant="accent" loading={pending}>
 				{pending ? 'Saving…' : saved ? 'Update payslip' : 'Save payslip'}
 			</Button>
 		</ActionBar>
