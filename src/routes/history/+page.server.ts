@@ -4,6 +4,7 @@ import { minorDigits, toMinor } from '#lib/format/money.ts';
 import {
 	buildEntries,
 	groupByMonth,
+	groupByYear,
 	itemTotals,
 	pickCurrency,
 	pickYear,
@@ -13,17 +14,19 @@ import {
 import { forUser } from '#lib/server/queries.ts';
 
 // /history?year=2026&currency=GBP — one year at a time, by the month each payslip was paid.
+// /history?year=all — all time, by year, each year linking to its own page.
 export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 	const thisYear = Number(todayIn(cookies.get('tz')).slice(0, 4));
+	const allTime = url.searchParams.get('year') === 'all';
 	const asked = Number(url.searchParams.get('year'));
 	const requested = Number.isInteger(asked) && asked >= 2000 && asked <= 2100 ? asked : null;
 
 	const user = forUser(locals.user!.id);
-	let data = await user.loadHistory(requested ?? thisYear);
+	let data = await user.loadHistory(allTime ? null : (requested ?? thisYear));
 	if (!data.general) return { needsSetup: true as const };
 	// The asked-for year may have nothing (or nothing yet this year): show a year that does.
 	const year = pickYear(data.years, requested, thisYear);
-	if (year !== (requested ?? thisYear)) data = await user.loadHistory(year);
+	if (!allTime && year !== (requested ?? thisYear)) data = await user.loadHistory(year);
 	const general = data.general!;
 
 	const rows = data.records.map(toRow);
@@ -46,10 +49,13 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 	return {
 		needsSetup: false as const,
 		year,
+		allTime,
 		years: [...new Set([thisYear, ...data.years])].sort((a, b) => b - a),
 		currency: currency ?? general.currency,
 		currencies,
-		months: groupByMonth(entries),
+		entries,
+		months: allTime ? [] : groupByMonth(entries),
+		yearGroups: allTime ? groupByYear(inCurrency) : [],
 		yearTotals: totals(entries),
 		deductionTotals: currency ? itemTotals(data.deductionTotals, currency) : [],
 		extraTotals: currency ? itemTotals(data.extraTotals, currency) : []

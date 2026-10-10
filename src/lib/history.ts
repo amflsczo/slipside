@@ -173,7 +173,21 @@ export function groupByMonth(entries: HistoryEntry[]): MonthGroup[] {
 		.map(([month, list]) => ({ month, totals: totals(list), entries: list }));
 }
 
-/** A deduction or extra added up across the year, as the database returns it. */
+export type YearGroup = { year: number; totals: Totals };
+
+/** Totals for each year payslips were paid in, newest year first (the all-time view). */
+export function groupByYear(rows: HistoryRow[]): YearGroup[] {
+	const groups = new Map<number, HistoryRow[]>();
+	for (const row of rows) {
+		const year = Number(row.paid.slice(0, 4));
+		groups.set(year, [...(groups.get(year) ?? []), row]);
+	}
+	return [...groups]
+		.sort(([a], [b]) => b - a)
+		.map(([year, list]) => ({ year, totals: totals(list) }));
+}
+
+/** A deduction or extra added up over the shown range, as the database returns it. */
 export type ItemTotalRecord = { name: string; currency: string; total: string; count: number };
 export type ItemTotal = { name: string; total: number; count: number };
 

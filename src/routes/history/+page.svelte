@@ -22,8 +22,19 @@
 
 	let { data }: PageProps = $props();
 
-	const allEntries = $derived(data.needsSetup ? [] : data.months.flatMap((m) => m.entries));
 	const thisYear = new Date().getFullYear();
+	const hasPayslips = $derived(!data.needsSetup && data.entries.length > 0);
+	/** The current view, for headings: "2026 so far", "2025" or "All time". */
+	const rangeTitle = $derived(
+		data.needsSetup
+			? ''
+			: data.allTime
+				? 'All time'
+				: `${data.year}${data.year === thisYear ? ' so far' : ''}`
+	);
+	/** A year's own page, keeping the currency. */
+	const yearHref = (year: number) =>
+		`/history?year=${year}${!data.needsSetup && data.currencies.length > 1 ? `&currency=${data.currency}` : ''}`;
 
 	const money = (minor: number) => (data.needsSetup ? '' : formatMoney(minor, data.currency));
 	const rate = (minor: number) => (data.needsSetup ? '' : `${formatRate(minor, data.currency)}/hr`);
@@ -62,7 +73,9 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 sm:gap-5">
 	<PageHeader
 		title="History"
-		subtitle="Your payslips, by the month you were paid."
+		subtitle={!data.needsSetup && data.allTime
+			? 'All your payslips, by year. Pick a year to see its months.'
+			: 'Your payslips, by the month you were paid.'}
 		icon={ChartLine}
 	/>
 
@@ -81,9 +94,10 @@
 			<select
 				id="history-year"
 				class="select w-auto min-w-28 font-semibold"
-				value={String(data.year)}
+				value={data.allTime ? 'all' : String(data.year)}
 				onchange={(e) => choose('year', e.currentTarget.value)}
 			>
+				<option value="all">All time</option>
 				{#each data.years as y (y)}
 					<option value={String(y)}>{y}</option>
 				{/each}
@@ -106,17 +120,17 @@
 					<span class="font-mono font-semibold text-ink tabular-nums"
 						>{money(data.yearTotals.net)}</span
 					>
-					net · {data.yearTotals.count}
+					net{data.allTime ? ' all time' : ''} · {data.yearTotals.count}
 					{data.yearTotals.count === 1 ? 'payslip' : 'payslips'}
 				</p>
 			{/if}
 		</div>
 
-		{#if data.months.length === 0}
+		{#if !hasPayslips}
 			<EmptyState
 				icon={ReceiptText}
-				title="No payslips in {data.year} yet"
-				hint={data.years.length > 1
+				title={data.allTime ? 'No payslips yet' : `No payslips in ${data.year} yet`}
+				hint={data.years.length > 1 && !data.allTime
 					? 'Saved payslips show up here, by the month they were paid. Pick another year above to see earlier ones.'
 					: 'Saved payslips show up here, by the month they were paid.'}
 			>
@@ -124,12 +138,12 @@
 			</EmptyState>
 		{/if}
 
-		{#if data.months.length > 0}
+		{#if hasPayslips}
 			{@const t = data.yearTotals}
 			<!-- The year at a glance. -->
 			<section
 				class="grid grid-cols-2 gap-4 rounded-3xl bg-card p-4 shadow-soft sm:grid-cols-4 sm:p-6"
-				aria-label="{data.year} summary"
+				aria-label="{rangeTitle} summary"
 			>
 				<StatTile
 					icon={Wallet}
@@ -156,14 +170,46 @@
 					icon={ReceiptText}
 					label="Payslips"
 					value={String(t.count)}
-					hint="{data.months.length} {data.months.length === 1 ? 'month' : 'months'}"
+					hint={data.allTime
+						? `${data.yearGroups.length} ${data.yearGroups.length === 1 ? 'year' : 'years'}`
+						: `${data.months.length} ${data.months.length === 1 ? 'month' : 'months'}`}
 				/>
 			</section>
 
-			<HistoryChart entries={allEntries} currency={data.currency} />
+			<HistoryChart entries={data.entries} currency={data.currency} />
 
 			<div class="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
 				<div class="flex min-w-0 flex-col gap-4 sm:gap-5">
+					{#each data.yearGroups as group (group.year)}
+						{@const y = group.totals}
+						<!-- All time: one card per year, opening that year's page. -->
+						<a
+							href={yearHref(group.year)}
+							class="group flex items-center gap-3 rounded-3xl bg-card px-4 py-4 shadow-soft transition-colors hover:bg-base-200/40 sm:px-6"
+						>
+							<div class="min-w-0 flex-1">
+								<div class="flex items-baseline justify-between gap-3">
+									<h2 class="font-mono text-xs font-semibold tracking-[0.2em] text-ink uppercase">
+										{group.year}{group.year === thisYear ? ' so far' : ''}
+									</h2>
+									<p class="font-mono text-sm font-semibold text-ink tabular-nums">
+										{money(y.net)}
+									</p>
+								</div>
+								<p class="mt-1 text-xs text-ink-muted tabular-nums">
+									{y.count}
+									{y.count === 1 ? 'payslip' : 'payslips'} · gross {money(
+										y.gross
+									)}{#if y.averageRate !== null}{` · avg ${rate(y.averageRate)}`}{/if}{` · ${y.regularHours + y.otHours} hrs`}
+								</p>
+							</div>
+							<ChevronRight
+								size={16}
+								class="shrink-0 text-ink-muted transition-transform group-hover:translate-x-0.5"
+								aria-hidden="true"
+							/>
+						</a>
+					{/each}
 					{#each data.months as group (group.month)}
 						<section class="rounded-3xl bg-card shadow-soft" aria-labelledby="month-{group.month}">
 							<header
@@ -254,12 +300,11 @@
 				</div>
 				<aside class="lg:sticky lg:top-6">
 					<YearBreakdown
-						year={data.year}
+						title={rangeTitle}
 						currency={data.currency}
 						totals={data.yearTotals}
 						deductions={data.deductionTotals}
 						extras={data.extraTotals}
-						thisYear={data.year === thisYear}
 					/>
 				</aside>
 			</div>

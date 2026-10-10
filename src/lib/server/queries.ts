@@ -259,16 +259,17 @@ export function forUser(userId: string) {
 		},
 
 		/**
-		 * Everything History needs for one year, in one round trip. A payslip counts on the day
-		 * it was paid (its end date when no pay date was given). Only the summary table is read
-		 * for the list; the per-item totals are added up in the database.
+		 * Everything History needs for one year (or all time, when `year` is null), in one round
+		 * trip. A payslip counts on the day it was paid (its end date when no pay date was given).
+		 * Only the summary table is read for the list; the per-item totals are added up in the
+		 * database.
 		 */
-		async loadHistory(year: number) {
+		async loadHistory(year: number | null) {
 			const paidOn = sql<string>`coalesce(${payPeriods.payDate}, ${payPeriods.periodEnd})`;
 			const from = `${year}-01-01`;
 			const to = `${year}-12-31`;
 			const mine = eq(payPeriods.userId, userId);
-			const inYear = and(mine, sql`${paidOn} between ${from} and ${to}`);
+			const inYear = year === null ? mine : and(mine, sql`${paidOn} between ${from} and ${to}`);
 			const summary = {
 				start: payPeriods.periodStart,
 				end: payPeriods.periodEnd,
@@ -312,7 +313,8 @@ export function forUser(userId: string) {
 				db
 					.selectDistinctOn([payPeriods.currency], summary)
 					.from(payPeriods)
-					.where(and(mine, sql`${paidOn} < ${from}`))
+					// All time has nothing before it.
+					.where(year === null ? sql`false` : and(mine, sql`${paidOn} < ${from}`))
 					.orderBy(payPeriods.currency, sql`${paidOn} desc`, sql`${payPeriods.periodStart} desc`),
 				db
 					.selectDistinct({ year: sql<number>`extract(year from ${paidOn})::int` })

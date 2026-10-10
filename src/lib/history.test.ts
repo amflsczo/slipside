@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	buildEntries,
 	groupByMonth,
+	groupByYear,
 	itemTotals,
 	pickCurrency,
 	pickYear,
@@ -187,5 +188,20 @@ describe('which year and currency to show', () => {
 		expect(pickCurrency([week, php], 'USD', 'GBP')).toBe('GBP');
 		expect(pickCurrency([php, php, week], null, 'USD')).toBe('PHP');
 		expect(pickCurrency([], null, 'GBP')).toBeNull();
+	});
+});
+
+describe('all time, by year', () => {
+	it('totals each year payslips were paid in, newest first', () => {
+		const dec = toRow(
+			record({ start: '2025-12-29', end: '2026-01-04', payDate: '2025-12-31', netPay: '300.00' })
+		);
+		const older = toRow(record({ start: '2025-06-02', end: '2025-06-08', netPay: '350.00' }));
+		const years = groupByYear([week, oneDay, dec, older]);
+		expect(years.map((y) => [y.year, y.totals.count, y.totals.net])).toEqual([
+			[2026, 2, 40000 + 9500],
+			// Ends in January 2026 but was paid on Dec 31, so it counts in 2025.
+			[2025, 2, 30000 + 35000]
+		]);
 	});
 });

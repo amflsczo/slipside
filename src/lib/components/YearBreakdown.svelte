@@ -3,22 +3,20 @@
 	import type { ItemTotal, Totals } from '#lib/history.ts';
 
 	let {
-		year,
+		title,
 		currency,
 		totals,
 		deductions,
-		extras,
-		thisYear
+		extras
 	}: {
-		year: number;
+		/** e.g. "2026 so far", "2025" or "All time". */
+		title: string;
 		currency: string;
 		totals: Totals;
 		/** Each deduction added up across the year, largest first. */
 		deductions: ItemTotal[];
 		/** Each extra added up across the year, largest first. */
 		extras: ItemTotal[];
-		/** True for the current year, which reads "so far". */
-		thisYear: boolean;
 	} = $props();
 
 	const money = (minor: number) => formatMoney(minor, currency);
@@ -44,7 +42,7 @@
 			id="breakdown-title"
 			class="font-mono text-xs font-semibold tracking-[0.2em] text-ink uppercase"
 		>
-			{year}{thisYear ? ' so far' : ''}
+			{title}
 		</h2>
 		<p class="mt-0.5 text-xs text-ink-muted">
 			{totals.count}

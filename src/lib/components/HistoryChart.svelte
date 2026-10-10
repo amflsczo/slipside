@@ -92,8 +92,6 @@
 		return out.filter((run) => run.length);
 	});
 	const linePath = (run: Point[]) => run.map((pt, k) => `${k ? 'L' : 'M'}${pt.x},${pt.y}`).join('');
-	const areaPath = (run: Point[]) =>
-		`${linePath(run)}L${run.at(-1)!.x},${pad.top + plotH}L${run[0]!.x},${pad.top + plotH}Z`;
 	// Dots on every payslip while there's room; on busy years only the hovered and latest.
 	const showDots = $derived(oldestFirst.length <= 24);
 
@@ -108,7 +106,11 @@
 			out.push({
 				key: iso,
 				x: xAt(iso),
-				label: d.toLocaleString('en', { month: 'short', timeZone: 'UTC' })
+				// January carries the year, so a span across years reads clearly.
+				label:
+					d.getUTCMonth() === 0
+						? String(d.getUTCFullYear())
+						: d.toLocaleString('en', { month: 'short', timeZone: 'UTC' })
 			});
 			d.setUTCMonth(d.getUTCMonth() + 1);
 		}
@@ -122,7 +124,15 @@
 				label: new Date(time(iso)).toLocaleString('en', { month: 'short', timeZone: 'UTC' })
 			});
 		}
-		return out;
+		// Keep labels at least ~34px apart; years win over months when they'd collide.
+		const kept: typeof out = [];
+		for (const label of out) {
+			const prev = kept.at(-1);
+			if (!prev || label.x - prev.x >= 34) kept.push(label);
+			else if (/^\d{4}$/.test(label.label) && !/^\d{4}$/.test(prev.label))
+				kept[kept.length - 1] = label;
+		}
+		return kept;
 	});
 
 	/**
@@ -227,9 +237,8 @@
 				>
 			{/each}
 
-			<!-- A soft wash under the line, then the 2px line. -->
+			<!-- The 2px line. -->
 			{#each runs as run, k (k)}
-				<path d={areaPath(run)} class="fill-chart opacity-10" />
 				<path
 					d={linePath(run)}
 					class="fill-none stroke-chart"
