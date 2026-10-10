@@ -655,6 +655,7 @@ The entry side mirrors the printed slip: **one card**, `form-surface rounded-3xl
 - **Rows:** `grid grid-cols-[minmax(0,1fr)_8.5rem] sm:grid-cols-[minmax(0,1fr)_10rem]`: label on the left, a right-aligned amount on the right (`h-9`, `[&_input]:text-right`). A short note sits under a label as `block text-xs text-ink-muted` (e.g. "Take-home amount", "Per day").
 - Section headings carry live totals (deductions in `text-negative` with "−", total hours) and small accent "+ Add" pills.
 - Hours: a 7-cell strip (also on phones); periods over 7 days use the calendar.
+- **Extras** each take two lines: the name and its total (mono, right) on top, what to fill in underneath, then a one-line note. Per day reads as a sentence, "[£35] a day × [5] days", with "up to N days in this payslip" below. Per payslip uses a toggle labelled "Paid this time". A one-off bonus has its name field and amount on one line with a remove button.
 - Unused parts are one line ("Overtime · None set up · Add rates in Settings", "+ Add a note"), never hidden.
 - Errors show under the row, right-aligned below the amount.
 

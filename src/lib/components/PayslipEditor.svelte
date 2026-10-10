@@ -539,92 +539,106 @@
 							bonus.
 						</p>
 					{/if}
-					<div class="flex flex-col gap-2">
+					<!-- Each extra: name and total on top (like the slip), what to fill in underneath. -->
+					<div class="flex flex-col divide-y divide-dashed divide-rule/60">
 						{#each form.extras as extra, i (i)}
 							{@const amount = extraAmount(extra)}
-							{#if extra.kind === 'per_day'}
-								<!-- Amount per day × days; the label wraps above the inputs on narrow screens. -->
-								<div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
-									<span class="min-w-[8rem] flex-1 text-sm leading-snug text-ink">
-										{extra.name}
-										<span class="block text-xs text-ink-muted">Per day</span>
-									</span>
-									<div class="flex items-center gap-1.5">
+							<div class="flex flex-col gap-2 py-2.5 first:pt-0 last:pb-0">
+								<div class="flex items-baseline justify-between gap-3">
+									{#if extra.kind === 'bonus'}
+										<p class="text-sm font-medium text-ink">One-off bonus</p>
+									{:else}
+										<p class="min-w-0 text-sm font-medium text-ink">{extra.name}</p>
+									{/if}
+									<span
+										class="shrink-0 font-mono text-sm tabular-nums {amount
+											? 'font-semibold text-ink'
+											: 'text-ink-muted'}"
+										aria-label="{extra.name || 'Bonus'} total: {amount ?? 'nothing'}"
+										>{amount ?? '—'}</span
+									>
+								</div>
+
+								{#if extra.kind === 'per_day'}
+									<!-- Reads as a sentence: £35 a day × 5 days. -->
+									<div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-ink-muted">
 										<NumberInput
 											{symbol}
 											bind:value={extra.unitAmount}
 											invalid={!!err(`extras.${i}.unitAmount`)}
-											aria-label="{extra.name}: amount per day"
+											aria-label="{extra.name}: amount a day"
 											class="{field} w-28"
 										/>
-										<span class="text-xs text-ink-muted" aria-hidden="true">×</span>
+										<span>a day ×</span>
 										<NumberInput
 											inputmode="numeric"
 											placeholder="0"
-											suffix="of {form.days.length}"
+											suffix={extra.quantity === '1' ? 'day' : 'days'}
 											bind:value={extra.quantity}
 											invalid={!!err(`extras.${i}.quantity`)}
-											aria-label="{extra.name}: days"
+											aria-label="{extra.name}: number of days (up to {form.days.length})"
 											class="{field} w-24"
 										/>
 									</div>
-								</div>
-							{:else}
-								<div class={row}>
-									{#if extra.kind === 'per_week'}
-										<label class="flex min-w-0 items-center gap-2">
+									<p class="text-xs text-ink-muted">
+										Paid per day · up to {form.days.length}
+										{form.days.length === 1 ? 'day' : 'days'} in this payslip
+									</p>
+								{:else if extra.kind === 'per_week'}
+									<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+										<label class="flex items-center gap-2.5 text-sm text-ink">
 											<input
 												type="checkbox"
-												class="checkbox checkbox-sm checkbox-primary"
+												class="toggle toggle-primary toggle-sm"
 												checked={extra.quantity === '1'}
 												onchange={(e) => (extra.quantity = e.currentTarget.checked ? '1' : '0')}
 											/>
-											<span class="min-w-0 text-sm leading-snug text-ink">
-												{extra.name}
-												<span class="block text-xs text-ink-muted">Per payslip</span>
-											</span>
+											Paid this time
 										</label>
-									{:else}
-										<div class="flex min-w-0 items-center gap-1">
-											<input
-												id="{uid}-bonus-name-{i}"
-												class="input h-9 w-full"
-												bind:value={extra.name}
-												maxlength="60"
-												autocomplete="off"
-												placeholder="Bonus name"
-												aria-label="Bonus name"
-												aria-invalid={!!err(`extras.${i}.name`) || undefined}
-											/>
-											<button
-												type="button"
-												class={removeButton}
-												aria-label="Remove {extra.name || 'this bonus'}"
-												onclick={() => form.extras.splice(i, 1)}
-											>
-												<X size={15} aria-hidden="true" />
-											</button>
-										</div>
-									{/if}
-									<NumberInput
-										{symbol}
-										bind:value={extra.unitAmount}
-										invalid={!!err(`extras.${i}.unitAmount`)}
-										aria-label="{extra.name || 'Bonus'}: amount"
-										class={field}
-									/>
-								</div>
-							{/if}
-							{#if amount && extra.kind === 'per_day'}
-								<p class="-mt-1 text-right font-mono text-xs text-ink-muted tabular-nums">
-									= {amount}
-								</p>
-							{/if}
-							{@render fieldError(
-								err(`extras.${i}.name`) ??
-									err(`extras.${i}.unitAmount`) ??
-									err(`extras.${i}.quantity`)
-							)}
+										<NumberInput
+											{symbol}
+											bind:value={extra.unitAmount}
+											invalid={!!err(`extras.${i}.unitAmount`)}
+											aria-label="{extra.name}: amount"
+											class="{field} w-28 sm:w-40"
+										/>
+									</div>
+									<p class="text-xs text-ink-muted">Paid once per payslip, whatever its length</p>
+								{:else}
+									<div class="flex items-center gap-2">
+										<input
+											id="{uid}-bonus-name-{i}"
+											class="input h-9 min-w-0 flex-1"
+											bind:value={extra.name}
+											maxlength="60"
+											autocomplete="off"
+											placeholder="What it's for, e.g. Christmas"
+											aria-label="Bonus name"
+											aria-invalid={!!err(`extras.${i}.name`) || undefined}
+										/>
+										<NumberInput
+											{symbol}
+											bind:value={extra.unitAmount}
+											invalid={!!err(`extras.${i}.unitAmount`)}
+											aria-label="{extra.name || 'Bonus'}: amount"
+											class="{field} w-28 sm:w-40"
+										/>
+										<button
+											type="button"
+											class={removeButton}
+											aria-label="Remove {extra.name || 'this bonus'}"
+											onclick={() => form.extras.splice(i, 1)}
+										>
+											<X size={15} aria-hidden="true" />
+										</button>
+									</div>
+								{/if}
+								{@render fieldError(
+									err(`extras.${i}.name`) ??
+										err(`extras.${i}.unitAmount`) ??
+										err(`extras.${i}.quantity`)
+								)}
+							</div>
 						{/each}
 					</div>
 				</section>
