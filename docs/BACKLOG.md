@@ -26,15 +26,15 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 
 > ✅ **Released 2026-10-10** at **https://slipside-tracker.vercel.app**. Production has migrations 0003 and 0004 and `main` is deployed. Backup branch in Neon: `backup-before-pay-periods`.
 
-### Next: History (planned 2026-10-10)
+### History (planned and released 2026-10-10)
 
 | Phase | What | Status |
 |---|---|---|
-| H1 | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid | ✅ Committed |
-| H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ✅ Committed |
-| H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ✅ Committed |
-| H4 | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Committed |
-| H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ⏳ Next |
+| H1 | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid | ✅ Released 2026-10-10 |
+| H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ✅ Released 2026-10-10 |
+| H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ✅ Released 2026-10-10 |
+| H4 | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Released 2026-10-10 |
+| H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ✅ Released 2026-10-10 |
 
 ---
 
@@ -98,7 +98,7 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 ## Tidy-ups (technical)
 
-- **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. History and Expenses will each need a guide, and the "coming in a later update" answer will need removing.
+- **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. Expenses will need a guide, and the "Where is Expenses?" answer will need removing.
 
 - **Line endings:** Git warns "LF will be replaced by CRLF" on every commit. A `.gitattributes` with `* text=auto eol=lf` would make it consistent.
 - **Local `npm run build` fails on Windows** at the final Vercel step (`EPERM` creating a symlink). Turning on Windows Developer Mode fixes it. Vercel's own builds aren't affected.

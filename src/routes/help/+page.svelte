@@ -4,6 +4,7 @@
 	import type { LucideIcon } from '@lucide/svelte';
 	import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
 	import CalendarRange from '@lucide/svelte/icons/calendar-range';
+	import ChartLine from '@lucide/svelte/icons/chart-line';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -105,6 +106,21 @@
 			note: 'Deleting can’t be undone.'
 		},
 		{
+			id: 'history',
+			title: 'See your history',
+			icon: ChartLine,
+			group: 'Guides',
+			summary: 'Look back over your payslips, by month or by year.',
+			steps: [
+				'Open **History**.',
+				'Pick a year at the top, or **All time** to see every year. Tap a year to open it.',
+				'Each month lists its payslips with net pay and the change since the one before. Tap a payslip to open it.',
+				'Use **Net**, **Rate** and **Hours** on the chart to see how they changed. Tap **Show as a table** for the numbers.',
+				'The slip beside the list adds up each deduction and extra for the year.'
+			],
+			note: 'A payslip counts in the month it was **paid**. If it was paid after its end date, set **Paid on** on the payslip.'
+		},
+		{
 			id: 'rate',
 			title: 'Spot pay problems',
 			icon: Gauge,
@@ -204,7 +220,15 @@
 				},
 				{
 					q: 'Where can I see past payslips?',
-					a: 'Open **History**. Payslips are grouped by the month they were paid; tap one to open it.'
+					a: 'Open **History**. Pick a year, or **All time** for every year. Payslips are grouped by the month they were paid; tap one to open it.'
+				},
+				{
+					q: 'What do “Rate high” and “Rate low” mean?',
+					a: 'That payslip’s hourly rate is further from your **Usual hourly rate** than the difference you allow in **Settings**. Check its hours, overtime and the payslip itself.'
+				},
+				{
+					q: 'Why do some History rows also show a rate change?',
+					a: 'When a payslip covers a different number of days from the one before, net pay alone can mislead, so the change in hourly rate is shown too.'
 				},
 				{ q: 'Where is Expenses?', a: 'It’s coming in a later update.' }
 			]
