@@ -24,7 +24,7 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 | 7 | Docs and naming cleanup: payslip names in the code, PLAN.md and DESIGN.md updated | ✅ Committed |
 | 8 | Release: back up, migrate production, push | ✅ Released 2026-10-10 |
 
-> ✅ **Released 2026-10-10.** Production has migrations 0003 and 0004 and `main` is deployed. Backup branch in Neon: `backup-before-pay-periods`.
+> ✅ **Released 2026-10-10** at **https://slipside-tracker.vercel.app**. Production has migrations 0003 and 0004 and `main` is deployed. Backup branch in Neon: `backup-before-pay-periods`.
 
 ---
 
@@ -83,7 +83,7 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 - **Per-template default pay length:** all templates suggest "Every week" for now. Could suggest per country once "twice a month" exists.
 - **Preview deployments use production data.** Vercel's `DATABASE_URL` is set for "Production and Preview", so preview builds read and write the live database. Consider giving Preview the Neon `dev` branch (or a separate preview branch).
 - **Delete the Neon backup branch** `backup-before-pay-periods` once the live site has been fine for a week or so.
-- **Your own address:** `slipside.vercel.app` belongs to someone else. A custom domain (or a distinct `*.vercel.app` alias) would make the app's address unambiguous.
+- **Custom domain** (optional): the live app is at **https://slipside-tracker.vercel.app**. Note `slipside.vercel.app` is a different site owned by someone else.
 - **Two jobs at once:** would need overlapping payslips and a "job" field. Out of scope for now (PLAN.md §11).
 - **PWA install, offline queue, pull-to-refresh** (PLAN.md phase 8).
 - **"Also add to my list"** on one-off deduction and bonus rows, to add the item to Settings in the same step (today a one-off row stays on that payslip only).
