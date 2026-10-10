@@ -29,6 +29,25 @@ export function addDays(iso: IsoDate, days: number): IsoDate {
 	return toIso(date);
 }
 
+/** The same day `months` later (or earlier), clamped to that month's last day: Jan 31 + 1 → Feb 28. */
+export function addMonths(iso: IsoDate, months: number): IsoDate {
+	const date = toUtc(iso);
+	const day = date.getUTCDate();
+	date.setUTCDate(1);
+	date.setUTCMonth(date.getUTCMonth() + months);
+	const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+	date.setUTCDate(Math.min(day, lastDay));
+	return toIso(date);
+}
+
+/** Whole days from `from` to `to`; negative when `to` is earlier. */
+export const daysBetween = (from: IsoDate, to: IsoDate) =>
+	Math.round((toUtc(to).getTime() - toUtc(from).getTime()) / 86_400_000);
+
+/** Every date from `start` to `end`, both included; empty when `end` is before `start`. */
+export const datesBetween = (start: IsoDate, end: IsoDate) =>
+	Array.from({ length: Math.max(0, daysBetween(start, end) + 1) }, (_, i) => addDays(start, i));
+
 /** 0 = Sunday ... 6 = Saturday, like Settings' week start day. */
 export const weekdayOf = (iso: IsoDate) => toUtc(iso).getUTCDay();
 

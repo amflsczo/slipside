@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	addDays,
+	addMonths,
+	datesBetween,
+	daysBetween,
 	dayLabel,
 	formatRange,
 	isIsoDate,
@@ -21,6 +24,27 @@ describe('dates', () => {
 	it('adds days across months and years', () => {
 		expect(addDays('2026-10-31', 1)).toBe('2026-11-01');
 		expect(addDays('2027-01-01', -1)).toBe('2026-12-31');
+	});
+
+	it('adds months, clamping to the end of shorter months', () => {
+		expect(addMonths('2026-10-16', 1)).toBe('2026-11-16');
+		expect(addMonths('2026-12-15', 1)).toBe('2027-01-15');
+		expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
+		expect(addMonths('2028-01-31', 1)).toBe('2028-02-29');
+		expect(addMonths('2026-03-31', -1)).toBe('2026-02-28');
+		expect(addMonths('2026-05-31', 1)).toBe('2026-06-30');
+	});
+
+	it('counts and lists the days between two dates', () => {
+		expect(daysBetween('2026-10-05', '2026-10-11')).toBe(6);
+		expect(daysBetween('2026-10-11', '2026-10-05')).toBe(-6);
+		expect(daysBetween('2026-03-28', '2026-03-30')).toBe(2); // across a DST change elsewhere
+		expect(datesBetween('2026-10-05', '2026-10-07')).toEqual([
+			'2026-10-05',
+			'2026-10-06',
+			'2026-10-07'
+		]);
+		expect(datesBetween('2026-10-07', '2026-10-05')).toEqual([]);
 	});
 
 	it("gives today's date in the user's time zone", () => {
