@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import type { SubmitFunction } from '$app/forms';
 	import Plus from '@lucide/svelte/icons/plus';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
@@ -44,6 +45,13 @@
 	} = $props();
 
 	const uid = $props.id();
+
+	// Post to this page's own URL (e.g. ?week=…) plus the action. SvelteKit lands on the posted
+	// URL after an action, so a bare "?/save" would drop the week and jump to the current one.
+	const actionUrl = (name: string) => {
+		const query = page.url.searchParams.toString();
+		return `?${query ? `${query}&` : ''}/${name}`;
+	};
 	const clone = (value: WeekForm): WeekForm => JSON.parse(JSON.stringify(value));
 	const initialJson = untrack(() => JSON.stringify(initial));
 	const currency = untrack(() => initial.currency);
@@ -206,7 +214,7 @@
 
 <form
 	method="post"
-	action="?/save"
+	action={actionUrl('save')}
 	use:enhance={submit}
 	novalidate
 	class="flex flex-col gap-4 sm:gap-5"
@@ -553,7 +561,13 @@
 	</ActionBar>
 </form>
 
-<form bind:this={deleteForm} method="post" action="?/delete" use:enhance={submitDelete} hidden>
+<form
+	bind:this={deleteForm}
+	method="post"
+	action={actionUrl('delete')}
+	use:enhance={submitDelete}
+	hidden
+>
 	<input type="hidden" name="weekStart" value={form.weekStart} />
 </form>
 
