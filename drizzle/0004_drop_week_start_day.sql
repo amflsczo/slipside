@@ -1,0 +1,1 @@
+ALTER TABLE "settings" DROP COLUMN "week_start_day";

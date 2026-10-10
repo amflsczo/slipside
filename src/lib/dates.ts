@@ -48,15 +48,6 @@ export const daysBetween = (from: IsoDate, to: IsoDate) =>
 export const datesBetween = (start: IsoDate, end: IsoDate) =>
 	Array.from({ length: Math.max(0, daysBetween(start, end) + 1) }, (_, i) => addDays(start, i));
 
-/** 0 = Sunday ... 6 = Saturday, like Settings' week start day. */
-export const weekdayOf = (iso: IsoDate) => toUtc(iso).getUTCDay();
-
-/** The first day of the pay week that contains `iso`. */
-export const weekStartFor = (iso: IsoDate, startDay: number) =>
-	addDays(iso, -((weekdayOf(iso) - startDay + 7) % 7));
-
-export const weekDates = (start: IsoDate) => Array.from({ length: 7 }, (_, i) => addDays(start, i));
-
 const rangeFormat = new Intl.DateTimeFormat('en', {
 	month: 'short',
 	day: 'numeric',

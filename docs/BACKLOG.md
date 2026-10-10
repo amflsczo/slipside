@@ -20,11 +20,11 @@ Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather th
 | 3 | Form and validation for any period length | ✅ Committed |
 | 4 | Queries, server, `?period=` URLs, overlap checks | ✅ Committed |
 | 5 | Payslip page UI: date sheet, calendar hours grid, "Payslip" wording | ✅ Committed |
-| 6 | Settings: "How often are you usually paid?" replaces the week start day | ⏳ Next |
-| 7 | Docs and naming cleanup | ⏳ |
+| 6 | Settings: "How often are you usually paid?" replaces the week start day; migration 0004 drops `week_start_day` (dev branch only) | ✅ Committed |
+| 7 | Docs and naming cleanup | ⏳ Next |
 | 8 | Release: back up, migrate production, push | ⏳ |
 
-> ⚠️ **Don't push `main` until Phase 8.** Local `main` is 5 commits ahead of GitHub, and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
+> ⚠️ **Don't push `main` until Phase 8.** Local `main` is 7 commits ahead of GitHub, and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
 
 ---
 
@@ -70,7 +70,7 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 
 - [ ] Confirm Vercel's `DATABASE_URL` is the production branch (decision 5).
 - [ ] In Neon, create a backup branch from production, e.g. `backup-before-pay-periods`.
-- [ ] Run migration 0003, and any later ones, on production.
+- [ ] Run migrations 0003 (pay periods) and 0004 (drop `week_start_day`) on production.
 - [ ] Check production: old weeks show as 7-day periods, and an overlapping save is refused.
 - [ ] Push `main` to GitHub so Vercel deploys.
 - [ ] On the live site: open an old payslip, save a 1-day payslip, check an old `?week=` link redirects.
@@ -84,6 +84,8 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 - **Expenses page** (planned): quick add, monthly totals by category, income vs expenses.
 - **Backup:** JSON export and import, CSV export (PLAN.md phase 7).
 - **Named pay patterns:** saved setups like "Regular week" or "Day gig", each with its own length and optionally its own deductions, chosen per payslip. This was deferred in favour of a single usual length.
+- **"Twice a month" pay length** (e.g. the 15th and the last day), common in the Philippines. It doesn't fit day / week / 2 weeks / month. Would need a fifth usual length with a calendar rule. For now, change the dates per payslip.
+- **Per-template default pay length:** all templates suggest "Every week" for now. Could suggest per country once "twice a month" exists.
 - **Two jobs at once:** would need overlapping payslips and a "job" field. Out of scope for now (PLAN.md §11).
 - **PWA install, offline queue, pull-to-refresh** (PLAN.md phase 8).
 - **Automated UI checks:** the Phase 5 check (Playwright driving the local Edge, against the dev branch) worked well. It could become a `npm run test:ui` script with a seeded test account.
@@ -98,10 +100,6 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
   - `WeekEditor.svelte` and `WeekPicker.svelte`.
   - `parseWeek`/`toWeekRecord`.
   - The draft storage key prefix (`slipside:week-draft:`), which needs a fallback read of the old key.
-- **Phase 6 removals:**
-  - The `settings.week_start_day` column, in a new migration.
-  - `weekStartFor` and `weekDates` in `dates.ts`.
-  - `weekStartDay` in the templates and Settings.
 - **PLAN.md** still describes weeks (screens, data model, phases). Update it to pay periods in Phase 7.
 - **Duplicate-name errors:** `isDuplicateName` treats *any* unique-constraint error as "That name is already in this list". The payslip save catches its own clashes first, but a narrower check by constraint name would be safer.
 - **Line endings:** Git warns "LF will be replaced by CRLF" on every commit. A `.gitattributes` with `* text=auto eol=lf` would make it consistent.
@@ -125,3 +123,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | "Per week" extras are labelled "per payslip" (paid once per period); the stored value stays `per_week`. |
 | 2026-10-10 | Templates stay as starter packs only; named per-payslip "pay patterns" are deferred. |
 | 2026-10-10 | URLs: `/` is the next payslip to fill in, `/?period=<start>` is a payslip, and old `?week=` links redirect. |
+| 2026-10-10 | `settings.week_start_day` removed (migration 0004); existing users default to "Every week". |

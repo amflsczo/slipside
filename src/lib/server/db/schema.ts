@@ -7,7 +7,6 @@ import {
 	numeric,
 	pgEnum,
 	pgTable,
-	smallint,
 	text,
 	timestamp,
 	uniqueIndex
@@ -34,9 +33,6 @@ export const settings = pgTable('settings', {
 	currency: text('currency').notNull(),
 	/** How often the user is usually paid; only suggests dates for a new payslip. */
 	payLength: payLength('pay_length').notNull().default('week'),
-	// 0 = Sunday ... 6 = Saturday (JavaScript's Date.getDay()). Replaced by pay_length; still
-	// read by the This Week page until it moves to pay periods, then dropped.
-	weekStartDay: smallint('week_start_day').notNull().default(1),
 	dateFormat: text('date_format').notNull().default('DD/MM/YYYY'),
 	usualRate: numeric('usual_rate', { precision: 12, scale: 2 }),
 	rateTolerancePct: numeric('rate_tolerance_pct', { precision: 5, scale: 2 }).notNull().default('2')

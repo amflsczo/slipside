@@ -8,10 +8,7 @@ import {
 	formatRange,
 	isIsoDate,
 	shortDate,
-	todayIn,
-	weekDates,
-	weekStartFor,
-	weekdayOf
+	todayIn
 } from './dates.ts';
 
 describe('dates', () => {
@@ -55,28 +52,7 @@ describe('dates', () => {
 		expect(todayIn('Not/AZone', instant)).toBe('2026-10-04');
 	});
 
-	it('finds the start of the pay week for any start day', () => {
-		// 2026-10-08 is a Thursday.
-		expect(weekdayOf('2026-10-08')).toBe(4);
-		expect(weekStartFor('2026-10-08', 1)).toBe('2026-10-05'); // Monday
-		expect(weekStartFor('2026-10-08', 0)).toBe('2026-10-04'); // Sunday
-		expect(weekStartFor('2026-10-08', 4)).toBe('2026-10-08'); // Thursday itself
-		expect(weekStartFor('2026-10-08', 5)).toBe('2026-10-02'); // Friday before
-	});
-
-	it('lists the seven dates of a week', () => {
-		expect(weekDates('2026-12-28')).toEqual([
-			'2026-12-28',
-			'2026-12-29',
-			'2026-12-30',
-			'2026-12-31',
-			'2027-01-01',
-			'2027-01-02',
-			'2027-01-03'
-		]);
-	});
-
-	it('formats week ranges', () => {
+	it('formats date ranges', () => {
 		// Intl puts thin spaces around the dash; compare with plain spaces.
 		const range = (start: string, end: string) => formatRange(start, end).replace(/\s/g, ' ');
 		expect(range('2026-10-05', '2026-10-11')).toBe('Oct 5 – 11, 2026');

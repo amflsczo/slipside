@@ -29,6 +29,13 @@
       "when": 1791618362026,
       "tag": "0003_pay_periods",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791621598862,
+      "tag": "0004_drop_week_start_day",
+      "breakpoints": true
     }
   ]
 }

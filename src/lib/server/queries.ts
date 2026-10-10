@@ -17,6 +17,7 @@ import {
 	payPeriods
 } from './db/schema';
 import type { IsoDate } from '#lib/dates.ts';
+import type { PayLength } from '#lib/period.ts';
 import { TEMPLATES, type ExtraKind, type TemplateId } from '#lib/templates.ts';
 import type { SavedWeek, WeekRecord } from '#lib/week/form.ts';
 
@@ -37,7 +38,7 @@ const listTable = (key: ListKey) => LISTS[key] as unknown as AnyList;
 
 export type GeneralSettings = {
 	currency: string;
-	weekStartDay: number;
+	payLength: PayLength;
 	dateFormat: string;
 	usualRate: string | null;
 	rateTolerancePct: string;

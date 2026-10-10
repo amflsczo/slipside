@@ -13,6 +13,7 @@
 	import SegmentedTabs from '#lib/components/SegmentedTabs.svelte';
 	import ThemePicker from '#lib/components/ThemePicker.svelte';
 	import { feedback } from '#lib/formFeedback.ts';
+	import type { PayLength } from '#lib/period.ts';
 	import { TEMPLATES, TEMPLATE_IDS, type TemplateId } from '#lib/templates.ts';
 	import type { PageProps } from './$types';
 
@@ -34,7 +35,7 @@
 	let template = $state<TemplateId>('blank');
 	let setupValues = $state({
 		currency: '',
-		weekStartDay: 1,
+		payLength: 'week' as PayLength,
 		dateFormat: 'DD/MM/YYYY',
 		usualRate: null as string | null,
 		rateTolerancePct: '2'
@@ -59,7 +60,7 @@
 <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 sm:gap-5">
 	<PageHeader
 		title="Settings"
-		subtitle="Your pay week, currency and the lists you pick from each week."
+		subtitle="How often you're paid, your currency and the lists you pick from on each payslip."
 		icon={SettingsIcon}
 	/>
 
@@ -86,7 +87,11 @@
 				/>
 			</FormSection>
 
-			<FormSection step={2} title="Your pay week" description="How your pay is counted and shown.">
+			<FormSection
+				step={2}
+				title="Your pay"
+				description="How often you're paid and how amounts are shown."
+			>
 				<GeneralFields values={setupValues} showRate={false} />
 			</FormSection>
 

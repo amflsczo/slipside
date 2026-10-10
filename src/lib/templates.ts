@@ -2,12 +2,14 @@
 // everything stays editable and nothing here is used by the calculations.
 // `suggested` values pre-select the setup form and can be changed there.
 
+import type { PayLength } from './period.ts';
+
 export type ExtraKind = 'per_day' | 'per_week';
 
 export interface Template {
 	id: TemplateId;
 	label: string;
-	suggested: { currency?: string; dateFormat?: DateFormat; weekStartDay?: number };
+	suggested: { currency?: string; dateFormat?: DateFormat; payLength?: PayLength };
 	deductions: string[];
 	extras: { name: string; kind: ExtraKind; defaultAmount?: string }[];
 	otRates: { name: string; multiplier: string }[];
@@ -45,7 +47,7 @@ export const TEMPLATES: Record<TemplateId, Template> = {
 	uk: {
 		id: 'uk',
 		label: 'UK',
-		suggested: { currency: 'GBP', dateFormat: 'DD/MM/YYYY', weekStartDay: 1 },
+		suggested: { currency: 'GBP', dateFormat: 'DD/MM/YYYY', payLength: 'week' },
 		deductions: ['Income Tax (PAYE)', 'National Insurance', 'Pension', 'Student Loan'],
 		extras: [
 			{ name: 'Shift allowance', kind: 'per_day' },
@@ -60,7 +62,7 @@ export const TEMPLATES: Record<TemplateId, Template> = {
 	ph: {
 		id: 'ph',
 		label: 'Philippines',
-		suggested: { currency: 'PHP', dateFormat: 'MM/DD/YYYY', weekStartDay: 1 },
+		suggested: { currency: 'PHP', dateFormat: 'MM/DD/YYYY', payLength: 'week' },
 		deductions: ['Withholding Tax', 'SSS', 'PhilHealth', 'Pag-IBIG'],
 		extras: [
 			{ name: 'Meal allowance', kind: 'per_day' },
@@ -76,7 +78,7 @@ export const TEMPLATES: Record<TemplateId, Template> = {
 	us: {
 		id: 'us',
 		label: 'US',
-		suggested: { currency: 'USD', dateFormat: 'MM/DD/YYYY', weekStartDay: 0 },
+		suggested: { currency: 'USD', dateFormat: 'MM/DD/YYYY', payLength: 'week' },
 		deductions: ['Federal Income Tax', 'Social Security', 'Medicare', 'State Income Tax', '401(k)'],
 		extras: [
 			{ name: 'Shift differential', kind: 'per_day' },
@@ -89,13 +91,3 @@ export const TEMPLATES: Record<TemplateId, Template> = {
 		expenseCategories: commonCategories
 	}
 };
-
-export const WEEKDAYS = [
-	'Sunday',
-	'Monday',
-	'Tuesday',
-	'Wednesday',
-	'Thursday',
-	'Friday',
-	'Saturday'
-] as const;

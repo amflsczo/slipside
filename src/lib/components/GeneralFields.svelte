@@ -8,18 +8,35 @@
 </script>
 
 <script lang="ts">
+	import ChoiceGroup from './ChoiceGroup.svelte';
 	import Field from './Field.svelte';
-	import { DATE_FORMATS, WEEKDAYS } from '#lib/templates.ts';
+	import { PAY_LENGTHS, PAY_LENGTH_LABELS, type PayLength } from '#lib/period.ts';
+	import { DATE_FORMATS } from '#lib/templates.ts';
 
 	type Values = {
 		currency: string;
-		weekStartDay: number;
+		payLength: PayLength;
 		dateFormat: string;
 		usualRate: string | null;
 		rateTolerancePct: string;
 	};
 
 	let { values, showRate = true }: { values: Values; showRate?: boolean } = $props();
+
+	const PAY_LENGTH_HINTS: Record<PayLength, string> = {
+		day: 'A payslip for each day',
+		week: 'A payslip every 7 days',
+		fortnight: 'A payslip every 14 days',
+		month: 'A payslip once a month'
+	};
+	const payLengthOptions = PAY_LENGTHS.map((value) => ({
+		value,
+		label: PAY_LENGTH_LABELS[value],
+		description: PAY_LENGTH_HINTS[value]
+	}));
+	// Follows `values` (e.g. a template's suggestion) until the user picks one.
+	let picked = $state<PayLength | null>(null);
+	const payLength = $derived(picked ?? values.payLength);
 </script>
 
 <Field label="Currency" required>
@@ -33,17 +50,21 @@
 	{/snippet}
 </Field>
 
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-	<Field label="Pay week starts on">
-		{#snippet children(id)}
-			<select {id} class="select w-full" name="weekStartDay" value={values.weekStartDay}>
-				{#each WEEKDAYS as day, i (day)}
-					<option value={i}>{day}</option>
-				{/each}
-			</select>
-		{/snippet}
-	</Field>
+<div class="flex flex-col gap-1.5">
+	<ChoiceGroup
+		legend="How often are you usually paid?"
+		name="payLength"
+		options={payLengthOptions}
+		value={payLength}
+		onchange={(value) => (picked = value)}
+		class="grid-cols-2 lg:grid-cols-4"
+	/>
+	<p class="text-xs text-ink-muted">
+		This only suggests the dates for a new payslip. You can change any payslip's dates.
+	</p>
+</div>
 
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
 	<Field label="Date format">
 		{#snippet children(id)}
 			<select {id} class="select w-full" name="dateFormat" value={values.dateFormat}>
@@ -57,7 +78,11 @@
 
 {#if showRate}
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-		<Field label="Usual hourly rate" optional hint="Used to spot weeks where the rate looks off.">
+		<Field
+			label="Usual hourly rate"
+			optional
+			hint="Used to spot payslips where the rate looks off."
+		>
 			{#snippet children(id)}
 				<input
 					{id}
@@ -70,7 +95,7 @@
 				/>
 			{/snippet}
 		</Field>
-		<Field label="Flag weeks that differ by more than">
+		<Field label="Flag payslips that differ by more than">
 			{#snippet children(id)}
 				<label class="input w-full">
 					<input

@@ -3,7 +3,6 @@ import { forUser, isListKey, type GeneralSettings, type ListFields } from '#lib/
 import {
 	FormError,
 	currency,
-	int,
 	money,
 	multiplier,
 	oneOf,
@@ -11,6 +10,7 @@ import {
 	runAction,
 	text
 } from '#lib/server/forms.ts';
+import { PAY_LENGTHS } from '#lib/period.ts';
 import { DATE_FORMATS, TEMPLATE_IDS } from '#lib/templates.ts';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 function generalFields(form: FormData): GeneralSettings {
 	return {
 		currency: currency(form, 'currency'),
-		weekStartDay: int(form, 'weekStartDay', 0, 6),
+		payLength: oneOf(form, 'payLength', PAY_LENGTHS),
 		dateFormat: oneOf(form, 'dateFormat', DATE_FORMATS),
 		usualRate: money(form, 'usualRate', 'usual rate'),
 		rateTolerancePct: percent(form, 'rateTolerancePct', 'tolerance')
