@@ -50,10 +50,10 @@
 		<div class="relative mx-auto my-8 w-full max-w-xs -rotate-3" aria-hidden="true">
 			<div class="drop-shadow-[0_24px_30px_rgb(0_0_0/0.35)]">
 				<div
-					class="rounded-t-2xl px-6 pt-5 pb-9 font-mono text-[0.75rem] text-[#16201b] slip-edge"
+					class="rounded-t-2xl px-6 pt-5 pb-9 font-mono text-xs text-[#16201b] slip-edge"
 					style="background: #fffdf8"
 				>
-					<div class="flex justify-between text-[0.7rem] tracking-[0.2em] uppercase">
+					<div class="flex justify-between text-2xs tracking-[0.2em] uppercase">
 						<span class="font-semibold">Payslip</span><span class="text-[#5f5b52]">Wk 42</span>
 					</div>
 					<div class="my-3 border-t border-dashed border-[#16201b]/25"></div>
@@ -62,7 +62,7 @@
 							<span>{row.name}</span><span class="leader" style="border-color: rgb(22 32 27 / 0.3)"
 							></span><span>{row.amount}</span>
 						</div>
-						<div class="text-[0.65rem] text-[#5f5b52]">{row.detail}</div>
+						<div class="text-2xs text-[#5f5b52]">{row.detail}</div>
 					{/each}
 					<div class="mt-2 flex justify-between border-t border-[#16201b]/25 pt-1.5 font-semibold">
 						<span>Gross</span><span>{SAMPLE.gross}</span>

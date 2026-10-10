@@ -38,16 +38,17 @@
 	/* Payslip lines, like a printed slip. */
 	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-	/* A notch more compact than Tailwind's defaults. */
+	/* Compact type scale. Use these steps everywhere; no one-off text-[…] sizes. */
+	--text-2xs: 0.6875rem; /* 11px — overlines, badges, dock labels only */
 	--text-xs: 0.75rem; /* 12px — never smaller for labels */
-	--text-sm: 0.8125rem; /* 13px — body text */
-	--text-base: 0.9375rem; /* 15px */
-	--text-lg: 1.0625rem; /* 17px */
-	--text-xl: 1.1875rem; /* 19px */
-	--text-2xl: 1.375rem; /* 22px */
-	--text-3xl: 1.625rem; /* 26px */
-	--text-4xl: 2rem; /* 32px */
-	--text-5xl: 2.5rem; /* 40px — the net pay figure */
+	--text-sm: 0.78125rem; /* 12.5px — body text */
+	--text-base: 0.875rem; /* 14px */
+	--text-lg: 0.9375rem; /* 15px */
+	--text-xl: 1.0625rem; /* 17px */
+	--text-2xl: 1.1875rem; /* 19px */
+	--text-3xl: 1.375rem; /* 22px */
+	--text-4xl: 1.6875rem; /* 27px */
+	--text-5xl: 2.125rem; /* 34px — the net pay figure */
 
 	/* Dialog entry: fade + rise (ConfirmDialog). */
 	--animate-dialog-in: dialog-in 160ms ease-out;
@@ -59,17 +60,16 @@
 	}
 }
 
-/* Phones: one notch smaller to fit more; body stays 13px, labels keep 12px. */
+/* Phones: the larger steps shrink a little more; body and labels stay the same. */
 @media (max-width: 639px) {
 	:root {
-		--text-sm: 0.8125rem;
-		--text-base: 0.875rem;
-		--text-lg: 1rem;
-		--text-xl: 1.125rem;
-		--text-2xl: 1.25rem;
-		--text-3xl: 1.375rem;
-		--text-4xl: 1.75rem;
-		--text-5xl: 2.125rem;
+		--text-base: 0.84375rem; /* 13.5px */
+		--text-lg: 0.90625rem; /* 14.5px */
+		--text-xl: 1rem; /* 16px */
+		--text-2xl: 1.125rem; /* 18px */
+		--text-3xl: 1.25rem; /* 20px */
+		--text-4xl: 1.5rem; /* 24px */
+		--text-5xl: 1.875rem; /* 30px */
 	}
 }
 
@@ -142,6 +142,25 @@
 	:focus-visible {
 		outline: 2px solid var(--color-sidebar-active);
 		outline-offset: 2px;
+	}
+	/* Anything you can click or tap shows the hand cursor; disabled controls don't. */
+	:is(
+		button,
+		[role='button'],
+		[role='tab'],
+		[role='menuitem'],
+		summary,
+		select,
+		label:has(> input:is([type='checkbox'], [type='radio'])),
+		input:is([type='checkbox'], [type='radio'], [type='submit'], [type='button'])
+	):not(:disabled, [aria-disabled='true']) {
+		cursor: pointer;
+	}
+	input[type='date']::-webkit-calendar-picker-indicator {
+		cursor: pointer;
+	}
+	:is(button, select, input):disabled {
+		cursor: default;
 	}
 }
 

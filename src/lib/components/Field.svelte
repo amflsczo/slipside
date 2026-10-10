@@ -28,7 +28,7 @@
 
 <div class="flex flex-col gap-1.5">
 	<div class="flex items-baseline justify-between gap-2">
-		<label for={id} class="text-[0.8rem] font-medium text-ink">
+		<label for={id} class="text-xs font-medium text-ink">
 			{label}{#if required}<span class="ml-0.5 text-error" aria-hidden="true">*</span>{/if}
 		</label>
 		{#if optional}<span class="text-xs text-ink-muted">Optional</span>{/if}

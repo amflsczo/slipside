@@ -32,7 +32,7 @@
 
 <div class="min-w-0">
 	<p
-		class="flex items-center gap-1.5 font-mono text-[0.7rem] font-medium tracking-wider text-ink-muted uppercase"
+		class="flex items-center gap-1.5 font-mono text-2xs font-medium tracking-wider text-ink-muted uppercase"
 	>
 		{#if Icon}<Icon size={13} class={cn('shrink-0', TONES[tone])} aria-hidden="true" />{/if}
 		<span class="truncate">{label}</span>

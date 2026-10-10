@@ -36,14 +36,14 @@
 
 	const PLACEHOLDER = ['Regular pay', 'Overtime', 'Gross pay', 'Deductions', 'Net pay'];
 	const sectionLabel =
-		'pb-1 font-sans text-[0.7rem] font-semibold tracking-wider text-ink-muted uppercase';
+		'pb-1 font-sans text-2xs font-semibold tracking-wider text-ink-muted uppercase';
 </script>
 
 {#snippet line(name: string, amount: string, detail?: string, negative = false)}
 	<div class="flex items-baseline gap-2 py-1">
 		<dt class="min-w-0">
 			{name}
-			{#if detail}<span class="block text-[0.7rem] text-ink-muted">{detail}</span>{/if}
+			{#if detail}<span class="block text-2xs text-ink-muted">{detail}</span>{/if}
 		</dt>
 		<dd class="flex min-w-0 flex-1 items-baseline gap-2">
 			<span class="leader" aria-hidden="true"></span>
@@ -66,7 +66,7 @@
 				{#if period}<p class="mt-0.5 text-xs text-ink-muted tabular-nums">{period}</p>{/if}
 			</div>
 			<span
-				class="flex shrink-0 items-center gap-1.5 rounded-full bg-sidebar-active/10 px-2.5 py-1 text-[0.7rem] font-semibold text-sidebar-active"
+				class="flex shrink-0 items-center gap-1.5 rounded-full bg-sidebar-active/10 px-2.5 py-1 text-2xs font-semibold text-sidebar-active"
 			>
 				<span class="size-1.5 rounded-full bg-sidebar-active" aria-hidden="true"></span>
 				Updates as you type
@@ -77,7 +77,7 @@
 
 		{#if !payslip}
 			<dl
-				class="flex flex-col gap-1 font-mono text-[0.8rem] text-ink-muted opacity-60"
+				class="flex flex-col gap-1 font-mono text-xs text-ink-muted opacity-60"
 				aria-hidden="true"
 			>
 				{#each PLACEHOLDER as name (name)}
@@ -89,9 +89,7 @@
 			</dl>
 			<p class="mt-5 text-center text-sm text-ink-muted">{emptyMessage}</p>
 		{:else}
-			<p class="font-mono text-[0.7rem] font-medium tracking-wider text-ink-muted uppercase">
-				Net pay
-			</p>
+			<p class="font-mono text-2xs font-medium tracking-wider text-ink-muted uppercase">Net pay</p>
 			<p class="mt-1 truncate font-display text-5xl leading-none font-semibold text-ink">
 				{money(payslip.net)}
 			</p>
@@ -142,7 +140,7 @@
 				{/if}
 			</div>
 
-			<dl class="mt-5 font-mono text-[0.8rem] text-ink tabular-nums">
+			<dl class="mt-5 font-mono text-xs text-ink tabular-nums">
 				<div class={sectionLabel}>Earnings</div>
 				{#if payslip.regularPay !== null && payslip.hourlyRate !== null}
 					{@render line(

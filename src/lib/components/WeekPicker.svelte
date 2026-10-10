@@ -59,8 +59,7 @@
 					aria-hidden="true"
 				/>
 			</span>
-			<span
-				class="block font-mono text-[0.7rem] font-medium tracking-wider text-ink-muted uppercase"
+			<span class="block font-mono text-2xs font-medium tracking-wider text-ink-muted uppercase"
 				>{detail}</span
 			>
 		</button>

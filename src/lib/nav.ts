@@ -20,8 +20,7 @@ export const NAV: NavItem[] = [
 	{ href: '/history', label: 'History', icon: ChartLine, primary: true, group: 'main' },
 	{ href: '/expenses', label: 'Expenses', icon: Wallet, primary: true, group: 'main' },
 	{ href: '/settings', label: 'Settings', icon: Settings, primary: true, group: 'more' },
-	// Not in the phone dock; phones reach it from the account menu.
-	{ href: '/help', label: 'Help', icon: CircleHelp, primary: false, group: 'more' }
+	{ href: '/help', label: 'Help', icon: CircleHelp, primary: true, group: 'more' }
 ];
 
 export const isActive = (href: string, pathname: string) =>

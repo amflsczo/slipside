@@ -139,7 +139,7 @@
 						<div class="{railOnly} mx-3 my-3 border-t border-sidebar-border" role="none"></div>
 					{/if}
 					<p
-						class="{wideOnly} mb-1 px-3 font-mono text-[0.7rem] font-medium tracking-widest text-sidebar-muted uppercase {group.id !==
+						class="{wideOnly} mb-1 px-3 font-mono text-2xs font-medium tracking-widest text-sidebar-muted uppercase {group.id !==
 						'main'
 							? 'mt-5'
 							: ''}"
@@ -291,7 +291,7 @@
 					href={item.href}
 					aria-current={current ? 'page' : undefined}
 					class={cn(
-						'relative flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-[1.35rem] text-[0.7rem] font-semibold transition-colors duration-200',
+						'relative flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-[1.35rem] text-2xs font-semibold transition-colors duration-200',
 						current ? 'text-sidebar' : 'text-sidebar-muted active:text-sidebar-ink'
 					)}
 				>

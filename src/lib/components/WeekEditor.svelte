@@ -411,7 +411,7 @@
 						<!-- Columns follow the period's first week, so the weekdays are the same down each one. -->
 						{#each form.days.slice(0, 7) as day (day.date)}
 							<span
-								class="text-center text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase"
+								class="text-center text-2xs font-semibold tracking-wide text-ink-muted uppercase"
 								aria-hidden="true">{dayLabel(day.date).weekday}</span
 							>
 						{/each}
@@ -531,7 +531,7 @@
 								</span>
 							{/if}
 							{#if amount}
-								<span class="shrink-0 font-mono text-[0.8rem] font-semibold text-ink tabular-nums"
+								<span class="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums"
 									>= {amount}</span
 								>
 							{/if}

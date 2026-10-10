@@ -43,7 +43,7 @@
 	<div class="min-w-0 flex-1">
 		{#if eyebrow !== undefined}
 			<p
-				class="mb-1 min-h-4 font-mono text-[0.7rem] font-medium tracking-wider text-ink-muted uppercase"
+				class="mb-1 min-h-4 font-mono text-2xs font-medium tracking-wider text-ink-muted uppercase"
 			>
 				{eyebrow}
 			</p>

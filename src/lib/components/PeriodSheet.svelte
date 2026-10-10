@@ -139,7 +139,7 @@
 
 		<div class="grid grid-cols-2 gap-3">
 			<label class="flex min-w-0 flex-col gap-1.5">
-				<span class="text-[0.8rem] font-medium">Start</span>
+				<span class="text-xs font-medium">Start</span>
 				<input
 					type="date"
 					class="input w-full"
@@ -150,7 +150,7 @@
 				/>
 			</label>
 			<label class="flex min-w-0 flex-col gap-1.5">
-				<span class="text-[0.8rem] font-medium">End</span>
+				<span class="text-xs font-medium">End</span>
 				<input
 					type="date"
 					class="input w-full"

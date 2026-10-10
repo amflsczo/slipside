@@ -75,14 +75,15 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 @plugin 'daisyui';
 
 @theme {
-	--color-sidebar: #fffdf8;
-	--color-sidebar-hover: color-mix(in oklch, #f3efe5 85%, var(--color-sidebar-active) 15%);
+	/* The sidebar and phone dock are a dark "ledger spine" in both themes. */
+	--color-sidebar: var(--color-ledger);
+	--color-sidebar-hover: color-mix(in oklch, var(--color-ledger) 88%, #f1ede3 12%);
 	--color-sidebar-active: #1f6b4f; /* banknote green */
 	--color-sidebar-active-ink: #ffffff;
-	--color-sidebar-muted: #67635a;
-	--color-sidebar-border: color-mix(in oklch, #e6e0d2 90%, var(--color-sidebar-active) 10%);
+	--color-sidebar-muted: #a3a59b; /* ≥ 4.5:1 on the sidebar */
+	--color-sidebar-border: color-mix(in oklch, var(--color-ledger) 82%, #f1ede3 18%);
 	--color-ledger: #16201b; /* near-black green: dark panels and the strong button */
-	--color-sidebar-ink: var(--color-ledger);
+	--color-sidebar-ink: #f6f2e8;
 	--color-surface: #f1ede3; /* warm paper canvas */
 	--color-ink: var(--color-ledger);
 	--color-ink-muted: #5f5b52; /* ≥ 4.5:1 on the canvas and on cards */
@@ -102,16 +103,17 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 	/* Payslip lines, like a printed slip. */
 	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-	/* A notch more compact than Tailwind's defaults. */
+	/* Compact type scale. Use these steps everywhere; no one-off text-[…] sizes. */
+	--text-2xs: 0.6875rem; /* 11px — overlines, badges, dock labels only */
 	--text-xs: 0.75rem; /* 12px — never smaller for labels */
-	--text-sm: 0.8125rem; /* 13px — body text */
-	--text-base: 0.9375rem; /* 15px */
-	--text-lg: 1.0625rem; /* 17px */
-	--text-xl: 1.1875rem; /* 19px */
-	--text-2xl: 1.375rem; /* 22px */
-	--text-3xl: 1.625rem; /* 26px */
-	--text-4xl: 2rem; /* 32px */
-	--text-5xl: 2.5rem; /* 40px — the net pay figure */
+	--text-sm: 0.78125rem; /* 12.5px — body text */
+	--text-base: 0.875rem; /* 14px */
+	--text-lg: 0.9375rem; /* 15px */
+	--text-xl: 1.0625rem; /* 17px */
+	--text-2xl: 1.1875rem; /* 19px */
+	--text-3xl: 1.375rem; /* 22px */
+	--text-4xl: 1.6875rem; /* 27px */
+	--text-5xl: 2.125rem; /* 34px — the net pay figure */
 
 	/* Dialog entry: fade + rise (ConfirmDialog). */
 	--animate-dialog-in: dialog-in 160ms ease-out;
@@ -123,17 +125,16 @@ Paste this into your global stylesheet (`layout.css` / `app.css`):
 	}
 }
 
-/* Phones: one notch smaller to fit more; body stays 13px, labels keep 12px. */
+/* Phones: the larger steps shrink a little more; body and labels stay the same. */
 @media (max-width: 639px) {
 	:root {
-		--text-sm: 0.8125rem;
-		--text-base: 0.875rem;
-		--text-lg: 1rem;
-		--text-xl: 1.125rem;
-		--text-2xl: 1.25rem;
-		--text-3xl: 1.375rem;
-		--text-4xl: 1.75rem;
-		--text-5xl: 2.125rem;
+		--text-base: 0.84375rem; /* 13.5px */
+		--text-lg: 0.90625rem; /* 14.5px */
+		--text-xl: 1rem; /* 16px */
+		--text-2xl: 1.125rem; /* 18px */
+		--text-3xl: 1.25rem; /* 20px */
+		--text-4xl: 1.5rem; /* 24px */
+		--text-5xl: 1.875rem; /* 30px */
 	}
 }
 
@@ -344,14 +345,16 @@ const KIND_TINTS = {
 | Form step title | `font-display text-lg font-semibold leading-tight`, numbered `01`, `02`… in `font-mono text-xs text-sidebar-active` |
 | Body | `text-sm text-ink` |
 | Secondary | `text-xs text-ink-muted` or `text-sm text-ink-muted` |
-| Field label | `text-[0.8rem] font-medium` |
-| Eyebrow / overline | `font-mono text-[0.7rem] font-medium uppercase tracking-wider text-ink-muted` |
+| Field label | `text-xs font-medium` |
+| Eyebrow / overline | `font-mono text-2xs font-medium uppercase tracking-wider text-ink-muted` |
 | Big number | `font-display text-5xl font-semibold leading-none` (net pay), `font-display text-lg font-semibold` (stat tiles) |
-| Payslip lines | `font-mono text-[0.8rem] tabular-nums`, `label <span class="leader"> amount` |
+| Payslip lines | `font-mono text-xs tabular-nums`, `label <span class="leader"> amount` |
 | Numbers in tables/facts | add `tabular-nums` |
 
 Rules:
-- Labels never go below 12px (`text-xs`), except overlines and badges.
+- Labels never go below 12px (`text-xs`), except overlines, badges and dock labels (`text-2xs`, 11px).
+- **Use only the scale** (`text-2xs` … `text-5xl`). No one-off `text-[…]` sizes, so every page matches.
+- **Clickable things show the hand cursor.** A base rule in `layout.css` covers buttons, tabs, menu items, `summary`, `select`, checkbox and radio labels; disabled controls keep the arrow.
 - On phones, form inputs use **16px** text, so iOS doesn't zoom in when a field is tapped.
 - Long user text that keeps its line breaks uses `whitespace-pre-line`. Anything that might overflow uses `break-words` / `truncate` / `line-clamp-*` with `min-w-0` on the flex child.
 
@@ -400,7 +403,7 @@ Phones (< md)              Tablets (md)            Desktops (lg+)
   - Active: a paper pill, `bg-sidebar-ink text-sidebar font-semibold`, with a small green dot on the right in the wide mode.
   - Inactive: `text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink`.
 - **Top bar (phones only):** `sticky top-0 h-14 px-4 pt-safe md:hidden`. It holds the brand, the theme toggle and the account menu. It slides away (`-translate-y-full`) while you scroll down past 72px, and comes back when you scroll up or while it has focus. Once scrolled it frosts: `bg-surface/80 backdrop-blur-md`.
-- **Dock (phones only):** a dark floating bar, `fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] max-w-md rounded-[1.75rem] bg-sidebar p-1.5`. It holds the 4–5 "primary" items, each an icon over a label (`text-[0.7rem] font-semibold`). A paper pill (`bg-sidebar-ink`) slides to the current tab with a slight overshoot.
+- **Dock (phones only):** a dark floating bar, `fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] max-w-md rounded-[1.75rem] bg-sidebar p-1.5`. It holds the 4–5 "primary" items, each an icon over a label (`text-2xs font-semibold`). A paper pill (`bg-sidebar-ink`) slides to the current tab with a slight overshoot.
 - **Main:** `px-4 pt-2 pb-32 sm:px-6 md:pt-6 md:pb-10 lg:px-10 lg:pt-8`. The bottom padding on phones keeps content clear of the dock. Sticky action bars sit at `bottom-[calc(5.5rem+env(safe-area-inset-bottom))]` on phones and `md:bottom-4` from md up.
 - **Single nav source:** one `navItems` array (label, href, icon, `visible(user)`, `primary`, `group`) drives the side nav, the bottom nav, and the rule for which pages show a back arrow.
 - **Print:** the shell hides itself with `print:hidden!`, and `<main>` drops its padding with `print:p-0!`.

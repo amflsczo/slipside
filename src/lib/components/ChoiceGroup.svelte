@@ -24,9 +24,7 @@
 </script>
 
 <fieldset>
-	<legend class={hideLegend ? 'sr-only' : 'mb-1.5 text-[0.8rem] font-medium text-ink'}
-		>{legend}</legend
-	>
+	<legend class={hideLegend ? 'sr-only' : 'mb-1.5 text-xs font-medium text-ink'}>{legend}</legend>
 	<div class={cn('grid grid-cols-1 gap-2 sm:grid-cols-2', className)}>
 		{#each options as option (option.value)}
 			{@const selected = option.value === value}

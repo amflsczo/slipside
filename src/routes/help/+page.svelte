@@ -283,7 +283,7 @@
 	<div class="grid gap-4 sm:gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
 		<!-- Phones and tablets: the phone's own picker, grouped like the list. -->
 		<div class="form-surface flex flex-col gap-1.5 lg:hidden">
-			<label for="{uid}-topic" class="text-[0.8rem] font-medium text-ink">Topic</label>
+			<label for="{uid}-topic" class="text-xs font-medium text-ink">Topic</label>
 			<select
 				id="{uid}-topic"
 				class="select w-full"
@@ -310,7 +310,7 @@
 		>
 			{#each GROUPS as group (group)}
 				<p
-					class="px-3 pt-2 pb-1 font-mono text-[0.7rem] font-medium tracking-widest text-ink-muted uppercase first:pt-1"
+					class="px-3 pt-2 pb-1 font-mono text-2xs font-medium tracking-widest text-ink-muted uppercase first:pt-1"
 					aria-hidden="true"
 				>
 					{group}
@@ -356,7 +356,7 @@
 				</span>
 				<div class="min-w-0">
 					{#if guideIndex >= 0}
-						<p class="font-mono text-[0.7rem] font-medium tracking-wider text-ink-muted uppercase">
+						<p class="font-mono text-2xs font-medium tracking-wider text-ink-muted uppercase">
 							Guide {guideIndex + 1} of {guides.length}
 						</p>
 					{/if}
@@ -370,7 +370,7 @@
 			{#if topic.steps}
 				<ol class="flex flex-col gap-3.5">
 					{#each topic.steps as step, i (i)}
-						<li class="flex gap-3 text-[0.95rem] leading-relaxed text-ink-muted">
+						<li class="flex gap-3 text-sm leading-relaxed text-ink-muted">
 							<span
 								class="grid size-7 shrink-0 place-items-center rounded-full bg-sidebar-active text-xs font-bold text-sidebar-active-ink"
 								aria-hidden="true">{i + 1}</span
@@ -384,7 +384,7 @@
 			{#if topic.bullets}
 				<ul class="flex flex-col gap-3">
 					{#each topic.bullets as item, i (i)}
-						<li class="flex gap-3 text-[0.95rem] leading-relaxed text-ink-muted">
+						<li class="flex gap-3 text-sm leading-relaxed text-ink-muted">
 							<span
 								class="mt-2.5 size-1.5 shrink-0 rounded-full bg-sidebar-active"
 								aria-hidden="true"
@@ -400,7 +400,7 @@
 					{#each topic.faq as item, i (i)}
 						<details class="group">
 							<summary
-								class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-[0.95rem] font-semibold text-ink [&::-webkit-details-marker]:hidden"
+								class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden"
 							>
 								{item.q}
 								<ChevronDown
@@ -409,7 +409,7 @@
 									aria-hidden="true"
 								/>
 							</summary>
-							<p class="pb-4 text-[0.95rem] leading-relaxed text-ink-muted">{@html rich(item.a)}</p>
+							<p class="pb-4 text-sm leading-relaxed text-ink-muted">{@html rich(item.a)}</p>
 						</details>
 					{/each}
 				</div>
