@@ -31,8 +31,8 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 | Phase | What | Status |
 |---|---|---|
 | H1 | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid | ✅ Committed |
-| H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ⏳ Next |
-| H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ⏳ |
+| H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ✅ Committed |
+| H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ⏳ Next |
 | H4 | Year summary tiles; a hand-drawn SVG chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ⏳ |
 | H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ⏳ |
 

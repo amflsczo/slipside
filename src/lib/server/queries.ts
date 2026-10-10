@@ -258,6 +258,80 @@ export function forUser(userId: string) {
 			return rows.length > 0;
 		},
 
+		/**
+		 * Everything History needs for one year, in one round trip. A payslip counts on the day
+		 * it was paid (its end date when no pay date was given). Only the summary table is read
+		 * for the list; the per-item totals are added up in the database.
+		 */
+		async loadHistory(year: number) {
+			const paidOn = sql<string>`coalesce(${payPeriods.payDate}, ${payPeriods.periodEnd})`;
+			const from = `${year}-01-01`;
+			const to = `${year}-12-31`;
+			const mine = eq(payPeriods.userId, userId);
+			const inYear = and(mine, sql`${paidOn} between ${from} and ${to}`);
+			const summary = {
+				start: payPeriods.periodStart,
+				end: payPeriods.periodEnd,
+				payDate: payPeriods.payDate,
+				currency: payPeriods.currency,
+				netPay: payPeriods.netPay,
+				grossPay: payPeriods.grossPay,
+				totalDeductions: payPeriods.totalDeductions,
+				extrasTotal: payPeriods.extrasTotal,
+				payFromHours: payPeriods.payFromHours,
+				regularHours: payPeriods.regularHours,
+				otHours: payPeriods.otHours,
+				hourlyRate: payPeriods.hourlyRate
+			};
+			// Totals per item, grouped by name ignoring case and stray spaces.
+			const itemTotals = (table: typeof payPeriodDeductions | typeof payPeriodExtras) =>
+				db
+					.select({
+						name: sql<string>`min(${table.name})`,
+						currency: payPeriods.currency,
+						total: sql<string>`sum(${table.amount})::text`,
+						count: sql<number>`count(*)::int`
+					})
+					.from(table)
+					.innerJoin(payPeriods, eq(table.periodId, payPeriods.id))
+					.where(inYear)
+					.groupBy(payPeriods.currency, sql`lower(trim(${table.name}))`);
+
+			const [[general], records, before, years, deductionTotals, extraTotals] = await db.batch([
+				db
+					.select({
+						currency: settings.currency,
+						usualRate: settings.usualRate,
+						rateTolerancePct: settings.rateTolerancePct
+					})
+					.from(settings)
+					.where(eq(settings.userId, userId))
+					.limit(1),
+				db.select(summary).from(payPeriods).where(inYear),
+				// The last payslip before the year, per currency, so January's first has a comparison.
+				db
+					.selectDistinctOn([payPeriods.currency], summary)
+					.from(payPeriods)
+					.where(and(mine, sql`${paidOn} < ${from}`))
+					.orderBy(payPeriods.currency, sql`${paidOn} desc`, sql`${payPeriods.periodStart} desc`),
+				db
+					.selectDistinct({ year: sql<number>`extract(year from ${paidOn})::int` })
+					.from(payPeriods)
+					.where(mine),
+				itemTotals(payPeriodDeductions),
+				itemTotals(payPeriodExtras)
+			]);
+
+			return {
+				general: general ?? null,
+				records,
+				before,
+				years: years.map((y) => Number(y.year)).sort((a, b) => b - a),
+				deductionTotals,
+				extraTotals
+			};
+		},
+
 		/** Everything the Settings screen needs, in one round trip. */
 		async loadSettingsPage() {
 			const [[general], deductions, extras, ot, categories] = await db.batch([
