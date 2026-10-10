@@ -14,6 +14,7 @@
 		payslip,
 		currency,
 		period,
+		paidOn,
 		fileName = 'payslip',
 		emptyMessage,
 		usualRate,
@@ -24,6 +25,8 @@
 		currency: string;
 		/** The pay period, e.g. "Oct 14 – 20, 2026". */
 		period?: string;
+		/** When it was paid, e.g. "Oct 22"; left out when not set. */
+		paidOn?: string;
 		/** For the saved image, without the extension, e.g. "payslip-2026-10-04". */
 		fileName?: string;
 		/** Why there's no payslip yet. */
@@ -153,7 +156,9 @@
 				>
 					Payslip
 				</h2>
-				{#if period}<p class="mt-0.5 text-xs text-ink-muted tabular-nums">{period}</p>{/if}
+				{#if period}<p class="mt-0.5 text-xs text-ink-muted tabular-nums">
+						{period}{#if paidOn}{` · paid ${paidOn}`}{/if}
+					</p>{/if}
 			</div>
 			{#if payslip}
 				<button

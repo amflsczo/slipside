@@ -19,7 +19,7 @@
 	import PeriodSheet from './PeriodSheet.svelte';
 	import PeriodPicker from './PeriodPicker.svelte';
 	import { reversePayslip } from '#lib/calc/reversePayslip.ts';
-	import { dayLabel, formatRange, type IsoDate } from '#lib/dates.ts';
+	import { dayLabel, formatRange, shortDate, type IsoDate } from '#lib/dates.ts';
 	import type { Period } from '#lib/period.ts';
 	import { periodHref } from '#lib/periodNav.ts';
 	import { currencySymbol, formatMoney, minorDigits, toMinor } from '#lib/format/money.ts';
@@ -369,6 +369,24 @@
 						/>
 					</div>
 					{@render fieldError(err('net'))}
+					<!-- When the money arrived; History counts the payslip in that month. -->
+					<div class="{row} mt-2.5">
+						<label for="{uid}-paid" class="text-sm text-ink">
+							Paid on
+							<span class="block text-xs text-ink-muted">
+								Optional · blank means {shortDate(form.end)}
+							</span>
+						</label>
+						<input
+							id="{uid}-paid"
+							type="date"
+							class="input h-9 w-full"
+							min={form.start}
+							bind:value={form.payDate}
+							aria-invalid={!!err('payDate') || undefined}
+						/>
+					</div>
+					{@render fieldError(err('payDate'))}
 				</section>
 
 				<section class={section} aria-labelledby="{uid}-ded-h">
@@ -672,6 +690,7 @@
 				{payslip}
 				{currency}
 				period={formatRange(form.start, form.end)}
+				paidOn={form.payDate ? shortDate(form.payDate) : undefined}
 				fileName="payslip-{form.start}"
 				{emptyMessage}
 				{usualRate}

@@ -202,6 +202,7 @@ export function forUser(userId: string) {
 			return {
 				currency: period.currency,
 				netPay: period.netPay,
+				payDate: period.payDate,
 				notes: period.notes,
 				updatedAt: period.updatedAt.toISOString(),
 				days,

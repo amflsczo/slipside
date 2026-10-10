@@ -25,6 +25,7 @@ const types: PayslipTypes = {
 const saved: SavedPayslip = {
 	currency: 'GBP',
 	netPay: '500.00',
+	payDate: null,
 	notes: 'Covered for Sam',
 	updatedAt: '2026-10-08T10:00:00.000Z',
 	days: [
@@ -206,6 +207,7 @@ describe('toPayslipRecord', () => {
 			regularHours: '40.00',
 			otHours: '4.00',
 			hourlyRate: '12.8261',
+			payDate: null,
 			notes: null
 		});
 		expect(record.days).toHaveLength(7);
@@ -409,5 +411,57 @@ describe('changing a payslip’s dates', () => {
 			{ date: '2026-10-05', hours: '8' },
 			{ date: '2026-10-06', hours: '6' }
 		]);
+	});
+});
+
+describe('the "Paid on" date', () => {
+	const filled = (payDate: string) => {
+		const form = buildForm(WEEK, 'GBP', types, null);
+		form.net = '100';
+		form.payDate = payDate;
+		return form;
+	};
+
+	it('is blank on a new payslip and comes back from a saved one', () => {
+		expect(buildForm(WEEK, 'GBP', types, null).payDate).toBe('');
+		expect(buildForm(WEEK, 'GBP', types, { ...saved, payDate: '2026-10-14' }).payDate).toBe(
+			'2026-10-14'
+		);
+	});
+
+	it('is optional: blank is saved as null (the end date stands in)', () => {
+		const result = parsePayslip(filled(''));
+		expect(result.ok && result.value.payDate).toBeNull();
+	});
+
+	it('can be any real date from the start onwards, even after the end', () => {
+		for (const date of ['2026-10-05', '2026-10-11', '2026-10-16']) {
+			const result = parsePayslip(filled(date));
+			expect(result.ok && result.value.payDate).toBe(date);
+		}
+	});
+
+	it('rejects a date before the start, or not a date', () => {
+		const early = parsePayslip(filled('2026-10-04'));
+		expect(!early.ok && early.errors.payDate).toBe(
+			'The pay date can’t be before the payslip starts.'
+		);
+		const junk = parsePayslip(filled('soon'));
+		expect(!junk.ok && junk.errors.payDate).toBe('Pick a date, or leave it blank.');
+	});
+
+	it('is stored on the record', () => {
+		const result = parsePayslip(filled('2026-10-14'));
+		if (!result.ok) throw new Error('expected a valid payslip');
+		const record = toPayslipRecord(result.value, reversePayslip(toInput(result.value)));
+		expect(record.summary.payDate).toBe('2026-10-14');
+	});
+
+	it('survives a draft, and older drafts without it still load', () => {
+		const base = buildForm(WEEK, 'GBP', types, { ...saved, payDate: '2026-10-14' });
+		const typed = { ...base, payDate: '2026-10-15' };
+		expect(mergeDraft(base, typed).payDate).toBe('2026-10-15');
+		const { payDate: _unused, ...old } = typed;
+		expect(mergeDraft(base, old as typeof typed).payDate).toBe('2026-10-14');
 	});
 });

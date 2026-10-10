@@ -3,13 +3,15 @@
 // parsePayslip: what the form holds (untrusted on the server) → clean numbers, or field errors.
 // toPayslipRecord: parsed payslip + calculation → rows for the database.
 import type { ExtraKind, Payslip, PayslipInput } from '#lib/calc/reversePayslip.ts';
-import type { IsoDate } from '#lib/dates.ts';
+import { isIsoDate, type IsoDate } from '#lib/dates.ts';
 import { PERIOD_MESSAGES, checkPeriod, dayCount, periodDates, type Period } from '#lib/period.ts';
 import { fromMinor, minorDigits, toMinor } from '#lib/format/money.ts';
 
 export type SavedPayslip = {
 	currency: string;
 	netPay: string;
+	/** null: the end date stands in for it. */
+	payDate: string | null;
 	notes: string | null;
 	updatedAt: string;
 	days: { date: IsoDate; hours: string }[];
@@ -31,6 +33,8 @@ export type PayslipForm = {
 	end: IsoDate;
 	currency: string;
 	net: string;
+	/** "Paid on"; blank means the end date. */
+	payDate: string;
 	/** custom: a one-off row the user added, so its name is editable and it can be removed. */
 	deductions: { name: string; amount: string; custom: boolean }[];
 	days: { date: IsoDate; hours: string }[];
@@ -75,6 +79,7 @@ export function buildForm(
 		end: period.end,
 		currency,
 		net: saved ? amount(saved.netPay) : '',
+		payDate: saved?.payDate ?? '',
 		deductions: [
 			...savedDeductions.map((d) => ({ name: d.name, amount: amount(d.amount), custom: false })),
 			...notIn(types.deductions, savedDeductions).map((t) => ({
@@ -157,6 +162,7 @@ export function mergeDraft(base: PayslipForm, draft: PayslipForm): PayslipForm {
 		start: period.start,
 		end: period.end,
 		net: draft.net,
+		payDate: draft.payDate ?? base.payDate,
 		notes: draft.notes,
 		deductions: [
 			...base.deductions
@@ -203,6 +209,8 @@ export type ParsedPayslip = {
 	end: IsoDate;
 	currency: string;
 	digits: number;
+	/** The day it was paid; null when left blank (the end date stands in). */
+	payDate: IsoDate | null;
 	notes: string | null;
 	net: number;
 	/** Only rows with an amount. */
@@ -357,6 +365,14 @@ export function parsePayslip(
 		return [{ name: rowName, kind: kind as ExtraKind, unitAmount, quantity }];
 	});
 
+	// Optional; when given, a real date no earlier than the start (paid after, or on, the work).
+	const payDate = str(field(raw, 'payDate'));
+	if (payDate && (!isIsoDate(payDate) || (!problem && payDate < start))) {
+		errors.payDate = isIsoDate(payDate)
+			? 'The pay date can’t be before the payslip starts.'
+			: 'Pick a date, or leave it blank.';
+	}
+
 	const notes = str(field(raw, 'notes'));
 	if (notes.length > MAX_NOTES) errors.notes = `Keep notes under ${MAX_NOTES} characters.`;
 
@@ -368,6 +384,7 @@ export function parsePayslip(
 			end,
 			currency,
 			digits,
+			payDate: payDate || null,
 			notes: notes || null,
 			net: net!,
 			deductions,
@@ -404,6 +421,7 @@ export function toPayslipRecord(p: ParsedPayslip, payslip: Payslip) {
 			// Stored in major units per hour, unrounded to 4 places.
 			hourlyRate:
 				payslip.hourlyRate === null ? null : (payslip.hourlyRate / 10 ** p.digits).toFixed(4),
+			payDate: p.payDate,
 			notes: p.notes
 		},
 		days: p.days.map((d) => ({ date: d.date, hours: d.hours.toFixed(2) })),

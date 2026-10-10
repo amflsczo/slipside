@@ -56,7 +56,7 @@
 			group: 'Guides',
 			summary: 'Copy the numbers from your payslip and see where your pay comes from.',
 			steps: [
-				'**Net pay**: type the take-home amount from your payslip.',
+				'**Net pay**: type the take-home amount from your payslip. **Paid on** is optional: the day the money arrived (History counts the payslip in that month).',
 				'**Deductions**: type each deduction on your payslip. Leave blank any you didn’t have.',
 				'**Hours**: type your regular hours for each day.',
 				'**Overtime**: type the hours at each overtime rate.',
