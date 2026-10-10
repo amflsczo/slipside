@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '$app/forms';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import Plus from '@lucide/svelte/icons/plus';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
 	import Trash from '@lucide/svelte/icons/trash';
@@ -12,8 +13,6 @@
 	import Button from './Button.svelte';
 	import Callout from './Callout.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
-	import Field from './Field.svelte';
-	import FormSection from './FormSection.svelte';
 	import NumberInput from './NumberInput.svelte';
 	import PayslipPanel from './PayslipPanel.svelte';
 	import PeriodSheet from './PeriodSheet.svelte';
@@ -268,9 +267,46 @@
 			hour: 'numeric',
 			minute: '2-digit'
 		});
+	/** Periods over a week show the hours as a calendar of week rows. */
+	const calendar = $derived(form.days.length > 7);
+
+	/** The deductions typed so far, for the section heading. */
+	const deductionTotal = $derived(
+		form.deductions.reduce(
+			(total, d) => total + (toMinor(d.amount.replace(/[\s,]/g, ''), digits) ?? 0),
+			0
+		)
+	);
+
+	// Notes stay a one-line "+ Add a note" until opened (or already written).
+	let noteOpen = $state(false);
+	async function openNote() {
+		noteOpen = true;
+		await tick();
+		document.getElementById(`${uid}-notes`)?.focus();
+	}
+
+	// Ledger layout: label on the left, a fixed-width amount column on the right.
+	const section = 'border-t border-dashed border-rule px-4 py-3.5 sm:px-6';
+	const head = 'mb-2 flex min-h-8 items-center justify-between gap-3';
+	const headTitle = 'font-mono text-2xs font-semibold tracking-widest text-ink-muted uppercase';
+	const row =
+		'grid grid-cols-[minmax(0,1fr)_8.5rem] items-center gap-x-3 sm:grid-cols-[minmax(0,1fr)_10rem]';
+	const field = 'h-9 w-full [&_input]:text-right';
+	const addButton =
+		'inline-flex min-h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-sidebar-active transition-colors hover:bg-sidebar-active/10';
+	const link = 'font-semibold text-sidebar-active hover:underline';
 	const removeButton =
-		'mt-6.5 grid size-10 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-base-200 hover:text-ink';
+		'grid size-8 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-base-200 hover:text-ink';
 </script>
+
+{#snippet fieldError(message: string | undefined)}
+	{#if message}
+		<p role="alert" class="mt-1 flex items-center justify-end gap-1 text-xs text-error">
+			<CircleAlert size={13} aria-hidden="true" />{message}
+		</p>
+	{/if}
+{/snippet}
 
 <PeriodPicker
 	period={form}
@@ -309,311 +345,308 @@
 				</Callout>
 			{/if}
 
-			<FormSection step={1} title="Net pay" description="The take-home amount on your payslip.">
-				<Field label="Net pay" required error={err('net')}>
-					{#snippet children(fid)}
+			<!-- One card that mirrors the printed slip: label on the left, amount on the right. -->
+			<div class="form-surface rounded-3xl bg-card shadow-soft">
+				<div class="flex items-center justify-between gap-3 px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
+					<h2 class="font-mono text-xs font-semibold tracking-[0.2em] text-ink uppercase">
+						Your payslip
+					</h2>
+					<a
+						href="/help#enter"
+						class="text-xs font-medium text-ink-muted transition-colors hover:text-sidebar-active"
+						>How to fill this in</a
+					>
+				</div>
+
+				<section class={section} aria-label="Net pay">
+					<div class={row}>
+						<label for="{uid}-net" class="text-sm font-semibold text-ink">
+							Net pay<span class="ml-0.5 text-error" aria-hidden="true">*</span>
+							<span class="block text-xs font-normal text-ink-muted">Take-home amount</span>
+						</label>
 						<NumberInput
-							id={fid}
+							id="{uid}-net"
 							{symbol}
 							bind:value={form.net}
 							invalid={!!err('net')}
 							placeholder={digits ? '0.00' : '0'}
-							class="sm:max-w-xs"
+							class="{field} font-semibold"
 						/>
-					{/snippet}
-				</Field>
-			</FormSection>
+					</div>
+					{@render fieldError(err('net'))}
+				</section>
 
-			<FormSection
-				step={2}
-				title="Deductions"
-				description="Each deduction on your payslip. Leave any you didn't have blank."
-			>
-				{#snippet action()}
-					<Button type="button" variant="ghost" size="sm" onclick={() => addRow('deduction')}>
-						<Plus size={14} aria-hidden="true" /> Add
-					</Button>
-				{/snippet}
-				{#if form.deductions.length === 0}
-					<p class="text-sm text-ink-muted">
-						No deductions set up. <a
-							href="/settings"
-							class="font-semibold text-sidebar-active hover:underline">Add them in Settings</a
-						>, or add a one-off here.
-					</p>
-				{/if}
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-					{#each form.deductions as row, i (i)}
-						{#if row.custom}
-							<div class="flex items-start gap-2 sm:col-span-2">
-								<div class="min-w-0 flex-1">
-									<Field
-										label="Name"
-										id="{uid}-deduction-name-{i}"
-										error={err(`deductions.${i}.name`)}
-									>
-										{#snippet children(fid)}
-											<input
-												id={fid}
-												class="input w-full"
-												bind:value={row.name}
-												maxlength="60"
-												autocomplete="off"
-												placeholder="e.g. Uniform"
-												aria-invalid={!!err(`deductions.${i}.name`) || undefined}
-											/>
-										{/snippet}
-									</Field>
-								</div>
-								<div class="w-36 sm:w-48">
-									<Field label="Amount" error={err(`deductions.${i}.amount`)}>
-										{#snippet children(fid)}
-											<NumberInput
-												id={fid}
-												{symbol}
-												bind:value={row.amount}
-												invalid={!!err(`deductions.${i}.amount`)}
-											/>
-										{/snippet}
-									</Field>
-								</div>
-								<button
-									type="button"
-									class={removeButton}
-									aria-label="Remove {row.name || 'this deduction'}"
-									onclick={() => form.deductions.splice(i, 1)}
+				<section class={section} aria-labelledby="{uid}-ded-h">
+					<div class={head}>
+						<h3 id="{uid}-ded-h" class={headTitle}>Deductions</h3>
+						<div class="flex items-center gap-2">
+							{#if deductionTotal > 0}
+								<span class="font-mono text-xs text-negative tabular-nums"
+									>−{formatMoney(deductionTotal, currency)}</span
 								>
-									<X size={16} aria-hidden="true" />
-								</button>
-							</div>
-						{:else}
-							<Field label={row.name} error={err(`deductions.${i}.amount`)}>
-								{#snippet children(fid)}
-									<NumberInput
-										id={fid}
-										{symbol}
-										bind:value={row.amount}
-										invalid={!!err(`deductions.${i}.amount`)}
-									/>
-								{/snippet}
-							</Field>
-						{/if}
-					{/each}
-				</div>
-			</FormSection>
-
-			<FormSection
-				step={3}
-				title="Hours"
-				description="Regular hours each day. Overtime goes in the next step."
-			>
-				{@const calendar = form.days.length > 7}
-				<div
-					class={calendar
-						? 'grid grid-cols-7 gap-x-1.5 gap-y-2.5 sm:gap-x-2'
-						: 'grid grid-cols-4 gap-2 sm:grid-cols-7'}
-				>
-					{#if calendar}
-						<!-- Columns follow the period's first week, so the weekdays are the same down each one. -->
-						{#each form.days.slice(0, 7) as day (day.date)}
-							<span
-								class="text-center text-2xs font-semibold tracking-wide text-ink-muted uppercase"
-								aria-hidden="true">{dayLabel(day.date).weekday}</span
-							>
-						{/each}
-					{/if}
-					{#each form.days as day, i (day.date)}
-						{@const label = dayLabel(day.date)}
-						<div class="flex min-w-0 flex-col gap-1">
-							<label for="{uid}-day-{i}" class="text-center leading-tight">
-								{#if calendar}
-									<span class="sr-only">{label.weekday}</span>
-									<span
-										class="text-xs {label.day === 1 || i === 0
-											? 'font-semibold text-ink'
-											: 'text-ink-muted'}"
-										>{label.day === 1 || i === 0 ? `${label.month} ${label.day}` : label.day}</span
-									>
-								{:else}
-									<span class="block text-xs font-semibold text-ink">{label.weekday}</span>
-									<span class="text-xs text-ink-muted">{label.day}</span>
-								{/if}
-							</label>
-							<input
-								id="{uid}-day-{i}"
-								class="input w-full px-1 text-center tabular-nums {err(`days.${i}.hours`)
-									? 'input-error'
-									: ''}"
-								inputmode="decimal"
-								autocomplete="off"
-								placeholder="0"
-								bind:value={day.hours}
-								aria-invalid={!!err(`days.${i}.hours`) || undefined}
-							/>
+							{/if}
+							<button type="button" class={addButton} onclick={() => addRow('deduction')}>
+								<Plus size={13} aria-hidden="true" /> Add
+							</button>
 						</div>
-					{/each}
-				</div>
-				<div class="flex items-start justify-between gap-3">
+					</div>
+					{#if form.deductions.length === 0}
+						<p class="text-sm text-ink-muted">
+							None set up. <a href="/settings" class={link}>Add them in Settings</a>, or tap Add.
+						</p>
+					{/if}
+					<div class="flex flex-col gap-1.5">
+						{#each form.deductions as item, i (i)}
+							<div class={row}>
+								{#if item.custom}
+									<div class="flex min-w-0 items-center gap-1">
+										<input
+											id="{uid}-deduction-name-{i}"
+											class="input h-9 w-full"
+											bind:value={item.name}
+											maxlength="60"
+											autocomplete="off"
+											placeholder="Deduction name"
+											aria-label="Deduction name"
+											aria-invalid={!!err(`deductions.${i}.name`) || undefined}
+										/>
+										<button
+											type="button"
+											class={removeButton}
+											aria-label="Remove {item.name || 'this deduction'}"
+											onclick={() => form.deductions.splice(i, 1)}
+										>
+											<X size={15} aria-hidden="true" />
+										</button>
+									</div>
+								{:else}
+									<label for="{uid}-ded-{i}" class="truncate text-sm text-ink">{item.name}</label>
+								{/if}
+								<NumberInput
+									id="{uid}-ded-{i}"
+									{symbol}
+									bind:value={item.amount}
+									invalid={!!err(`deductions.${i}.amount`)}
+									aria-label={item.custom ? `${item.name || 'Deduction'} amount` : undefined}
+									class={field}
+								/>
+							</div>
+							{@render fieldError(err(`deductions.${i}.name`) ?? err(`deductions.${i}.amount`))}
+						{/each}
+					</div>
+				</section>
+
+				<section class={section} aria-labelledby="{uid}-hours-h">
+					<div class={head}>
+						<h3 id="{uid}-hours-h" class={headTitle}>Hours</h3>
+						<p class="text-xs text-ink-muted">
+							Total <span class="font-mono font-semibold text-ink tabular-nums"
+								>{fmtHours(totalHours)}</span
+							>
+						</p>
+					</div>
+					<div class="grid grid-cols-7 gap-x-1.5 sm:gap-x-2 {calendar ? 'gap-y-2' : ''}">
+						{#if calendar}
+							<!-- Columns follow the period's first week, so the weekdays are the same down each one. -->
+							{#each form.days.slice(0, 7) as day (day.date)}
+								<span
+									class="text-center text-2xs font-semibold tracking-wide text-ink-muted uppercase"
+									aria-hidden="true">{dayLabel(day.date).weekday}</span
+								>
+							{/each}
+						{/if}
+						{#each form.days as day, i (day.date)}
+							{@const label = dayLabel(day.date)}
+							<div class="flex min-w-0 flex-col gap-1">
+								<label for="{uid}-day-{i}" class="text-center text-2xs leading-tight">
+									{#if calendar}
+										<span class="sr-only">{label.weekday}</span>
+										<span
+											class={label.day === 1 || i === 0
+												? 'font-semibold text-ink'
+												: 'text-ink-muted'}
+											>{label.day === 1 || i === 0
+												? `${label.month} ${label.day}`
+												: label.day}</span
+										>
+									{:else}
+										<span class="font-semibold text-ink">{label.weekday}</span>
+										<span class="text-ink-muted">{label.day}</span>
+									{/if}
+								</label>
+								<input
+									id="{uid}-day-{i}"
+									class="input h-9 w-full px-0 text-center tabular-nums {err(`days.${i}.hours`)
+										? 'input-error'
+										: ''}"
+									inputmode="decimal"
+									autocomplete="off"
+									placeholder="0"
+									bind:value={day.hours}
+									aria-invalid={!!err(`days.${i}.hours`) || undefined}
+								/>
+							</div>
+						{/each}
+					</div>
 					{#if dayError}
-						<p role="alert" class="text-xs text-error">
+						<p role="alert" class="mt-1.5 text-xs text-error">
 							{dayLabel(dayError.day.date).weekday}
 							{dayLabel(dayError.day.date).day}: {dayError.message}
 						</p>
-					{:else}
-						<span></span>
 					{/if}
-					<p class="shrink-0 text-sm text-ink-muted">
-						Total <span class="font-semibold text-ink tabular-nums">{fmtHours(totalHours)}</span>
-					</p>
-				</div>
-			</FormSection>
+				</section>
 
-			<FormSection step={4} title="Overtime" description="Hours worked at each overtime rate.">
-				{#if form.ot.length === 0}
-					<p class="text-sm text-ink-muted">
-						No overtime rates set up. <a
-							href="/settings"
-							class="font-semibold text-sidebar-active hover:underline">Add them in Settings</a
-						> if you're paid overtime.
-					</p>
-				{:else}
-					<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
-						{#each form.ot as row, i (i)}
-							<Field label="{row.name} × {row.multiplier}" error={err(`ot.${i}.hours`)}>
-								{#snippet children(fid)}
+				<section class={section} aria-labelledby="{uid}-ot-h">
+					{#if form.ot.length === 0}
+						<p class="flex flex-wrap items-baseline gap-x-2 text-sm text-ink-muted">
+							<span id="{uid}-ot-h" class={headTitle}>Overtime</span>
+							None set up · <a href="/settings" class={link}>Add rates in Settings</a>
+						</p>
+					{:else}
+						<h3 id="{uid}-ot-h" class="{headTitle} mb-1.5">Overtime</h3>
+						<div class="flex flex-col gap-1.5">
+							{#each form.ot as rate, i (i)}
+								<div class={row}>
+									<label for="{uid}-ot-{i}" class="truncate text-sm text-ink">
+										{rate.name}
+										<span class="font-mono text-xs text-ink-muted">×{rate.multiplier}</span>
+									</label>
 									<NumberInput
-										id={fid}
+										id="{uid}-ot-{i}"
 										suffix="hrs"
 										placeholder="0"
-										bind:value={row.hours}
+										bind:value={rate.hours}
 										invalid={!!err(`ot.${i}.hours`)}
+										class={field}
 									/>
-								{/snippet}
-							</Field>
-						{/each}
-					</div>
-				{/if}
-			</FormSection>
-
-			<FormSection
-				step={5}
-				title="Extras"
-				description="Allowances and bonuses on top of your hours."
-			>
-				{#snippet action()}
-					<Button type="button" variant="ghost" size="sm" onclick={() => addRow('bonus')}>
-						<Plus size={14} aria-hidden="true" /> Add bonus
-					</Button>
-				{/snippet}
-				{#if form.extras.length === 0}
-					<p class="text-sm text-ink-muted">
-						No allowances set up. <a
-							href="/settings"
-							class="font-semibold text-sidebar-active hover:underline">Add them in Settings</a
-						>, or add a one-off bonus.
-					</p>
-				{/if}
-				{#each form.extras as row, i (i)}
-					{@const amount = extraAmount(row)}
-					<div class="rounded-2xl border border-base-300/70 p-3 sm:p-4">
-						<div class="mb-3 flex items-center gap-2">
-							{#if row.kind === 'per_week'}
-								<label class="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
-									<input
-										type="checkbox"
-										class="checkbox checkbox-sm checkbox-primary"
-										checked={row.quantity === '1'}
-										onchange={(e) => (row.quantity = e.currentTarget.checked ? '1' : '0')}
-									/>
-									<span class="truncate text-sm font-semibold text-ink">{row.name}</span>
-									<span class="badge shrink-0 badge-ghost badge-sm">Paid this payslip</span>
-								</label>
-							{:else}
-								<p class="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-									{row.kind === 'bonus' ? 'One-off bonus' : row.name}
-								</p>
-								<span class="badge shrink-0 badge-ghost badge-sm">
-									{row.kind === 'bonus' ? 'This payslip only' : 'Per day'}
-								</span>
-							{/if}
-							{#if amount}
-								<span class="shrink-0 font-mono text-xs font-semibold text-ink tabular-nums"
-									>= {amount}</span
-								>
-							{/if}
-							{#if row.custom}
-								<button
-									type="button"
-									class="grid size-8 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-base-200 hover:text-ink"
-									aria-label="Remove {row.name || 'this bonus'}"
-									onclick={() => form.extras.splice(i, 1)}
-								>
-									<X size={16} aria-hidden="true" />
-								</button>
-							{/if}
+								</div>
+								{@render fieldError(err(`ot.${i}.hours`))}
+							{/each}
 						</div>
+					{/if}
+				</section>
 
-						<div class="grid grid-cols-2 gap-3 sm:max-w-md">
-							{#if row.kind === 'bonus'}
-								<Field label="Name" id="{uid}-bonus-name-{i}" error={err(`extras.${i}.name`)}>
-									{#snippet children(fid)}
-										<input
-											id={fid}
-											class="input w-full"
-											bind:value={row.name}
-											maxlength="60"
-											autocomplete="off"
-											placeholder="e.g. Christmas bonus"
-											aria-invalid={!!err(`extras.${i}.name`) || undefined}
-										/>
-									{/snippet}
-								</Field>
-							{/if}
-							<Field
-								label={row.kind === 'per_day' ? 'Amount per day' : 'Amount'}
-								error={err(`extras.${i}.unitAmount`)}
-							>
-								{#snippet children(fid)}
-									<NumberInput
-										id={fid}
-										{symbol}
-										bind:value={row.unitAmount}
-										invalid={!!err(`extras.${i}.unitAmount`)}
-									/>
-								{/snippet}
-							</Field>
-							{#if row.kind === 'per_day'}
-								<Field label="Days" error={err(`extras.${i}.quantity`)}>
-									{#snippet children(fid)}
+				<section class={section} aria-labelledby="{uid}-ex-h">
+					<div class={head}>
+						<h3 id="{uid}-ex-h" class={headTitle}>Extras</h3>
+						<button type="button" class={addButton} onclick={() => addRow('bonus')}>
+							<Plus size={13} aria-hidden="true" /> Bonus
+						</button>
+					</div>
+					{#if form.extras.length === 0}
+						<p class="text-sm text-ink-muted">
+							None set up. <a href="/settings" class={link}>Add allowances in Settings</a>, or add a
+							bonus.
+						</p>
+					{/if}
+					<div class="flex flex-col gap-2">
+						{#each form.extras as extra, i (i)}
+							{@const amount = extraAmount(extra)}
+							{#if extra.kind === 'per_day'}
+								<!-- Amount per day × days; the label wraps above the inputs on narrow screens. -->
+								<div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+									<span class="min-w-[8rem] flex-1 text-sm leading-snug text-ink">
+										{extra.name}
+										<span class="block text-xs text-ink-muted">Per day</span>
+									</span>
+									<div class="flex items-center gap-1.5">
 										<NumberInput
-											id={fid}
+											{symbol}
+											bind:value={extra.unitAmount}
+											invalid={!!err(`extras.${i}.unitAmount`)}
+											aria-label="{extra.name}: amount per day"
+											class="{field} w-28"
+										/>
+										<span class="text-xs text-ink-muted" aria-hidden="true">×</span>
+										<NumberInput
 											inputmode="numeric"
 											placeholder="0"
 											suffix="of {form.days.length}"
-											bind:value={row.quantity}
+											bind:value={extra.quantity}
 											invalid={!!err(`extras.${i}.quantity`)}
+											aria-label="{extra.name}: days"
+											class="{field} w-24"
 										/>
-									{/snippet}
-								</Field>
+									</div>
+								</div>
+							{:else}
+								<div class={row}>
+									{#if extra.kind === 'per_week'}
+										<label class="flex min-w-0 items-center gap-2">
+											<input
+												type="checkbox"
+												class="checkbox checkbox-sm checkbox-primary"
+												checked={extra.quantity === '1'}
+												onchange={(e) => (extra.quantity = e.currentTarget.checked ? '1' : '0')}
+											/>
+											<span class="min-w-0 text-sm leading-snug text-ink">
+												{extra.name}
+												<span class="block text-xs text-ink-muted">Per payslip</span>
+											</span>
+										</label>
+									{:else}
+										<div class="flex min-w-0 items-center gap-1">
+											<input
+												id="{uid}-bonus-name-{i}"
+												class="input h-9 w-full"
+												bind:value={extra.name}
+												maxlength="60"
+												autocomplete="off"
+												placeholder="Bonus name"
+												aria-label="Bonus name"
+												aria-invalid={!!err(`extras.${i}.name`) || undefined}
+											/>
+											<button
+												type="button"
+												class={removeButton}
+												aria-label="Remove {extra.name || 'this bonus'}"
+												onclick={() => form.extras.splice(i, 1)}
+											>
+												<X size={15} aria-hidden="true" />
+											</button>
+										</div>
+									{/if}
+									<NumberInput
+										{symbol}
+										bind:value={extra.unitAmount}
+										invalid={!!err(`extras.${i}.unitAmount`)}
+										aria-label="{extra.name || 'Bonus'}: amount"
+										class={field}
+									/>
+								</div>
 							{/if}
-						</div>
+							{#if amount && extra.kind === 'per_day'}
+								<p class="-mt-1 text-right font-mono text-xs text-ink-muted tabular-nums">
+									= {amount}
+								</p>
+							{/if}
+							{@render fieldError(
+								err(`extras.${i}.name`) ??
+									err(`extras.${i}.unitAmount`) ??
+									err(`extras.${i}.quantity`)
+							)}
+						{/each}
 					</div>
-				{/each}
-			</FormSection>
+				</section>
 
-			<FormSection step={6} title="Notes" description="Anything to remember about this payslip.">
-				<Field label="Notes" optional error={err('notes')}>
-					{#snippet children(fid)}
+				<section class="{section} pb-4 sm:pb-5" aria-label="Notes">
+					{#if noteOpen || form.notes}
+						<label for="{uid}-notes" class="{headTitle} mb-1.5 block">Notes</label>
 						<textarea
-							id={fid}
+							id="{uid}-notes"
 							class="textarea w-full"
-							rows="3"
+							rows="2"
 							maxlength="500"
 							placeholder="e.g. Covered a late shift on Friday"
 							bind:value={form.notes}></textarea>
-					{/snippet}
-				</Field>
-			</FormSection>
+						{@render fieldError(err('notes'))}
+					{:else}
+						<button type="button" class={addButton} onclick={openNote}>
+							<Plus size={13} aria-hidden="true" /> Add a note
+						</button>
+					{/if}
+				</section>
+			</div>
 		</div>
 
 		<aside

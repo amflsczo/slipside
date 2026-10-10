@@ -123,3 +123,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | Smaller type scale used everywhere (body 12.5px; new `text-2xs` for overlines); Help is the 5th item in the phone dock; every clickable control shows the pointer cursor. |
 | 2026-10-10 | The action bar (status + Save) is the last card of the form, in the page flow, not a sticky floating bar. |
 | 2026-10-10 | Code uses payslip names (PayslipEditor, PeriodPicker, PayslipForm, parsePayslip, `src/lib/payslip/`); drafts move to a `slipside:payslip-draft:` key and old-key drafts are still read. The stored `per_week` value and the legacy `?week=` link stay. |
+| 2026-10-10 | Payslip form redesigned as one "ledger rows" card that mirrors the printed slip (label left, amount right, dashed section rules, live totals); unused parts are one compact line. Desktop page height went from about 2,030px to 1,154px. |

@@ -60,7 +60,7 @@
 				'**Deductions**: type each deduction on your payslip. Leave blank any you didn’t have.',
 				'**Hours**: type your regular hours for each day.',
 				'**Overtime**: type the hours at each overtime rate.',
-				'**Extras**: fill in allowances and bonuses. Tick **Paid this payslip** for extras paid once per payslip.',
+				'**Extras**: fill in allowances and bonuses. Tick the box next to extras marked **per payslip** when you got them.',
 				'Check the breakdown. It updates as you type.',
 				'Tap **Save payslip**.'
 			],

@@ -649,6 +649,15 @@ A native `<dialog>` like ConfirmDialog: a **bottom sheet on phones** (`max-sm:mb
 - If the new dates drop days that have hours, a warning Callout lists them and the button becomes **Remove hours and apply**.
 - Apply (accent) is disabled while there's a problem or nothing changed.
 
+### Payslip form (ledger rows)
+The entry side mirrors the printed slip: **one card**, `form-surface rounded-3xl bg-card shadow-soft`, headed "YOUR PAYSLIP" (`font-mono tracking-[0.2em] uppercase`) with a "How to fill this in" link to Help.
+- Sections are split by dashed hairlines (`border-t border-dashed border-rule px-4 py-3.5 sm:px-6`) and titled in `font-mono text-2xs uppercase tracking-widest text-ink-muted`. No per-section descriptions.
+- **Rows:** `grid grid-cols-[minmax(0,1fr)_8.5rem] sm:grid-cols-[minmax(0,1fr)_10rem]`: label on the left, a right-aligned amount on the right (`h-9`, `[&_input]:text-right`). A short note sits under a label as `block text-xs text-ink-muted` (e.g. "Take-home amount", "Per day").
+- Section headings carry live totals (deductions in `text-negative` with "−", total hours) and small accent "+ Add" pills.
+- Hours: a 7-cell strip (also on phones); periods over 7 days use the calendar.
+- Unused parts are one line ("Overtime · None set up · Add rates in Settings", "+ Add a note"), never hidden.
+- Errors show under the row, right-aligned below the amount.
+
 ### Payslip panel (the printed slip)
 
 The reverse payslip looks printed: `drop-shadow-soft` on the wrapper, `slip-edge` (a torn zigzag bottom, via a mask) on a `rounded-t-3xl bg-card` card.
