@@ -671,6 +671,16 @@ The reverse payslip looks printed: `drop-shadow-soft` on the wrapper, `slip-edge
 - Lines in `font-mono text-xs tabular-nums`: `label · · · · amount` with the `leader` utility; deductions in `text-negative` with a minus sign; a rule above Gross, and a single rule above plus a double rule under Net pay (accounting style).
 - Before net pay is entered, faded placeholder lines and one hint.
 
+### History page
+One year at a time (a native year select, plus currency when more than one was used). From `lg`, the month list and the year breakdown sit side by side (`lg:grid-cols-[minmax(0,1fr)_22rem]`, the breakdown sticky); on phones the breakdown comes last.
+- **Summary tiles:** one card of four StatTiles (net, average rate weighted by hours, hours + overtime, payslips).
+- **Month cards:** ledger-style headers ("OCTOBER 2026 · £932.60 · 3 payslips") over tappable rows: dates and length, rate and "paid <date>" on the left; net (mono) and the change since the previous payslip on the right, green up and clay down. When the lengths differ, the rate change follows. A "Rate high/low" pill marks rates outside the tolerance; screen readers get the change as one sentence.
+- **Year breakdown:** the printed-slip look (torn edge, leaders, double rule under net) for the year's totals, with each extra and deduction added up by name.
+
+### Charts
+Follow the dataviz rules: one series and one axis at a time (Net / Rate / Hours switch), bars at most 24px with a 4px rounded top and square base, at least 2px between bars, solid 1px gridlines in `base-300`, clean round ticks, a label on the latest value only (lifted above any bar it overlaps), a hover tooltip per bar whose hit area is the whole slot, and a "Show as a table" fallback.
+- Marks use the `chart` token: `#1e7c50` light, `#46a876` dark. These are brand-green steps that pass the palette validator (the `sidebar-active` green is too muted for a mark). Text never uses the chart colour.
+
 ### Help page
 
 One topic at a time. From `lg`: a sticky grouped list (Guides, Reference) beside the topic card, as ARIA tabs with arrow keys. Below `lg`: a native "Topic" `<select>` with `<optgroup>`s. The open topic is the URL hash (`/help#dates`). Guides show "Guide N of 7", numbered steps (accent circles) with on-screen words in **bold**, an optional note, and Previous / Next at the bottom. Keep every step one short sentence.
