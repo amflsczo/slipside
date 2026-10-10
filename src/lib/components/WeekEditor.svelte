@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '$app/forms';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -15,8 +16,12 @@
 	import FormSection from './FormSection.svelte';
 	import NumberInput from './NumberInput.svelte';
 	import PayslipPanel from './PayslipPanel.svelte';
+	import PeriodSheet from './PeriodSheet.svelte';
+	import WeekPicker from './WeekPicker.svelte';
 	import { reversePayslip } from '#lib/calc/reversePayslip.ts';
-	import { dayLabel, formatRange } from '#lib/dates.ts';
+	import { dayLabel, formatRange, type IsoDate } from '#lib/dates.ts';
+	import type { Period } from '#lib/period.ts';
+	import { periodHref } from '#lib/periodNav.ts';
 	import {
 		currencySymbol,
 		formatMoney,
@@ -25,36 +30,50 @@
 		toMinor
 	} from '#lib/format/money.ts';
 	import { toast } from '#lib/toast.svelte.ts';
-	import { clearDraft, readDraft, writeDraft } from '#lib/week/draft.ts';
-	import { mergeDraft, parseWeek, toInput, type WeekForm } from '#lib/week/form.ts';
+	import { carried, clearDraft, readDraft, writeDraft } from '#lib/week/draft.ts';
+	import { mergeDraft, parseWeek, toInput, withPeriod, type WeekForm } from '#lib/week/form.ts';
 
 	let {
 		initial,
 		owner,
 		saved,
 		usualRate,
-		tolerancePct
+		tolerancePct,
+		today,
+		savedPeriods,
+		previousHref,
+		nextHref,
+		homeHref
 	}: {
-		/** The week as saved (or as a new week from Settings). The parent remounts on change. */
+		/** The payslip as saved (or a new one from Settings). The parent remounts on change. */
 		initial: WeekForm;
 		/** Whose device draft this is (the account email). */
 		owner: string;
 		saved: boolean;
 		usualRate: number | null;
 		tolerancePct: number;
+		today: IsoDate;
+		/** Every saved payslip's dates (for overlap warnings while choosing dates). */
+		savedPeriods: Period[];
+		previousHref: string;
+		nextHref: string | null;
+		homeHref: string | null;
 	} = $props();
 
 	const uid = $props.id();
 
-	// Post to this page's own URL (e.g. ?week=…) plus the action. SvelteKit lands on the posted
-	// URL after an action, so a bare "?/save" would drop the week and jump to the current one.
+	// Post to this page's own URL (e.g. ?period=…) plus the action. SvelteKit lands on the
+	// posted URL after an action, so a bare "?/save" would drop the period.
 	const actionUrl = (name: string) => {
 		const query = page.url.searchParams.toString();
 		return `?${query ? `${query}&` : ''}/${name}`;
 	};
 	const clone = (value: WeekForm): WeekForm => JSON.parse(JSON.stringify(value));
 	const initialJson = untrack(() => JSON.stringify(initial));
-	/** Where the saved payslip starts now, so a save can find it even after its dates change. */
+	/**
+	 * Where this payslip lives: its saved start, or a new payslip's start. Keys the device draft,
+	 * and tells a save which payslip to update even after its dates change in the form.
+	 */
 	const savedStart = untrack(() => initial.start);
 	const currency = untrack(() => initial.currency);
 	const symbol = currencySymbol(currency);
@@ -73,7 +92,14 @@
 	let draftTimer: ReturnType<typeof setTimeout> | undefined;
 
 	onMount(() => {
-		const draft = readDraft(owner, form.start);
+		// A new payslip whose dates were just changed: keep what was typed, quietly.
+		if (carried.form?.start === savedStart) {
+			form = mergeDraft(clone(initial), carried.form);
+			carried.form = null;
+			keepDraft = true;
+			return () => clearTimeout(draftTimer);
+		}
+		const draft = readDraft(owner, savedStart);
 		if (draft) {
 			// Rows follow the current Settings; the draft only fills in what was typed.
 			const merged = mergeDraft(clone(initial), draft.form);
@@ -81,7 +107,7 @@
 				form = merged;
 				restoredAt = draft.savedAt;
 			} else {
-				clearDraft(owner, form.start);
+				clearDraft(owner, savedStart);
 			}
 		}
 		keepDraft = true;
@@ -92,22 +118,44 @@
 		if (!keepDraft) return;
 		const snapshot = $state.snapshot(form);
 		clearTimeout(draftTimer);
-		if (JSON.stringify(snapshot) === initialJson) clearDraft(owner, snapshot.start);
-		else draftTimer = setTimeout(() => writeDraft(owner, snapshot), 300);
+		if (JSON.stringify(snapshot) === initialJson) clearDraft(owner, savedStart);
+		else draftTimer = setTimeout(() => writeDraft(owner, savedStart, snapshot), 300);
 	});
 
 	/** After a save or delete: the server copy is now the truth. */
 	function dropDraft() {
 		keepDraft = false;
 		clearTimeout(draftTimer);
-		clearDraft(owner, form.start);
+		clearDraft(owner, savedStart);
 	}
 
 	function discard() {
 		form = clone(initial);
 		restoredAt = null;
 		attempted = false;
-		clearDraft(owner, form.start);
+		clearDraft(owner, savedStart);
+	}
+
+	// --- Changing the dates ---
+	let changingDates = $state(false);
+	const hoursOn = $derived(form.days.filter((d) => Number(d.hours) > 0).map((d) => d.date));
+
+	/**
+	 * A saved payslip takes its new dates in the form; saving moves it. A new payslip lives at
+	 * its dates, so the page moves there, carrying what was typed (also kept as a draft there).
+	 */
+	function changeDates(period: Period) {
+		const next = withPeriod($state.snapshot(form) as WeekForm, period);
+		if (saved) {
+			form = next;
+			return;
+		}
+		keepDraft = false;
+		clearTimeout(draftTimer);
+		clearDraft(owner, savedStart);
+		writeDraft(owner, period.start, next);
+		carried.form = next;
+		goto(periodHref({ period, saved: false }), { reset: false });
 	}
 
 	// --- Live calculation ---
@@ -218,6 +266,18 @@
 		'mt-6.5 grid size-10 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-base-200 hover:text-ink';
 </script>
 
+<WeekPicker
+	period={form}
+	{today}
+	{previousHref}
+	{nextHref}
+	{homeHref}
+	onchange={() => (changingDates = true)}
+/>
+{#if errors.period}
+	<Callout tone="warning" title="Check the dates">{errors.period}</Callout>
+{/if}
+
 <form
 	method="post"
 	action={actionUrl('save')}
@@ -234,7 +294,7 @@
 		<div class="flex min-w-0 flex-col gap-4 sm:gap-5">
 			{#if restoredAt}
 				<Callout title="Restored your unsaved changes">
-					From {time(restoredAt)}, kept on this device. Save the week to keep them for good.
+					From {time(restoredAt)}, kept on this device. Save the payslip to keep them for good.
 					{#snippet action()}
 						<Button type="button" variant="ghost" size="sm" onclick={discard}>
 							<RotateCcw size={14} aria-hidden="true" /> Discard
@@ -341,13 +401,37 @@
 				title="Hours"
 				description="Regular hours each day. Overtime goes in the next step."
 			>
-				<div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
+				{@const calendar = form.days.length > 7}
+				<div
+					class={calendar
+						? 'grid grid-cols-7 gap-x-1.5 gap-y-2.5 sm:gap-x-2'
+						: 'grid grid-cols-4 gap-2 sm:grid-cols-7'}
+				>
+					{#if calendar}
+						<!-- Columns follow the period's first week, so the weekdays are the same down each one. -->
+						{#each form.days.slice(0, 7) as day (day.date)}
+							<span
+								class="text-center text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase"
+								aria-hidden="true">{dayLabel(day.date).weekday}</span
+							>
+						{/each}
+					{/if}
 					{#each form.days as day, i (day.date)}
 						{@const label = dayLabel(day.date)}
 						<div class="flex min-w-0 flex-col gap-1">
 							<label for="{uid}-day-{i}" class="text-center leading-tight">
-								<span class="block text-xs font-semibold text-ink">{label.weekday}</span>
-								<span class="text-xs text-ink-muted">{label.day}</span>
+								{#if calendar}
+									<span class="sr-only">{label.weekday}</span>
+									<span
+										class="text-xs {label.day === 1 || i === 0
+											? 'font-semibold text-ink'
+											: 'text-ink-muted'}"
+										>{label.day === 1 || i === 0 ? `${label.month} ${label.day}` : label.day}</span
+									>
+								{:else}
+									<span class="block text-xs font-semibold text-ink">{label.weekday}</span>
+									<span class="text-xs text-ink-muted">{label.day}</span>
+								{/if}
 							</label>
 							<input
 								id="{uid}-day-{i}"
@@ -366,7 +450,8 @@
 				<div class="flex items-start justify-between gap-3">
 					{#if dayError}
 						<p role="alert" class="text-xs text-error">
-							{dayLabel(dayError.day.date).weekday}: {dayError.message}
+							{dayLabel(dayError.day.date).weekday}
+							{dayLabel(dayError.day.date).day}: {dayError.message}
 						</p>
 					{:else}
 						<span></span>
@@ -442,7 +527,7 @@
 									{row.kind === 'bonus' ? 'One-off bonus' : row.name}
 								</p>
 								<span class="badge shrink-0 badge-ghost badge-sm">
-									{row.kind === 'bonus' ? 'This week only' : 'Per day'}
+									{row.kind === 'bonus' ? 'This payslip only' : 'Per day'}
 								</span>
 							{/if}
 							{#if amount}
@@ -510,7 +595,7 @@
 				{/each}
 			</FormSection>
 
-			<FormSection step={6} title="Notes" description="Anything to remember about this week.">
+			<FormSection step={6} title="Notes" description="Anything to remember about this payslip.">
 				<Field label="Notes" optional error={err('notes')}>
 					{#snippet children(fid)}
 						<textarea
@@ -563,7 +648,7 @@
 			</Button>
 		{/if}
 		<Button variant="accent" class="flex-1 sm:flex-none" loading={pending}>
-			{pending ? 'Saving…' : saved ? 'Update week' : 'Save week'}
+			{pending ? 'Saving…' : saved ? 'Update payslip' : 'Save payslip'}
 		</Button>
 	</ActionBar>
 </form>
@@ -575,14 +660,25 @@
 	use:enhance={submitDelete}
 	hidden
 >
-	<input type="hidden" name="start" value={form.start} />
+	<!-- The saved start: the form's dates may have changed without being saved. -->
+	<input type="hidden" name="start" value={savedStart} />
 </form>
 
 <ConfirmDialog
 	bind:open={confirmDelete}
-	title="Delete this week?"
-	message="Its pay, hours and breakdown are removed for good. Your Settings lists aren't affected."
-	confirmLabel="Delete week"
+	title="Delete this payslip?"
+	message="Its pay, dates, hours and breakdown are removed for good. Your Settings lists aren't affected."
+	confirmLabel="Delete payslip"
 	pending={deleting}
 	onconfirm={() => deleteForm.requestSubmit()}
+/>
+
+<PeriodSheet
+	bind:open={changingDates}
+	period={form}
+	{today}
+	{savedPeriods}
+	editingStart={saved ? savedStart : null}
+	{hoursOn}
+	onapply={changeDates}
 />

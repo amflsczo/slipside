@@ -5,7 +5,6 @@
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import WeekEditor from '#lib/components/WeekEditor.svelte';
-	import WeekPicker from '#lib/components/WeekPicker.svelte';
 	import { minorDigits, toMinor } from '#lib/format/money.ts';
 	import { clock, firstName, greeting, longDay } from '#lib/greeting.svelte.ts';
 	import { buildForm } from '#lib/week/form.ts';
@@ -37,19 +36,11 @@
 		<EmptyState
 			icon={Settings}
 			title="Set up your pay first"
-			hint="Choose your currency, pay week and deductions in Settings. It takes a minute."
+			hint="Choose your currency, how often you're paid and your deductions in Settings. It takes a minute."
 		>
 			{#snippet action()}<Button href="/settings">Go to Settings</Button>{/snippet}
 		</EmptyState>
 	{:else}
-		<WeekPicker
-			period={data.period}
-			today={data.today}
-			previousHref={data.previousHref}
-			nextHref={data.nextHref}
-			homeHref={data.homeHref}
-		/>
-
 		<!-- Remounts (fresh form + draft check) when the period changes or after a save. -->
 		{#key `${data.period.start}:${data.period.end}:${data.saved?.updatedAt ?? 'new'}`}
 			<WeekEditor
@@ -58,6 +49,11 @@
 				saved={data.saved !== null}
 				{usualRate}
 				tolerancePct={data.rateTolerancePct}
+				today={data.today}
+				savedPeriods={data.savedPeriods}
+				previousHref={data.previousHref}
+				nextHref={data.nextHref}
+				homeHref={data.homeHref}
 			/>
 		{/key}
 	{/if}

@@ -3,6 +3,7 @@ import { balances, reversePayslip } from '../calc/reversePayslip.ts';
 import {
 	buildForm,
 	mergeDraft,
+	withPeriod,
 	parseWeek,
 	toInput,
 	toWeekRecord,
@@ -367,5 +368,41 @@ describe('pay periods of any length', () => {
 		const record = toWeekRecord(result.week, reversePayslip(toInput(result.week)));
 		expect([record.start, record.end]).toEqual(['2026-10-05', '2026-10-18']);
 		expect(record.days).toHaveLength(14);
+	});
+});
+
+describe('changing a payslip’s dates', () => {
+	it('rebuilds the days, keeping hours on dates in both periods', () => {
+		const form = buildForm(WEEK, 'GBP', types, null);
+		form.days[0]!.hours = '8'; // Oct 5
+		form.days[6]!.hours = '4'; // Oct 11
+		form.net = '300';
+
+		const shorter = withPeriod(form, { start: '2026-10-05', end: '2026-10-07' });
+		expect(shorter.days).toEqual([
+			{ date: '2026-10-05', hours: '8' },
+			{ date: '2026-10-06', hours: '' },
+			{ date: '2026-10-07', hours: '' }
+		]);
+		expect(shorter.net).toBe('300');
+
+		const longer = withPeriod(form, { start: '2026-10-11', end: '2026-10-12' });
+		expect(longer.days).toEqual([
+			{ date: '2026-10-11', hours: '4' },
+			{ date: '2026-10-12', hours: '' }
+		]);
+	});
+
+	it('restores a draft with new dates that were not saved yet', () => {
+		const base = buildForm(WEEK, 'GBP', types, saved); // saved Oct 5–11, 8 hrs on Oct 5
+		const draft = withPeriod(base, { start: '2026-10-05', end: '2026-10-06' });
+		draft.days[1]!.hours = '6';
+
+		const merged = mergeDraft(base, draft);
+		expect([merged.start, merged.end]).toEqual(['2026-10-05', '2026-10-06']);
+		expect(merged.days).toEqual([
+			{ date: '2026-10-05', hours: '8' },
+			{ date: '2026-10-06', hours: '6' }
+		]);
 	});
 });

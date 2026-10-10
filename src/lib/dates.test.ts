@@ -7,6 +7,7 @@ import {
 	dayLabel,
 	formatRange,
 	isIsoDate,
+	shortDate,
 	todayIn,
 	weekDates,
 	weekStartFor,
@@ -84,6 +85,7 @@ describe('dates', () => {
 	});
 
 	it('labels days for the hours grid', () => {
-		expect(dayLabel('2026-10-05')).toEqual({ weekday: 'Mon', day: 5 });
+		expect(dayLabel('2026-10-05')).toEqual({ weekday: 'Mon', day: 5, month: 'Oct' });
+		expect(shortDate('2026-10-05')).toBe('Oct 5');
 	});
 });

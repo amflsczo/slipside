@@ -23,7 +23,7 @@ describe('drafts on this device', () => {
 	it('keeps a draft for a period of any length', () => {
 		const form = buildForm({ start: '2026-10-05', end: '2026-10-18' }, 'GBP', types, null);
 		form.net = '900';
-		writeDraft(owner, form);
+		writeDraft(owner, '2026-10-05', form);
 		expect(readDraft(owner, '2026-10-05')?.form).toEqual(form);
 		clearDraft(owner, '2026-10-05');
 		expect(readDraft(owner, '2026-10-05')).toBeNull();
@@ -42,10 +42,14 @@ describe('drafts on this device', () => {
 		expect(draft?.savedAt).toBe('then');
 	});
 
-	it('ignores a draft for another period or with the wrong number of days', () => {
+	it('keeps new dates typed on a saved payslip, under its saved start', () => {
+		const form = buildForm({ start: '2026-10-06', end: '2026-10-08' }, 'GBP', types, null);
+		writeDraft(owner, '2026-10-05', form);
+		expect(readDraft(owner, '2026-10-05')?.form).toEqual(form);
+	});
+
+	it('ignores a draft with the wrong number of days', () => {
 		const form = buildForm({ start: '2026-10-05', end: '2026-10-11' }, 'GBP', types, null);
-		localStorage.setItem(key('2026-10-06'), JSON.stringify({ savedAt: 'x', form }));
-		expect(readDraft(owner, '2026-10-06')).toBeNull();
 
 		localStorage.setItem(
 			key('2026-10-05'),

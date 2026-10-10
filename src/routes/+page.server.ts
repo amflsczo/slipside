@@ -46,15 +46,17 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 		usualRate: page.general.usualRate,
 		rateTolerancePct: Number(page.general.rateTolerancePct),
 		types: page.types,
-		saved
+		saved,
+		/** Every saved payslip's dates, so the date picker can warn about overlaps as you choose. */
+		savedPeriods: page.periods.map(({ start, end }) => ({ start, end }))
 	};
 };
 
 export const actions: Actions = {
-	save: async ({ request, locals, cookies }) => {
+	save: async ({ request, locals, cookies, url }) => {
 		const form = await request.formData();
 		const today = todayIn(cookies.get('tz'));
-		let moved: string | null = null;
+		let savedAt: string | null = null;
 
 		const result = await runAction(async () => {
 			let payload: unknown;
@@ -92,11 +94,14 @@ export const actions: Actions = {
 				}
 				throw e;
 			}
-			if (editing && editing !== week.start) moved = week.start;
+			savedAt = week.start;
 		}, 'Payslip saved.');
 
-		// A saved payslip that now starts on another day lives at a new URL.
-		if (moved) redirect(303, `/?period=${moved}`);
+		// Stay on the saved payslip: it lives at its start date, which differs from this page's
+		// URL when it was new ("/", "&end=") or its dates changed.
+		if (savedAt && (url.searchParams.get('period') !== savedAt || url.searchParams.has('end'))) {
+			redirect(303, `/?period=${savedAt}`);
+		}
 		return result;
 	},
 

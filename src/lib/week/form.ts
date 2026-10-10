@@ -119,6 +119,19 @@ export function buildForm(
 	};
 }
 
+/** The form for other dates: one day per date, keeping the hours typed on dates in both. */
+export function withPeriod(form: WeekForm, period: Period): WeekForm {
+	return {
+		...form,
+		start: period.start,
+		end: period.end,
+		days: periodDates(period).map((date) => ({
+			date,
+			hours: form.days.find((d) => d.date === date)?.hours ?? ''
+		}))
+	};
+}
+
 /**
  * Puts a device draft back onto the current form. The rows come from `base` (the latest
  * Settings and saved week), so items added or unhidden since the draft still show up;
@@ -133,9 +146,16 @@ export function mergeDraft(base: WeekForm, draft: WeekForm): WeekForm {
 		!rows.some((row) => !row.custom && sameName(row.name, name));
 
 	const baseExtras = base.extras.filter((e) => !e.custom);
+	// A saved payslip's draft may have new dates (not saved yet); keep them.
+	const datesOk = checkPeriod(draft, '9999-12-31') === null;
+	const period = datesOk
+		? { start: draft.start, end: draft.end }
+		: { start: base.start, end: base.end };
 
 	return {
 		...base,
+		start: period.start,
+		end: period.end,
 		net: draft.net,
 		notes: draft.notes,
 		deductions: [
@@ -149,9 +169,12 @@ export function mergeDraft(base: WeekForm, draft: WeekForm): WeekForm {
 				(d) => d.custom || (missingFrom(base.deductions, d.name) && typed(d.amount))
 			)
 		],
-		days: base.days.map((day) => ({
-			...day,
-			hours: draft.days.find((d) => d.date === day.date)?.hours ?? day.hours
+		days: periodDates(period).map((date) => ({
+			date,
+			hours:
+				draft.days.find((d) => d.date === date)?.hours ??
+				base.days.find((d) => d.date === date)?.hours ??
+				''
 		})),
 		ot: [
 			...base.ot.map((row) => ({ ...row, hours: match(draft.ot, row.name)?.hours ?? row.hours })),

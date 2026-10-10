@@ -70,8 +70,20 @@ export const formatRange = (start: IsoDate, end: IsoDate) =>
 
 const weekdayFormat = new Intl.DateTimeFormat('en', { weekday: 'short', timeZone: 'UTC' });
 
-/** { weekday: "Mon", day: 6 } for the hours grid. */
+const monthFormat = new Intl.DateTimeFormat('en', { month: 'short', timeZone: 'UTC' });
+
+/** { weekday: "Mon", day: 6, month: "Oct" } for the hours grid. */
 export const dayLabel = (iso: IsoDate) => ({
 	weekday: weekdayFormat.format(toUtc(iso)),
-	day: toUtc(iso).getUTCDate()
+	day: toUtc(iso).getUTCDate(),
+	month: monthFormat.format(toUtc(iso))
 });
+
+const shortFormat = new Intl.DateTimeFormat('en', {
+	month: 'short',
+	day: 'numeric',
+	timeZone: 'UTC'
+});
+
+/** "Oct 12" */
+export const shortDate = (iso: IsoDate) => shortFormat.format(toUtc(iso));

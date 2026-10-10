@@ -1,6 +1,6 @@
 import type { LucideIcon } from '@lucide/svelte';
-import CalendarDays from '@lucide/svelte/icons/calendar-days';
 import ChartLine from '@lucide/svelte/icons/chart-line';
+import ReceiptText from '@lucide/svelte/icons/receipt-text';
 import Settings from '@lucide/svelte/icons/settings';
 import Wallet from '@lucide/svelte/icons/wallet';
 
@@ -15,7 +15,7 @@ export type NavItem = {
 };
 
 export const NAV: NavItem[] = [
-	{ href: '/', label: 'This Week', icon: CalendarDays, primary: true, group: 'main' },
+	{ href: '/', label: 'Payslip', icon: ReceiptText, primary: true, group: 'main' },
 	{ href: '/history', label: 'History', icon: ChartLine, primary: true, group: 'main' },
 	{ href: '/expenses', label: 'Expenses', icon: Wallet, primary: true, group: 'main' },
 	{ href: '/settings', label: 'Settings', icon: Settings, primary: true, group: 'more' }
@@ -26,7 +26,7 @@ export const isActive = (href: string, pathname: string) =>
 
 // Tab titles for every route, set in one place (+layout.svelte).
 const SECTION_TITLES: Record<string, string> = {
-	'/': 'This week',
+	'/': 'Payslip',
 	'/history': 'History',
 	'/expenses': 'Expenses',
 	'/settings': 'Settings',
