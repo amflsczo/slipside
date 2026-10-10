@@ -7,7 +7,9 @@ import {
 	dayLabel,
 	formatRange,
 	isIsoDate,
+	monthLabel,
 	shortDate,
+	shortRange,
 	todayIn
 } from './dates.ts';
 
@@ -63,5 +65,13 @@ describe('dates', () => {
 	it('labels days for the hours grid', () => {
 		expect(dayLabel('2026-10-05')).toEqual({ weekday: 'Mon', day: 5, month: 'Oct' });
 		expect(shortDate('2026-10-05')).toBe('Oct 5');
+	});
+
+	it('labels ranges without the year, and months', () => {
+		const plain = (text: string) => text.replace(/\s/g, ' ');
+		expect(plain(shortRange('2026-10-04', '2026-10-10'))).toBe('Oct 4 – 10');
+		expect(plain(shortRange('2026-09-28', '2026-10-04'))).toBe('Sep 28 – Oct 4');
+		expect(shortRange('2026-10-15', '2026-10-15')).toBe('Oct 15');
+		expect(monthLabel('2026-10')).toBe('October 2026');
 	});
 });

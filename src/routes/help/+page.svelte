@@ -202,7 +202,11 @@
 					q: 'I was paid for just one day.',
 					a: 'Tap the dates at the top of the payslip and choose **Just today**.'
 				},
-				{ q: 'Where are History and Expenses?', a: 'They’re coming in a later update.' }
+				{
+					q: 'Where can I see past payslips?',
+					a: 'Open **History**. Payslips are grouped by the month they were paid; tap one to open it.'
+				},
+				{ q: 'Where is Expenses?', a: 'It’s coming in a later update.' }
 			]
 		}
 	];

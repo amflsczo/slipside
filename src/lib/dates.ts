@@ -78,3 +78,24 @@ const shortFormat = new Intl.DateTimeFormat('en', {
 
 /** "Oct 12" */
 export const shortDate = (iso: IsoDate) => shortFormat.format(toUtc(iso));
+
+const shortRangeFormat = new Intl.DateTimeFormat('en', {
+	month: 'short',
+	day: 'numeric',
+	timeZone: 'UTC'
+});
+
+/** "Oct 4 – 10", "Sep 28 – Oct 4", or "Oct 15" for a single day (no year). */
+export const shortRange = (start: IsoDate, end: IsoDate) =>
+	start === end
+		? shortRangeFormat.format(toUtc(start))
+		: shortRangeFormat.formatRange(toUtc(start), toUtc(end));
+
+const monthYearFormat = new Intl.DateTimeFormat('en', {
+	month: 'long',
+	year: 'numeric',
+	timeZone: 'UTC'
+});
+
+/** "2026-10" → "October 2026" */
+export const monthLabel = (month: string) => monthYearFormat.format(toUtc(`${month}-01`));
