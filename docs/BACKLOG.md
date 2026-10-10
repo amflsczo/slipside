@@ -127,4 +127,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | Templates stay as starter packs only; named per-payslip "pay patterns" are deferred. |
 | 2026-10-10 | URLs: `/` is the next payslip to fill in, `/?period=<start>` is a payslip, and old `?week=` links redirect. |
 | 2026-10-10 | `settings.week_start_day` removed (migration 0004); existing users default to "Every week". |
-| 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. |
+| 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. One topic shows at a time (a topic list beside it on desktop, swipeable tabs on phones), guides have Previous / Next, and `/help#<topic>` opens a topic directly. |
