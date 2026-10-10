@@ -24,7 +24,7 @@ Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather th
 | 7 | Docs and naming cleanup | ⏳ Next |
 | 8 | Release: back up, migrate production, push | ⏳ |
 
-> ⚠️ **Don't push `main` until Phase 8.** Local `main` is 8 commits ahead of GitHub, and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
+> ⚠️ **Don't push `main` until Phase 8.** Local `main` has unpushed commits (check with `git log origin/main..main`), and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
 
 ---
 
