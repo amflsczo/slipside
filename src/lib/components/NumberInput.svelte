@@ -22,7 +22,7 @@
 
 <!-- A div, not a label: the Field's own <label for> names the input. -->
 <div class={cn('input w-full', invalid && 'input-error', className)}>
-	{#if symbol}<span class="text-ink-muted" aria-hidden="true">{symbol}</span>{/if}
+	{#if symbol}<span class="text-sm text-ink-muted" aria-hidden="true">{symbol}</span>{/if}
 	<input
 		bind:value
 		class="min-w-0 tabular-nums"

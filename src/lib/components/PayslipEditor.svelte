@@ -13,6 +13,7 @@
 	import Button from './Button.svelte';
 	import Callout from './Callout.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
+	import InfoTip from './InfoTip.svelte';
 	import NumberInput from './NumberInput.svelte';
 	import PayslipPanel from './PayslipPanel.svelte';
 	import PeriodSheet from './PeriodSheet.svelte';
@@ -586,15 +587,22 @@
 									</p>
 								{:else if extra.kind === 'per_week'}
 									<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-										<label class="flex items-center gap-2.5 text-sm text-ink">
-											<input
-												type="checkbox"
-												class="toggle toggle-primary toggle-sm"
-												checked={extra.quantity === '1'}
-												onchange={(e) => (extra.quantity = e.currentTarget.checked ? '1' : '0')}
-											/>
-											Paid this time
-										</label>
+										<div class="flex items-center gap-1">
+											<label class="flex items-center gap-2.5 text-sm text-ink">
+												<input
+													type="checkbox"
+													class="toggle toggle-primary toggle-sm"
+													checked={extra.quantity === '1'}
+													onchange={(e) => (extra.quantity = e.currentTarget.checked ? '1' : '0')}
+												/>
+												Paid this time
+											</label>
+											<InfoTip label="What does Paid this time mean?">
+												Turn this on if <strong class="font-semibold">{extra.name}</strong> is on this
+												payslip. It's paid once, at the amount you type, however many days the payslip
+												covers. Leave it off if you didn't get it this time.
+											</InfoTip>
+										</div>
 										<NumberInput
 											{symbol}
 											bind:value={extra.unitAmount}

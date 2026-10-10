@@ -269,14 +269,25 @@
 		resize: vertical;
 		line-height: 1.5;
 	}
-	.form-surface :is(.input, .textarea)::placeholder {
+	.form-surface :is(.input, .textarea)::placeholder,
+	.form-surface .input input::placeholder {
 		color: var(--color-ink-muted);
 		opacity: 0.7;
 	}
-	@media (max-width: 639px) {
-		.form-surface :is(.input, .select, .textarea):not(.input-sm, .select-sm, .textarea-sm) {
-			font-size: 1rem;
-		}
+	/* Placeholders use the body size everywhere. Typed text can stay 16px on phones (so iOS
+	   doesn't zoom); only the input's own font size triggers that, not the placeholder's. */
+	:is(.input, .textarea)::placeholder,
+	.input input::placeholder {
+		font-size: var(--text-sm);
+	}
+}
+
+/* Phones: typed text in form fields is 16px, so iOS doesn't zoom in on focus. Unlayered on
+   purpose: daisyUI's input sizes live in a later layer and would otherwise win. */
+@media (max-width: 639px) {
+	.form-surface :is(.input, .select, .textarea):not(.input-sm, .select-sm, .textarea-sm),
+	.form-surface .input:not(.input-sm) input {
+		font-size: 1rem;
 	}
 }
 
