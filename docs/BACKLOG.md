@@ -24,7 +24,7 @@ Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather th
 | 7 | Docs and naming cleanup | ⏳ Next |
 | 8 | Release: back up, migrate production, push | ⏳ |
 
-> ⚠️ **Don't push `main` until Phase 8.** Local `main` is 7 commits ahead of GitHub, and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
+> ⚠️ **Don't push `main` until Phase 8.** Local `main` is 8 commits ahead of GitHub, and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
 
 ---
 
@@ -88,11 +88,14 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 - **Per-template default pay length:** all templates suggest "Every week" for now. Could suggest per country once "twice a month" exists.
 - **Two jobs at once:** would need overlapping payslips and a "job" field. Out of scope for now (PLAN.md §11).
 - **PWA install, offline queue, pull-to-refresh** (PLAN.md phase 8).
+- **Help links in context:** a small "?" next to tricky fields (e.g. "How often are you usually paid?") that opens the matching Help section, and a "Need help?" link on the login page.
 - **Automated UI checks:** the Phase 5 check (Playwright driving the local Edge, against the dev branch) worked well. It could become a `npm run test:ui` script with a seeded test account.
 
 ---
 
 ## Tidy-ups (technical)
+
+- **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. History and Expenses will each need a guide, and the "coming in a later update" answer will need removing.
 
 - **Phase 7 renames:**
   - `WeekForm`/`ParsedWeek`/`SavedWeek`/`WeekRecord` → payslip names.
@@ -124,3 +127,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | Templates stay as starter packs only; named per-payslip "pay patterns" are deferred. |
 | 2026-10-10 | URLs: `/` is the next payslip to fill in, `/?period=<start>` is a payslip, and old `?week=` links redirect. |
 | 2026-10-10 | `settings.week_start_day` removed (migration 0004); existing users default to "Every week". |
+| 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. |

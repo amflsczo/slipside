@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import CircleHelp from '@lucide/svelte/icons/circle-help';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import Settings from '@lucide/svelte/icons/settings';
 	import Avatar from './Avatar.svelte';
@@ -65,6 +66,14 @@
 				onclick={() => (open = false)}
 			>
 				<Settings size={16} aria-hidden="true" /> Settings
+			</a>
+			<a
+				href="/help"
+				role="menuitem"
+				class="flex items-center gap-2.5 rounded-xl p-2.5 text-sm text-ink hover:bg-base-200"
+				onclick={() => (open = false)}
+			>
+				<CircleHelp size={16} aria-hidden="true" /> Help
 			</a>
 			<form method="post" action="/logout" role="none">
 				<button

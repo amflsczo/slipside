@@ -4,8 +4,8 @@ import { building } from '$app/env';
 import { auth } from '#lib/server/auth.ts';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 
-// Everything else requires a signed-in user.
-const PUBLIC_PATHS = ['/login', '/register', '/api/auth'];
+// Everything else requires a signed-in user. Help is readable before signing up.
+const PUBLIC_PATHS = ['/login', '/register', '/help', '/api/auth'];
 
 const isPublic = (pathname: string) =>
 	PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));

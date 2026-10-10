@@ -1,5 +1,6 @@
 import type { LucideIcon } from '@lucide/svelte';
 import ChartLine from '@lucide/svelte/icons/chart-line';
+import CircleHelp from '@lucide/svelte/icons/circle-help';
 import ReceiptText from '@lucide/svelte/icons/receipt-text';
 import Settings from '@lucide/svelte/icons/settings';
 import Wallet from '@lucide/svelte/icons/wallet';
@@ -18,7 +19,9 @@ export const NAV: NavItem[] = [
 	{ href: '/', label: 'Payslip', icon: ReceiptText, primary: true, group: 'main' },
 	{ href: '/history', label: 'History', icon: ChartLine, primary: true, group: 'main' },
 	{ href: '/expenses', label: 'Expenses', icon: Wallet, primary: true, group: 'main' },
-	{ href: '/settings', label: 'Settings', icon: Settings, primary: true, group: 'more' }
+	{ href: '/settings', label: 'Settings', icon: Settings, primary: true, group: 'more' },
+	// Not in the phone dock; phones reach it from the account menu.
+	{ href: '/help', label: 'Help', icon: CircleHelp, primary: false, group: 'more' }
 ];
 
 export const isActive = (href: string, pathname: string) =>
@@ -30,6 +33,7 @@ const SECTION_TITLES: Record<string, string> = {
 	'/history': 'History',
 	'/expenses': 'Expenses',
 	'/settings': 'Settings',
+	'/help': 'Help',
 	'/login': 'Log in',
 	'/register': 'Create account'
 };
