@@ -10,11 +10,11 @@ import {
 	extraTypes,
 	otRates,
 	settings,
-	weekDays,
-	weekDeductions,
-	weekExtras,
-	weekOt,
-	weeks
+	payPeriodDays,
+	payPeriodDeductions,
+	payPeriodExtras,
+	payPeriodOt,
+	payPeriods
 } from './db/schema';
 import { addDays, type IsoDate } from '#lib/dates.ts';
 import { TEMPLATES, type ExtraKind, type TemplateId } from '#lib/templates.ts';
@@ -118,7 +118,7 @@ export function forUser(userId: string) {
 	// The id of this user's week starting on `weekStart`, as a subquery, so a save can
 	// write the week and its rows in one batch without waiting for the id.
 	const weekIdOf = (weekStart: IsoDate) =>
-		sql<number>`(select ${weeks.id} from ${weeks} where ${weeks.userId} = ${userId} and ${weeks.weekStart} = ${weekStart})`;
+		sql<number>`(select ${payPeriods.id} from ${payPeriods} where ${payPeriods.userId} = ${userId} and ${payPeriods.periodStart} = ${weekStart})`;
 
 	return {
 		/**
@@ -127,11 +127,11 @@ export function forUser(userId: string) {
 		 * before it). The caller picks the week once it knows the week start day.
 		 */
 		async loadWeekPage(anchor: IsoDate) {
-			const range = between(weeks.weekStart, addDays(anchor, -6), anchor);
+			const range = between(payPeriods.periodStart, addDays(anchor, -6), anchor);
 			const weekIds = db
-				.select({ id: weeks.id })
-				.from(weeks)
-				.where(and(eq(weeks.userId, userId), range));
+				.select({ id: payPeriods.id })
+				.from(payPeriods)
+				.where(and(eq(payPeriods.userId, userId), range));
 			const active = <T extends typeof extraTypes | typeof otRates>(table: T) =>
 				and(eq(table.userId, userId), eq(table.active, true));
 
@@ -160,41 +160,41 @@ export function forUser(userId: string) {
 					.orderBy(...byOrder(otRates)),
 				db
 					.select()
-					.from(weeks)
-					.where(and(eq(weeks.userId, userId), range)),
-				db.select().from(weekDays).where(inArray(weekDays.weekId, weekIds)),
+					.from(payPeriods)
+					.where(and(eq(payPeriods.userId, userId), range)),
+				db.select().from(payPeriodDays).where(inArray(payPeriodDays.periodId, weekIds)),
 				db
 					.select()
-					.from(weekOt)
-					.where(inArray(weekOt.weekId, weekIds))
-					.orderBy(asc(weekOt.sortOrder)),
+					.from(payPeriodOt)
+					.where(inArray(payPeriodOt.periodId, weekIds))
+					.orderBy(asc(payPeriodOt.sortOrder)),
 				db
 					.select()
-					.from(weekDeductions)
-					.where(inArray(weekDeductions.weekId, weekIds))
-					.orderBy(asc(weekDeductions.sortOrder)),
+					.from(payPeriodDeductions)
+					.where(inArray(payPeriodDeductions.periodId, weekIds))
+					.orderBy(asc(payPeriodDeductions.sortOrder)),
 				db
 					.select()
-					.from(weekExtras)
-					.where(inArray(weekExtras.weekId, weekIds))
-					.orderBy(asc(weekExtras.sortOrder))
+					.from(payPeriodExtras)
+					.where(inArray(payPeriodExtras.periodId, weekIds))
+					.orderBy(asc(payPeriodExtras.sortOrder))
 			]);
 
-			const toSaved = (week: typeof weeks.$inferSelect): SavedWeek => ({
+			const toSaved = (week: typeof payPeriods.$inferSelect): SavedWeek => ({
 				currency: week.currency,
 				netPay: week.netPay,
 				notes: week.notes,
 				updatedAt: week.updatedAt.toISOString(),
-				days: days.filter((d) => d.weekId === week.id),
-				deductions: savedDeductions.filter((d) => d.weekId === week.id),
-				ot: savedOt.filter((o) => o.weekId === week.id),
-				extras: savedExtras.filter((e) => e.weekId === week.id)
+				days: days.filter((d) => d.periodId === week.id),
+				deductions: savedDeductions.filter((d) => d.periodId === week.id),
+				ot: savedOt.filter((o) => o.periodId === week.id),
+				extras: savedExtras.filter((e) => e.periodId === week.id)
 			});
 
 			return {
 				general: general ?? null,
 				types: { deductions, extras, otRates: ot },
-				saved: new Map(saved.map((week) => [week.weekStart, toSaved(week)]))
+				saved: new Map(saved.map((week) => [week.periodStart, toSaved(week)]))
 			};
 		},
 
@@ -202,29 +202,38 @@ export function forUser(userId: string) {
 		async saveWeek(record: WeekRecord) {
 			const weekId = weekIdOf(record.weekStart);
 			const children = [
-				[weekDays, record.days],
-				[weekDeductions, record.deductions],
-				[weekOt, record.ot],
-				[weekExtras, record.extras]
+				[payPeriodDays, record.days],
+				[payPeriodDeductions, record.deductions],
+				[payPeriodOt, record.ot],
+				[payPeriodExtras, record.extras]
 			] as const;
 
 			await batch([
 				db
-					.insert(weeks)
-					.values({ ...record.summary, userId, weekStart: record.weekStart })
+					.insert(payPeriods)
+					// Until the payslip page moves to pay periods, every saved period is a 7-day week.
+					.values({
+						...record.summary,
+						userId,
+						periodStart: record.weekStart,
+						periodEnd: addDays(record.weekStart, 6)
+					})
 					.onConflictDoUpdate({
-						target: [weeks.userId, weeks.weekStart],
+						target: [payPeriods.userId, payPeriods.periodStart],
 						set: { ...record.summary, updatedAt: sql`now()` }
 					}),
 				// Replace the rows: simplest way to handle added, changed and removed lines.
-				...children.map(([table]) => db.delete(table).where(eq(table.weekId, weekId))),
+				...children.map(([table]) => db.delete(table).where(eq(table.periodId, weekId))),
 				...children
 					.filter(([, rows]) => rows.length > 0)
 					.map(([table, rows]) =>
 						db
 							.insert(table)
 							.values(
-								rows.map((row) => ({ ...row, weekId })) as unknown as (typeof table.$inferInsert)[]
+								rows.map((row) => ({
+									...row,
+									periodId: weekId
+								})) as unknown as (typeof table.$inferInsert)[]
 							)
 					)
 			]);
@@ -233,9 +242,9 @@ export function forUser(userId: string) {
 		/** Returns false if there was no saved week (or it isn't this user's). */
 		async deleteWeek(weekStart: IsoDate) {
 			const rows = await db
-				.delete(weeks)
-				.where(and(eq(weeks.userId, userId), eq(weeks.weekStart, weekStart)))
-				.returning({ id: weeks.id });
+				.delete(payPeriods)
+				.where(and(eq(payPeriods.userId, userId), eq(payPeriods.periodStart, weekStart)))
+				.returning({ id: payPeriods.id });
 			return rows.length > 0;
 		},
 

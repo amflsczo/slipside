@@ -22,6 +22,13 @@
       "when": 1791467332294,
       "tag": "0002_weeks",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791618362026,
+      "tag": "0003_pay_periods",
+      "breakpoints": true
     }
   ]
 }

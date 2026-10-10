@@ -1,5 +1,6 @@
 import {
 	boolean,
+	check,
 	date,
 	index,
 	integer,
@@ -12,6 +13,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { PAY_LENGTHS } from '../../period.ts';
 import { user } from './auth.schema';
 
 export * from './auth.schema';
@@ -25,10 +27,15 @@ const userId = () =>
 
 const id = () => integer('id').primaryKey().generatedAlwaysAsIdentity();
 
+export const payLength = pgEnum('pay_length', PAY_LENGTHS);
+
 export const settings = pgTable('settings', {
 	userId: userId().primaryKey(),
 	currency: text('currency').notNull(),
-	// 0 = Sunday ... 6 = Saturday (JavaScript's Date.getDay())
+	/** How often the user is usually paid; only suggests dates for a new payslip. */
+	payLength: payLength('pay_length').notNull().default('week'),
+	// 0 = Sunday ... 6 = Saturday (JavaScript's Date.getDay()). Replaced by pay_length; still
+	// read by the This Week page until it moves to pay periods, then dropped.
 	weekStartDay: smallint('week_start_day').notNull().default(1),
 	dateFormat: text('date_format').notNull().default('DD/MM/YYYY'),
 	usualRate: numeric('usual_rate', { precision: 12, scale: 2 }),
@@ -88,19 +95,24 @@ export const expenseCategories = pgTable(
 	(t) => [uniqueIndex('expense_categories_user_name_idx').on(t.userId, sql`lower(${t.name})`)]
 );
 
-// Weeks are snapshots (PLAN.md section 5): each saved week keeps its own currency and the
-// names, amounts and multipliers it was saved with, so editing Settings never changes history.
-// Child rows have no user_id; they are only ever reached through their user-filtered week.
+// Pay periods are snapshots (PLAN.md section 5): each saved payslip keeps its own currency and
+// the names, amounts and multipliers it was saved with, so editing Settings never changes history.
+// A period covers period_start to period_end, both included, 1 to 62 days, and a user's periods
+// never overlap (an exclusion constraint added in migration 0003; Drizzle can't declare it).
+// Child rows have no user_id; they are only ever reached through their user-filtered period.
 const amount = (name: string) => numeric(name, { precision: 12, scale: 2 }).notNull();
 
-export const weekExtraKind = pgEnum('week_extra_kind', ['per_day', 'per_week', 'bonus']);
+export const periodExtraKind = pgEnum('period_extra_kind', ['per_day', 'per_week', 'bonus']);
 
-export const weeks = pgTable(
-	'weeks',
+export const payPeriods = pgTable(
+	'pay_periods',
 	{
 		id: id(),
 		userId: userId(),
-		weekStart: date('week_start', { mode: 'string' }).notNull(),
+		periodStart: date('period_start', { mode: 'string' }).notNull(),
+		periodEnd: date('period_end', { mode: 'string' }).notNull(),
+		/** The day it was paid; when null, the end date stands in for it. */
+		payDate: date('pay_date', { mode: 'string' }),
 		currency: text('currency').notNull(),
 		netPay: amount('net_pay'),
 		totalDeductions: amount('total_deductions'),
@@ -109,67 +121,74 @@ export const weeks = pgTable(
 		payFromHours: amount('pay_from_hours'),
 		regularHours: numeric('regular_hours', { precision: 6, scale: 2 }).notNull(),
 		otHours: numeric('ot_hours', { precision: 6, scale: 2 }).notNull(),
-		// Major units per hour, 4 places; null when the week has no valid rate (e.g. no hours).
+		// Major units per hour, 4 places; null when the period has no valid rate (e.g. no hours).
 		hourlyRate: numeric('hourly_rate', { precision: 12, scale: 4 }),
 		notes: text('notes'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 	},
-	(t) => [uniqueIndex('weeks_user_week_idx').on(t.userId, t.weekStart)]
+	(t) => [
+		uniqueIndex('pay_periods_user_start_idx').on(t.userId, t.periodStart),
+		check(
+			'pay_periods_dates_check',
+			sql`${t.periodEnd} >= ${t.periodStart} and ${t.periodEnd} - ${t.periodStart} < 62`
+		)
+	]
 );
 
-const weekId = () =>
-	integer('week_id')
+const periodId = () =>
+	integer('period_id')
 		.notNull()
-		.references(() => weeks.id, { onDelete: 'cascade' });
+		.references(() => payPeriods.id, { onDelete: 'cascade' });
 
-export const weekDays = pgTable(
-	'week_days',
+export const payPeriodDays = pgTable(
+	'pay_period_days',
 	{
 		id: id(),
-		weekId: weekId(),
+		periodId: periodId(),
 		date: date('date', { mode: 'string' }).notNull(),
 		hours: numeric('hours', { precision: 5, scale: 2 }).notNull()
 	},
-	(t) => [index('week_days_week_idx').on(t.weekId)]
+	(t) => [index('pay_period_days_period_idx').on(t.periodId)]
 );
 
-export const weekOt = pgTable(
-	'week_ot',
+export const payPeriodOt = pgTable(
+	'pay_period_ot',
 	{
 		id: id(),
-		weekId: weekId(),
+		periodId: periodId(),
 		name: text('name').notNull(),
 		multiplier: numeric('multiplier', { precision: 6, scale: 3 }).notNull(),
 		hours: numeric('hours', { precision: 6, scale: 2 }).notNull(),
 		sortOrder: integer('sort_order').notNull().default(0)
 	},
-	(t) => [index('week_ot_week_idx').on(t.weekId)]
+	(t) => [index('pay_period_ot_period_idx').on(t.periodId)]
 );
 
-export const weekDeductions = pgTable(
-	'week_deductions',
+export const payPeriodDeductions = pgTable(
+	'pay_period_deductions',
 	{
 		id: id(),
-		weekId: weekId(),
+		periodId: periodId(),
 		name: text('name').notNull(),
 		amount: amount('amount'),
 		sortOrder: integer('sort_order').notNull().default(0)
 	},
-	(t) => [index('week_deductions_week_idx').on(t.weekId)]
+	(t) => [index('pay_period_deductions_period_idx').on(t.periodId)]
 );
 
-export const weekExtras = pgTable(
-	'week_extras',
+export const payPeriodExtras = pgTable(
+	'pay_period_extras',
 	{
 		id: id(),
-		weekId: weekId(),
+		periodId: periodId(),
 		name: text('name').notNull(),
-		kind: weekExtraKind('kind').notNull(),
+		/** per_week is shown as "per payslip": paid once per period, whatever its length. */
+		kind: periodExtraKind('kind').notNull(),
 		unitAmount: amount('unit_amount'),
 		quantity: numeric('quantity', { precision: 6, scale: 2 }).notNull(),
 		amount: amount('amount'),
 		sortOrder: integer('sort_order').notNull().default(0)
 	},
-	(t) => [index('week_extras_week_idx').on(t.weekId)]
+	(t) => [index('pay_period_extras_period_idx').on(t.periodId)]
 );
