@@ -26,6 +26,16 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 
 > ✅ **Released 2026-10-10** at **https://slipside-tracker.vercel.app**. Production has migrations 0003 and 0004 and `main` is deployed. Backup branch in Neon: `backup-before-pay-periods`.
 
+### Next: History (planned 2026-10-10)
+
+| Phase | What | Status |
+|---|---|---|
+| H1 | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid | ⏳ Next |
+| H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ⏳ |
+| H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ⏳ |
+| H4 | Year summary tiles; a hand-drawn SVG chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ⏳ |
+| H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ⏳ |
+
 ---
 
 ## Needs a decision
@@ -46,11 +56,6 @@ Periods over 7 days show one hours box per day (a calendar). The plan offered a 
   - **(b)** Add an end-of-month rule: a start on the last day of a month runs to the second-to-last day of the next month.
   - **(c)** Make "1 month" a calendar month (1st to the last day) only.
 - **Suggestion:** (a), unless you're paid monthly from a late-month start.
-
-### 3. Pay date on the payslip
-The database has an optional `pay_date` column (Phase 2), but nothing sets it yet. When it's empty, the end date stands in for it.
-- **Question:** add a "Paid on" field to the payslip now, or when History is built (where it decides which month a payslip counts in)?
-- **Suggestion:** add it with History.
 
 ### 4. Template item called "Weekly bonus"
 The UK and US templates include an extra named **Weekly bonus**, of kind "per payslip". With flexible periods the name can read oddly.
@@ -75,7 +80,6 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 ## Ideas for later
 
-- **History page** (planned): list and chart of past payslips, comparisons, the rate-check flag. It should read the **stored totals**, so a future change to the maths never changes old payslips. Group by pay date (decision 3).
 - **Expenses page** (planned): quick add, monthly totals by category, income vs expenses.
 - **Backup:** JSON export and import, CSV export (PLAN.md phase 7).
 - **Named pay patterns:** saved setups like "Regular week" or "Day gig", each with its own length and optionally its own deductions, chosen per payslip. This was deferred in favour of a single usual length.
@@ -129,3 +133,4 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 | 2026-10-10 | Payslip action bar: same width as the "Your payslip" card on wide screens, and minimal: a status dot + label, an icon-only Delete (still confirms) and the Update / Save button, in one row on every screen. Gross and rate removed (the slip shows them). |
 | 2026-10-10 | The "Updates as you type" pill is removed. The slip has **Save image** (PNG, 2×, slip shape on paper; share sheet on phones, download elsewhere). One-off deductions and bonuses added on a payslip stay on that payslip only; they are not added to Settings. |
 | 2026-10-10 | Vercel's `DATABASE_URL` (a Sensitive variable, so its value can't be viewed) points at the Neon **production** branch: confirmed by production waking when the live site was opened. |
+| 2026-10-10 | History plan: comparisons show the change in net **and** the rate change when payslip lengths differ; payslips count in the **month they were paid** (new "Paid on" field, built first); the chart shows **net pay** first; **one year at a time**; the chart is hand-drawn SVG (no library); a year breakdown totals each deduction and extra. History reads stored totals and never recalculates. |
