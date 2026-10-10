@@ -13,7 +13,7 @@ This guide is written so you can copy it into another project. The class names a
 3. **Money reads like money.** Figures are set in the serif display face, with lining tabular numerals. Payslip lines are monospaced, with dotted leaders, a single rule above the totals and a double rule under net pay. Money going out (deductions, expenses) is `text-negative`, with a `−` sign.
 4. **Rounded and soft.** Large radii (cards `rounded-3xl`, controls `rounded-full` or `rounded-xl`), one soft shadow, and short transitions of 150–200 ms.
 5. **Status is colour-coded everywhere.** A record's state (Draft, Pending, Approved, Rejected…) always has the same colour, in pills, card washes and callouts.
-6. **Phone first, desktop roomier.** Layouts stack on phones and spread out from `sm` and `lg` up. Action bars stick to the bottom on phones, within thumb reach.
+6. **Phone first, desktop roomier.** Layouts stack on phones and spread out from `sm` and `lg` up. A form ends with its action bar, in the page flow.
 7. **Explain, don't just block.** If something can't be done, a short note says why and what to do instead.
 8. **Usable by everyone.** Every screen follows the four POUR principles (Perceivable, Operable, Understandable, Robust) of WCAG 2.2 at level AA. See [§11](#11-accessibility-the-four-pour-principles) for the rules.
 
@@ -404,7 +404,7 @@ Phones (< md)              Tablets (md)            Desktops (lg+)
   - Inactive: `text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-ink`.
 - **Top bar (phones only):** `sticky top-0 h-14 px-4 pt-safe md:hidden`. It holds the brand, the theme toggle and the account menu. It slides away (`-translate-y-full`) while you scroll down past 72px, and comes back when you scroll up or while it has focus. Once scrolled it frosts: `bg-surface/80 backdrop-blur-md`.
 - **Dock (phones only):** a dark floating bar, `fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] max-w-md rounded-[1.75rem] bg-sidebar p-1.5`. It holds the 4–5 "primary" items, each an icon over a label (`text-2xs font-semibold`). A paper pill (`bg-sidebar-ink`) slides to the current tab with a slight overshoot.
-- **Main:** `px-4 pt-2 pb-32 sm:px-6 md:pt-6 md:pb-10 lg:px-10 lg:pt-8`. The bottom padding on phones keeps content clear of the dock. Sticky action bars sit at `bottom-[calc(5.5rem+env(safe-area-inset-bottom))]` on phones and `md:bottom-4` from md up.
+- **Main:** `px-4 pt-2 pb-32 sm:px-6 md:pt-6 md:pb-10 lg:px-10 lg:pt-8`. The bottom padding on phones keeps content clear of the dock.
 - **Single nav source:** one `navItems` array (label, href, icon, `visible(user)`, `primary`, `group`) drives the side nav, the bottom nav, and the rule for which pages show a back arrow.
 - **Print:** the shell hides itself with `print:hidden!`, and `<main>` drops its padding with `print:p-0!`.
 
@@ -500,11 +500,10 @@ A daisyUI `badge font-medium` with the status class from §3, `badge-sm` by defa
 4. **Contextual callout(s):** e.g. a deadline reminder, in the tone of its state (positive / warning / error / neutral).
 5. **DetailSection(s):** a card with a small tinted icon square and a `text-sm font-semibold` title, holding a `<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">` of **InfoItem**s (`dt` = `text-xs text-ink-muted`, `dd` = `text-sm text-ink mt-1`). A `wide` item spans both columns. Show `—` for empty values.
 6. **History:** a timeline of what happened, who did it and when.
-7. **DetailActions:** the sticky action bar (below).
+7. **DetailActions:** the action bar (below).
 
-### Sticky action bar (forms and details)
-`sticky bottom-[calc(5.1rem+env(safe-area-inset-bottom))] lg:bottom-4 z-20 rounded-2xl border bg-card/90 backdrop-blur-md p-3`, with the floating shadow.
-- It sits **above the bottom nav** on phones.
+### Action bar (forms and details)
+`rounded-3xl bg-card p-4 sm:px-6 shadow-soft`: the **last card of the form**, in the page flow. It doesn't float or stick.
 - **Form version:** a short summary on the left ("3 employees · 12 hrs"). On the right, "Save as draft" (secondary) and **Submit** (accent).
 - **Detail version:** the buttons stretch to fill the row on phones (`min-w-[9rem] flex-1`) and align right on desktop. The bar hides itself if it has no buttons.
 - While working, button labels change to "Submitting…" / "Saving…".

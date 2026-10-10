@@ -129,3 +129,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | `settings.week_start_day` removed (migration 0004); existing users default to "Every week". |
 | 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. One topic shows at a time (a topic list beside it on desktop, a "Topic" dropdown on phones and tablets), guides have Previous / Next, and `/help#<topic>` opens a topic directly. |
 | 2026-10-10 | Smaller type scale used everywhere (body 12.5px; new `text-2xs` for overlines); Help is the 5th item in the phone dock; every clickable control shows the pointer cursor. |
+| 2026-10-10 | The action bar (status + Save) is the last card of the form, in the page flow, not a sticky floating bar. |
