@@ -281,17 +281,36 @@
 	/>
 
 	<div class="grid gap-4 sm:gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
-		<!-- Topics: a swipeable row of tabs on phones, a grouped list beside the guide from lg up. -->
+		<!-- Phones and tablets: the phone's own picker, grouped like the list. -->
+		<div class="form-surface flex flex-col gap-1.5 lg:hidden">
+			<label for="{uid}-topic" class="text-[0.8rem] font-medium text-ink">Topic</label>
+			<select
+				id="{uid}-topic"
+				class="select w-full"
+				value={topic.id}
+				onchange={(e) => open(e.currentTarget.value)}
+			>
+				{#each GROUPS as group (group)}
+					<optgroup label={group}>
+						{#each TOPICS.filter((t) => t.group === group) as t (t.id)}
+							<option value={t.id}>{t.title}</option>
+						{/each}
+					</optgroup>
+				{/each}
+			</select>
+		</div>
+
+		<!-- lg+: a grouped list of topics beside the guide. -->
 		<div
 			role="tablist"
 			aria-label="Help topics"
 			tabindex="-1"
 			onkeydown={onKeydown}
-			class="-mx-4 flex snap-x [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:sticky lg:top-6 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:rounded-3xl lg:bg-card lg:p-3 lg:shadow-soft"
+			class="sticky top-6 hidden flex-col gap-1 rounded-3xl bg-card p-3 shadow-soft lg:flex"
 		>
 			{#each GROUPS as group (group)}
 				<p
-					class="hidden px-3 pt-2 pb-1 font-mono text-[0.7rem] font-medium tracking-widest text-ink-muted uppercase first:pt-1 lg:block"
+					class="px-3 pt-2 pb-1 font-mono text-[0.7rem] font-medium tracking-widest text-ink-muted uppercase first:pt-1"
 					aria-hidden="true"
 				>
 					{group}
@@ -307,13 +326,13 @@
 						tabindex={selected ? 0 : -1}
 						onclick={() => open(t.id, { focusPanel: true })}
 						class={cn(
-							'flex min-h-10 shrink-0 snap-start items-center gap-2.5 rounded-full border px-3.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 lg:rounded-2xl lg:border-0 lg:px-3 lg:text-left lg:whitespace-normal',
+							'flex min-h-10 items-center gap-2.5 rounded-2xl px-3 text-left text-sm font-medium transition-colors duration-150',
 							selected
-								? 'border-sidebar-active bg-sidebar-active text-sidebar-active-ink lg:bg-sidebar-active/10 lg:font-semibold lg:text-sidebar-active'
-								: 'border-base-300 bg-card text-ink hover:bg-base-200 lg:bg-transparent'
+								? 'bg-sidebar-active/10 font-semibold text-sidebar-active'
+								: 'text-ink hover:bg-base-200'
 						)}
 					>
-						<t.icon size={16} class="hidden shrink-0 lg:block" aria-hidden="true" />
+						<t.icon size={16} class="shrink-0" aria-hidden="true" />
 						{t.title}
 					</button>
 				{/each}
