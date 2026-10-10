@@ -177,18 +177,17 @@
 	color: var(--color-sidebar-active-ink);
 }
 
-/* daisyUI controls follow the type scale on larger screens. */
-@media (min-width: 640px) {
-	:is(.input, .select, .textarea):not(
-		.input-xs,
-		.input-sm,
-		.select-xs,
-		.select-sm,
-		.textarea-xs,
-		.textarea-sm
-	) {
-		font-size: var(--text-sm);
-	}
+/* daisyUI controls use the body size at every width, phones included. (iOS would zoom in on
+   fields under 16px; app.html stops that on iPhone and iPad, where pinch-zoom still works.) */
+:is(.input, .select, .textarea):not(
+	.input-xs,
+	.input-sm,
+	.select-xs,
+	.select-sm,
+	.textarea-xs,
+	.textarea-sm
+) {
+	font-size: var(--text-sm);
 }
 .btn:not(.btn-xs, .btn-sm, .btn-lg) {
 	font-size: var(--text-sm);
@@ -279,15 +278,6 @@
 	:is(.input, .textarea)::placeholder,
 	.input input::placeholder {
 		font-size: var(--text-sm);
-	}
-}
-
-/* Phones: typed text in form fields is 16px, so iOS doesn't zoom in on focus. Unlayered on
-   purpose: daisyUI's input sizes live in a later layer and would otherwise win. */
-@media (max-width: 639px) {
-	.form-surface :is(.input, .select, .textarea):not(.input-sm, .select-sm, .textarea-sm),
-	.form-surface .input:not(.input-sm) input {
-		font-size: 1rem;
 	}
 }
 

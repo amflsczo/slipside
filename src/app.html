@@ -17,7 +17,19 @@
 								: 'light';
 					document.documentElement.setAttribute('data-theme', mode);
 				} catch (e) {}
-				// Lets the server work out "this week" in the user's time zone (src/lib/dates.ts).
+				// Fields use the body text size (under 16px), which makes iOS Safari zoom in on focus.
+				// maximum-scale=1 stops that; Safari still allows pinch-zoom, so only set it on iOS
+				// (elsewhere it would block pinch-zoom).
+				try {
+					var ios =
+						/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+						(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+					if (ios)
+						document
+							.querySelector('meta[name="viewport"]')
+							.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1');
+				} catch (e) {}
+				// Lets the server work out today's date in the user's time zone (src/lib/dates.ts).
 				try {
 					var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 					if (tz)

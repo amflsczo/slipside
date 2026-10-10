@@ -384,7 +384,7 @@ Rules:
 - Labels never go below 12px (`text-xs`), except overlines, badges and dock labels (`text-2xs`, 11px).
 - **Use only the scale** (`text-2xs` … `text-5xl`). No one-off `text-[…]` sizes, so every page matches.
 - **Clickable things show the hand cursor.** A base rule in `layout.css` covers buttons, tabs, menu items, `summary`, `select`, checkbox and radio labels; disabled controls keep the arrow.
-- On phones, typed text in form fields is **16px**, so iOS doesn't zoom in when a field is tapped. The rule sits outside CSS layers in `layout.css`, because daisyUI's input sizes would otherwise override it. **Placeholders, currency symbols and suffixes stay at `text-sm`/`text-xs`**, so empty fields look calm.
+- **Form fields use the body size (`text-sm`) everywhere**, phones included, so typed text matches the page. iOS Safari would zoom in on fields under 16px, so `app.html` sets `maximum-scale=1` on iPhone and iPad only; Safari still allows pinch-zoom there, and other platforms keep normal zoom. Placeholders, currency symbols and suffixes are `text-sm`/`text-xs` too.
 - **Info helpers:** `InfoTip` puts a small ⓘ button next to a control that needs explaining. It opens a dark bubble with one or two sentences on tap or click, and closes on Escape, a tap elsewhere or focus moving away.
 - Long user text that keeps its line breaks uses `whitespace-pre-line`. Anything that might overflow uses `break-words` / `truncate` / `line-clamp-*` with `min-w-0` on the flex child.
 
