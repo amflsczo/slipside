@@ -22,7 +22,7 @@ Current work: **flexible pay periods.** A payslip covers 1 to 62 days, rather th
 | 5 | Payslip page UI: date sheet, calendar hours grid, "Payslip" wording | ✅ Committed |
 | 6 | Settings: "How often are you usually paid?" replaces the week start day; migration 0004 drops `week_start_day` (dev branch only) | ✅ Committed |
 | 7 | Docs and naming cleanup: payslip names in the code, PLAN.md and DESIGN.md updated | ✅ Committed |
-| 8 | Release: back up, migrate production, push | ⏳ Next (needs decision 5) |
+| 8 | Release: back up, migrate production, push | ⏳ Next (ready) |
 
 > ⚠️ **Don't push `main` until Phase 8.** Local `main` has unpushed commits (check with `git log origin/main..main`), and from Phase 2 on it expects the `pay_periods` tables. Production still has `weeks`, so pushing first would break the live site.
 
@@ -59,16 +59,11 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
   - **(b)** Leave it.
 - **Suggestion:** (a).
 
-### 5. Which database does Vercel use?
-I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`ep-damp-cake-…`). This is unconfirmed.
-- **Why it matters:** Phase 8 migrates that database.
-- **To do:** check in Vercel → Settings → Environment Variables before Phase 8.
-
 ---
 
 ## Before going live (Phase 8 checklist)
 
-- [ ] Confirm Vercel's `DATABASE_URL` is the production branch (decision 5).
+- [x] Confirm Vercel's `DATABASE_URL` is the production branch (confirmed 2026-10-10: production woke when the live site was opened).
 - [ ] In Neon, create a backup branch from production, e.g. `backup-before-pay-periods`.
 - [ ] Run migrations 0003 (pay periods) and 0004 (drop `week_start_day`) on production.
 - [ ] Check production: old weeks show as 7-day periods, and an overlapping save is refused.
@@ -86,6 +81,7 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 - **Named pay patterns:** saved setups like "Regular week" or "Day gig", each with its own length and optionally its own deductions, chosen per payslip. This was deferred in favour of a single usual length.
 - **"Twice a month" pay length** (e.g. the 15th and the last day), common in the Philippines. It doesn't fit day / week / 2 weeks / month. Would need a fifth usual length with a calendar rule. For now, change the dates per payslip.
 - **Per-template default pay length:** all templates suggest "Every week" for now. Could suggest per country once "twice a month" exists.
+- **Preview deployments use production data.** Vercel's `DATABASE_URL` is set for "Production and Preview", so preview builds read and write the live database. Consider giving Preview the Neon `dev` branch (or a separate preview branch).
 - **Two jobs at once:** would need overlapping payslips and a "job" field. Out of scope for now (PLAN.md §11).
 - **PWA install, offline queue, pull-to-refresh** (PLAN.md phase 8).
 - **"Also add to my list"** on one-off deduction and bonus rows, to add the item to Settings in the same step (today a one-off row stays on that payslip only).
@@ -130,3 +126,4 @@ I've assumed Vercel's `DATABASE_URL` points at the Neon **production** branch (`
 | 2026-10-10 | Typed text in fields is the body size (12.5px) on phones too, per the user's preference. To stop iOS zooming in on focus, `maximum-scale=1` is set on iPhone/iPad only (pinch-zoom still works there); Android and desktop keep normal zoom. |
 | 2026-10-10 | Payslip action bar: same width as the "Your payslip" card on wide screens, and minimal: a status dot + label, an icon-only Delete (still confirms) and the Update / Save button, in one row on every screen. Gross and rate removed (the slip shows them). |
 | 2026-10-10 | The "Updates as you type" pill is removed. The slip has **Save image** (PNG, 2×, slip shape on paper; share sheet on phones, download elsewhere). One-off deductions and bonuses added on a payslip stay on that payslip only; they are not added to Settings. |
+| 2026-10-10 | Vercel's `DATABASE_URL` (a Sensitive variable, so its value can't be viewed) points at the Neon **production** branch: confirmed by production waking when the live site was opened. |
