@@ -672,7 +672,7 @@
 		</div>
 
 		<aside
-			class="xl:sticky xl:top-6 xl:-mx-3 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:px-3 xl:pb-4"
+			class="xl:sticky xl:top-6 xl:row-span-2 xl:-mx-3 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:px-3 xl:pb-4"
 		>
 			<PayslipPanel
 				{payslip}
@@ -683,35 +683,36 @@
 				{tolerancePct}
 			/>
 		</aside>
-	</div>
 
-	<ActionBar>
-		{#snippet summary()}
-			<span class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				{#if dirty}
-					<span class="badge badge-sm font-medium badge-warning">Unsaved changes</span>
-				{:else if saved}
-					<span class="badge badge-sm font-medium badge-success">Saved</span>
-				{:else}
-					<span class="badge badge-sm font-medium badge-neutral">Not saved yet</span>
-				{/if}
-				{#if payslip}
-					<span class="tabular-nums">
-						Gross {formatMoney(payslip.gross, currency)}{#if payslip.hourlyRate !== null}
-							· {formatRate(payslip.hourlyRate, currency)}/hr{/if}
-					</span>
-				{/if}
-			</span>
-		{/snippet}
-		{#if saved}
-			<Button type="button" variant="ghost" onclick={() => (confirmDelete = true)}>
-				<Trash size={16} aria-hidden="true" /> Delete
+		<!-- Under the form card on wide screens (same width); last on the page on phones. -->
+		<ActionBar class="xl:col-start-1">
+			{#snippet summary()}
+				<span class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 sm:justify-start">
+					{#if dirty}
+						<span class="badge badge-sm font-medium badge-warning">Unsaved changes</span>
+					{:else if saved}
+						<span class="badge badge-sm font-medium badge-success">Saved</span>
+					{:else}
+						<span class="badge badge-sm font-medium badge-neutral">Not saved yet</span>
+					{/if}
+					{#if payslip}
+						<span class="tabular-nums">
+							Gross {formatMoney(payslip.gross, currency)}{#if payslip.hourlyRate !== null}
+								· {formatRate(payslip.hourlyRate, currency)}/hr{/if}
+						</span>
+					{/if}
+				</span>
+			{/snippet}
+			{#if saved}
+				<Button type="button" variant="ghost" onclick={() => (confirmDelete = true)}>
+					<Trash size={16} aria-hidden="true" /> Delete
+				</Button>
+			{/if}
+			<Button variant="accent" class="flex-1 sm:flex-none" loading={pending}>
+				{pending ? 'Saving…' : saved ? 'Update payslip' : 'Save payslip'}
 			</Button>
-		{/if}
-		<Button variant="accent" class="flex-1 sm:flex-none" loading={pending}>
-			{pending ? 'Saving…' : saved ? 'Update payslip' : 'Save payslip'}
-		</Button>
-	</ActionBar>
+		</ActionBar>
+	</div>
 </form>
 
 <form
