@@ -64,7 +64,7 @@
 				'Check the breakdown. It updates as you type.',
 				'Tap **Save payslip**.'
 			],
-			note: 'The breakdown appears once net pay is entered. **Adds back to the net pay on your payslip** means the numbers match.'
+			note: 'The breakdown appears once net pay is entered. **Adds back to the net pay on your payslip** means the numbers match. Tap **Save image** on the breakdown to keep a picture of it.'
 		},
 		{
 			id: 'dates',
@@ -189,6 +189,14 @@
 				{
 					q: 'An item is missing from my payslip.',
 					a: 'It may be hidden. Go to **Settings**, find it and tap the eye to show it again.'
+				},
+				{
+					q: 'Can I keep a copy of a payslip?',
+					a: 'Yes. Tap **Save image** at the top of the breakdown. On a phone, choose **Save Image** to put it in your photos; on a computer it downloads.'
+				},
+				{
+					q: 'If I add a deduction or bonus on a payslip, is it added to my Settings?',
+					a: 'No. It’s saved with that payslip only. To have it on every payslip, add it in **Settings**.'
 				},
 				{
 					q: 'I was paid for just one day.',

@@ -666,7 +666,7 @@ The entry side mirrors the printed slip: **one card**, `form-surface rounded-3xl
 
 The reverse payslip looks printed: `drop-shadow-soft` on the wrapper, `slip-edge` (a torn zigzag bottom, via a mask) on a `rounded-t-3xl bg-card` card.
 
-- Header: "PAYSLIP" in `font-mono tracking-[0.2em] uppercase`, the period under it, and a soft accent "Updates as you type" pill.
+- Header: "PAYSLIP" in `font-mono tracking-[0.2em] uppercase`, the period under it, and a small outlined **Save image** button once there's a payslip. It saves a PNG of the slip (modern-screenshot, loaded on demand) cut to the slip's shape (rounded top, torn edge) on the paper colour with a soft shadow; phones get the share sheet, desktops a download.
 - **Net pay** in `font-display text-5xl`, then a row of three StatTiles (Gross, Rate, Hours) on `bg-base-200/70`.
 - Lines in `font-mono text-xs tabular-nums`: `label · · · · amount` with the `leader` utility; deductions in `text-negative` with a minus sign; a rule above Gross, and a single rule above plus a double rule under Net pay (accounting style).
 - Before net pay is entered, faded placeholder lines and one hint.

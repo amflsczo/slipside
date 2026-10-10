@@ -22,12 +22,7 @@
 	import { dayLabel, formatRange, type IsoDate } from '#lib/dates.ts';
 	import type { Period } from '#lib/period.ts';
 	import { periodHref } from '#lib/periodNav.ts';
-	import {
-		currencySymbol,
-		formatMoney,
-		minorDigits,
-		toMinor
-	} from '#lib/format/money.ts';
+	import { currencySymbol, formatMoney, minorDigits, toMinor } from '#lib/format/money.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import { carried, clearDraft, readDraft, writeDraft } from '#lib/payslip/draft.ts';
 	import {
@@ -677,6 +672,7 @@
 				{payslip}
 				{currency}
 				period={formatRange(form.start, form.end)}
+				fileName="payslip-{form.start}"
 				{emptyMessage}
 				{usualRate}
 				{tolerancePct}

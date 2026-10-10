@@ -2,16 +2,19 @@
 	import Banknote from '@lucide/svelte/icons/banknote';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import Clock from '@lucide/svelte/icons/clock';
+	import Download from '@lucide/svelte/icons/download';
 	import Gauge from '@lucide/svelte/icons/gauge';
 	import Callout from './Callout.svelte';
 	import StatTile from './StatTile.svelte';
 	import { balances, checkRate, type Payslip } from '#lib/calc/reversePayslip.ts';
 	import { formatMoney, formatRate } from '#lib/format/money.ts';
+	import { toast } from '#lib/toast.svelte.ts';
 
 	let {
 		payslip,
 		currency,
 		period,
+		fileName = 'payslip',
 		emptyMessage,
 		usualRate,
 		tolerancePct
@@ -21,6 +24,8 @@
 		currency: string;
 		/** The pay period, e.g. "Oct 14 – 20, 2026". */
 		period?: string;
+		/** For the saved image, without the extension, e.g. "payslip-2026-10-04". */
+		fileName?: string;
 		/** Why there's no payslip yet. */
 		emptyMessage: string;
 		/** Minor units per hour, from Settings; null when not set or a different currency. */
@@ -37,6 +42,91 @@
 	const PLACEHOLDER = ['Regular pay', 'Overtime', 'Gross pay', 'Deductions', 'Net pay'];
 	const sectionLabel =
 		'pb-1 font-sans text-2xs font-semibold tracking-wider text-ink-muted uppercase';
+
+	// --- Save as an image: the slip exactly as shown, paper and torn edge included ---
+	let slip: HTMLDivElement;
+	let exporting = $state(false);
+
+	/**
+	 * The screenshot is a plain rectangle (CSS masks aren't captured), so cut it to the slip's
+	 * shape: rounded top corners (rounded-t-3xl, 24px) and the torn edge (slip-edge, 14px teeth).
+	 * It's laid on the page's paper colour with a soft shadow, so the edge shows in any gallery
+	 * (some show transparency as black).
+	 */
+	function cutToSlip(shot: HTMLCanvasElement, scale: number): Promise<Blob> {
+		const { width: w, height: h } = shot;
+		const margin = 28 * scale;
+		const radius = 24 * scale;
+		const tooth = 14 * scale;
+		const canvas = Object.assign(document.createElement('canvas'), {
+			width: w + margin * 2,
+			height: h + margin * 2
+		});
+		const ctx = canvas.getContext('2d')!;
+		ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		ctx.translate(margin, margin);
+		const shape = new Path2D();
+		shape.moveTo(0, radius);
+		shape.arcTo(0, 0, radius, 0, radius);
+		shape.lineTo(w - radius, 0);
+		shape.arcTo(w, 0, w, radius, radius);
+		shape.lineTo(w, h - tooth / 2);
+		for (let x = w; x > 0; x -= tooth) {
+			shape.lineTo(x - tooth / 2, h);
+			shape.lineTo(Math.max(x - tooth, 0), h - tooth / 2);
+		}
+		shape.closePath();
+
+		// The soft card shadow, then the slip itself.
+		ctx.save();
+		ctx.shadowColor = 'rgb(40 32 16 / 0.14)';
+		ctx.shadowBlur = 18 * scale;
+		ctx.shadowOffsetY = 8 * scale;
+		ctx.fillStyle = getComputedStyle(shot.ownerDocument.body).backgroundColor;
+		ctx.fill(shape);
+		ctx.restore();
+		ctx.clip(shape);
+		ctx.drawImage(shot, 0, 0);
+
+		return new Promise((resolve, reject) =>
+			canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob'))), 'image/png')
+		);
+	}
+
+	async function saveImage() {
+		if (!payslip || exporting) return;
+		exporting = true;
+		try {
+			// Loaded only when used, so it doesn't slow down the page.
+			const { domToCanvas } = await import('modern-screenshot');
+			const scale = 2;
+			const shot = await domToCanvas(slip, {
+				scale,
+				// Leave the Save image button itself out of the picture.
+				filter: (node) => !(node instanceof HTMLElement && 'noExport' in node.dataset)
+			});
+			const blob = await cutToSlip(shot, scale);
+			const file = new File([blob], `${fileName}.png`, { type: 'image/png' });
+			// Phones: the share sheet (Save Image, Messages…). Elsewhere: a download.
+			if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
+				await navigator.share({ files: [file], title: 'Payslip' });
+			} else {
+				const url = URL.createObjectURL(blob);
+				const link = Object.assign(document.createElement('a'), { href: url, download: file.name });
+				link.click();
+				setTimeout(() => URL.revokeObjectURL(url), 1000);
+			}
+		} catch (error) {
+			// Closing the share sheet isn't an error.
+			if ((error as DOMException)?.name !== 'AbortError') {
+				toast.show("Couldn't create the image just now. Try again.", 'error');
+			}
+		} finally {
+			exporting = false;
+		}
+	}
 </script>
 
 {#snippet line(name: string, amount: string, detail?: string, negative = false)}
@@ -54,7 +144,7 @@
 
 <!-- A printed payslip: torn bottom edge, dotted leaders, ruled totals. -->
 <section class="drop-shadow-soft" aria-labelledby="payslip-title">
-	<div class="rounded-t-3xl bg-card px-4 pt-4 pb-9 slip-edge sm:px-6 sm:pt-6">
+	<div bind:this={slip} class="rounded-t-3xl bg-card px-4 pt-4 pb-9 slip-edge sm:px-6 sm:pt-6">
 		<div class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
 				<h2
@@ -65,12 +155,19 @@
 				</h2>
 				{#if period}<p class="mt-0.5 text-xs text-ink-muted tabular-nums">{period}</p>{/if}
 			</div>
-			<span
-				class="flex shrink-0 items-center gap-1.5 rounded-full bg-sidebar-active/10 px-2.5 py-1 text-2xs font-semibold text-sidebar-active"
-			>
-				<span class="size-1.5 rounded-full bg-sidebar-active" aria-hidden="true"></span>
-				Updates as you type
-			</span>
+			{#if payslip}
+				<button
+					type="button"
+					data-no-export
+					class="flex shrink-0 items-center gap-1.5 rounded-full border border-base-300 px-2.5 py-1 text-2xs font-semibold text-ink-muted transition-colors hover:border-sidebar-active hover:text-sidebar-active disabled:opacity-60"
+					aria-label="Save this payslip as an image"
+					disabled={exporting}
+					onclick={saveImage}
+				>
+					<Download size={13} aria-hidden="true" />
+					{exporting ? 'Saving…' : 'Save image'}
+				</button>
+			{/if}
 		</div>
 
 		<hr class="my-4 border-0 border-t border-dashed border-rule" />
