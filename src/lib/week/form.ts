@@ -1,9 +1,10 @@
-// The This Week form, shared by the browser (live payslip) and the server (save).
-// buildForm: settings lists + saved week → what the form shows.
+// The payslip form for one pay period, shared by the browser (live payslip) and the server (save).
+// buildForm: pay period + settings lists + saved payslip → what the form shows.
 // parseWeek: what the form holds (untrusted on the server) → clean numbers, or field errors.
 // toWeekRecord: parsed week + payslip → rows for the database.
 import type { ExtraKind, Payslip, WeekInput } from '#lib/calc/reversePayslip.ts';
-import { type IsoDate, isIsoDate, weekDates } from '#lib/dates.ts';
+import type { IsoDate } from '#lib/dates.ts';
+import { PERIOD_MESSAGES, checkPeriod, dayCount, periodDates, type Period } from '#lib/period.ts';
 import { fromMinor, minorDigits, toMinor } from '#lib/format/money.ts';
 
 export type SavedWeek = {
@@ -25,14 +26,16 @@ export type WeekTypes = {
 };
 
 export type WeekForm = {
-	weekStart: IsoDate;
+	/** The pay period, both days included. */
+	start: IsoDate;
+	end: IsoDate;
 	currency: string;
 	net: string;
 	/** custom: a one-off row the user added, so its name is editable and it can be removed. */
 	deductions: { name: string; amount: string; custom: boolean }[];
 	days: { date: IsoDate; hours: string }[];
 	ot: { name: string; multiplier: string; hours: string }[];
-	/** per_day: quantity = days. per_week: quantity "1" when paid this week, else "0". */
+	/** per_day: quantity = days. per_week (shown as "per payslip"): "1" when paid, else "0". */
 	extras: {
 		name: string;
 		kind: ExtraKind;
@@ -50,7 +53,7 @@ const notIn = <T extends { name: string }>(types: T[], rows: { name: string }[])
 const plainNumber = (value: string) => String(Number(value));
 
 export function buildForm(
-	weekStart: IsoDate,
+	period: Period,
 	settingsCurrency: string,
 	types: WeekTypes,
 	saved: SavedWeek | null
@@ -68,7 +71,8 @@ export function buildForm(
 	const savedExtras = saved?.extras ?? [];
 
 	return {
-		weekStart,
+		start: period.start,
+		end: period.end,
 		currency,
 		net: saved ? amount(saved.netPay) : '',
 		deductions: [
@@ -79,7 +83,7 @@ export function buildForm(
 				custom: false
 			}))
 		],
-		days: weekDates(weekStart).map((date) => {
+		days: periodDates(period).map((date) => {
 			const day = saved?.days.find((d) => d.date === date);
 			return { date, hours: day && Number(day.hours) ? plainNumber(day.hours) : '' };
 		}),
@@ -172,22 +176,23 @@ export function mergeDraft(base: WeekForm, draft: WeekForm): WeekForm {
 }
 
 export type ParsedWeek = {
-	weekStart: IsoDate;
+	start: IsoDate;
+	end: IsoDate;
 	currency: string;
 	digits: number;
 	notes: string | null;
 	net: number;
 	/** Only rows with an amount. */
 	deductions: { name: string; amount: number }[];
-	/** All seven days; blank counts as 0. */
+	/** Every day of the period; blank counts as 0. */
 	days: { date: IsoDate; hours: number }[];
 	/** Only rows with hours. */
 	ot: { name: string; multiplier: number; hours: number }[];
-	/** Only extras that were paid this week. */
+	/** Only extras that were paid in this period. */
 	extras: { name: string; kind: ExtraKind; unitAmount: number; quantity: number }[];
 };
 
-/** Field path (e.g. "net", "days.2.hours", "extras.0.unitAmount") → message. */
+/** Field path (e.g. "period", "net", "days.2.hours", "extras.0.unitAmount") → message. */
 export type FieldErrors = Record<string, string>;
 
 const CURRENCIES = new Set(Intl.supportedValuesOf('currency'));
@@ -210,8 +215,13 @@ function decimalText(value: unknown, places: number, max: number, message: strin
 	return n;
 }
 
+/**
+ * `today` (the user's date) rejects a period that starts in the future. The server passes it;
+ * the live payslip in the browser leaves it out.
+ */
 export function parseWeek(
-	raw: unknown
+	raw: unknown,
+	today?: IsoDate
 ): { ok: true; week: ParsedWeek } | { ok: false; errors: FieldErrors } {
 	const errors: FieldErrors = {};
 	const at = <T>(path: string, read: () => T, fallback: T): T => {
@@ -223,8 +233,14 @@ export function parseWeek(
 		}
 	};
 
-	const weekStart = str(field(raw, 'weekStart'));
-	if (!isIsoDate(weekStart)) errors.weekStart = 'Unknown week.';
+	const start = str(field(raw, 'start'));
+	const end = str(field(raw, 'end'));
+	// Without `today`, any start date passes the future check.
+	const problem = checkPeriod({ start, end }, today ?? '9999-12-31');
+	if (problem) errors.period = PERIOD_MESSAGES[problem];
+	const period = { start, end };
+	// The day limits below scale with the period; 0 days while the dates are wrong.
+	const length = problem ? 0 : dayCount(period);
 	const currency = str(field(raw, 'currency')).toUpperCase();
 	if (!CURRENCIES.has(currency)) errors.currency = 'Unknown currency.';
 	const digits = minorDigits(currency);
@@ -257,7 +273,7 @@ export function parseWeek(
 	});
 
 	const rawDays = list(field(raw, 'days'));
-	const expectedDates = isIsoDate(weekStart) ? weekDates(weekStart) : [];
+	const expectedDates = problem ? [] : periodDates(period);
 	const days = expectedDates.map((date, i) => {
 		const row = rawDays.find((d) => field(d, 'date') === date);
 		const hours = at(
@@ -271,7 +287,7 @@ export function parseWeek(
 	const ot = list(field(raw, 'ot')).flatMap((row, i) => {
 		const hours = at(
 			`ot.${i}.hours`,
-			() => decimalText(field(row, 'hours'), 2, 168, 'Use hours like 2.5.'),
+			() => decimalText(field(row, 'hours'), 2, 24 * length, 'Use hours like 2.5.'),
 			null
 		);
 		if (!hours) return [];
@@ -300,7 +316,12 @@ export function parseWeek(
 			quantity = at(
 				`extras.${i}.quantity`,
 				() => {
-					const days = decimalText(field(row, 'quantity'), 0, 7, 'Use a number of days, 0 to 7.');
+					const days = decimalText(
+						field(row, 'quantity'),
+						0,
+						length,
+						`Use a number of days, 0 to ${length}.`
+					);
 					return days ?? 0;
 				},
 				0
@@ -320,7 +341,8 @@ export function parseWeek(
 	return {
 		ok: true,
 		week: {
-			weekStart,
+			start,
+			end,
 			currency,
 			digits,
 			notes: notes || null,
@@ -345,7 +367,8 @@ export const toInput = (week: ParsedWeek): WeekInput => ({
 export function toWeekRecord(week: ParsedWeek, payslip: Payslip) {
 	const money = (minor: number) => fromMinor(minor, week.digits);
 	return {
-		weekStart: week.weekStart,
+		start: week.start,
+		end: week.end,
 		summary: {
 			currency: week.currency,
 			netPay: money(payslip.net),

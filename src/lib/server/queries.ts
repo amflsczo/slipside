@@ -200,7 +200,7 @@ export function forUser(userId: string) {
 
 		/** Saves a week and all its rows in one transaction (one round trip). */
 		async saveWeek(record: WeekRecord) {
-			const weekId = weekIdOf(record.weekStart);
+			const weekId = weekIdOf(record.start);
 			const children = [
 				[payPeriodDays, record.days],
 				[payPeriodDeductions, record.deductions],
@@ -211,30 +211,22 @@ export function forUser(userId: string) {
 			await batch([
 				db
 					.insert(payPeriods)
-					// Until the payslip page moves to pay periods, every saved period is a 7-day week.
-					.values({
-						...record.summary,
-						userId,
-						periodStart: record.weekStart,
-						periodEnd: addDays(record.weekStart, 6)
-					})
+					.values({ ...record.summary, userId, periodStart: record.start, periodEnd: record.end })
 					.onConflictDoUpdate({
 						target: [payPeriods.userId, payPeriods.periodStart],
-						set: { ...record.summary, updatedAt: sql`now()` }
+						set: { ...record.summary, periodEnd: record.end, updatedAt: sql`now()` }
 					}),
 				// Replace the rows: simplest way to handle added, changed and removed lines.
 				...children.map(([table]) => db.delete(table).where(eq(table.periodId, weekId))),
 				...children
 					.filter(([, rows]) => rows.length > 0)
 					.map(([table, rows]) =>
-						db
-							.insert(table)
-							.values(
-								rows.map((row) => ({
-									...row,
-									periodId: weekId
-								})) as unknown as (typeof table.$inferInsert)[]
-							)
+						db.insert(table).values(
+							rows.map((row) => ({
+								...row,
+								periodId: weekId
+							})) as unknown as (typeof table.$inferInsert)[]
+						)
 					)
 			]);
 		},

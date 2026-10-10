@@ -36,8 +36,9 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 };
 
 export const actions: Actions = {
-	save: async ({ request, locals }) => {
+	save: async ({ request, locals, cookies }) => {
 		const form = await request.formData();
+		const today = todayIn(cookies.get('tz'));
 		return runAction(async () => {
 			let payload: unknown;
 			try {
@@ -45,7 +46,7 @@ export const actions: Actions = {
 			} catch {
 				throw new FormError("Couldn't read the form. Refresh the page and try again.");
 			}
-			const parsed = parseWeek(payload);
+			const parsed = parseWeek(payload, today);
 			if (!parsed.ok) throw new FormError('Some fields need fixing. Check the highlighted ones.');
 			const payslip = reversePayslip(toInput(parsed.week));
 			await forUser(locals.user!.id).saveWeek(toWeekRecord(parsed.week, payslip));

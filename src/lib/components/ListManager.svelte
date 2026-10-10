@@ -61,7 +61,7 @@
 			};
 		};
 
-	const kindLabel = { per_day: 'per day', per_week: 'per week' } as const;
+	const kindLabel = { per_day: 'per day', per_week: 'per payslip' } as const;
 
 	function details(item: Item) {
 		if (fields === 'multiplier') return `× ${Number(item.multiplier)}`;
@@ -85,7 +85,7 @@
 			value={item?.kind ?? 'per_day'}
 		>
 			<option value="per_day">Per day</option>
-			<option value="per_week">Per week</option>
+			<option value="per_week">Per payslip</option>
 		</select>
 		<input
 			class="input w-full tabular-nums sm:w-40"

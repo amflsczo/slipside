@@ -166,7 +166,7 @@
 			{:else if tab === 'extras'}
 				<Panel
 					title="Extras"
-					subtitle="Extra pay on top of your hours: per-day amounts (e.g. a shift allowance × days) or per-week amounts."
+					subtitle="Extra pay on top of your hours: per-day amounts (e.g. a shift allowance × days) or a fixed amount once per payslip."
 					class="form-surface"
 				>
 					<ListManager list="extras" items={data.lists.extras} singular="extra" fields="extra" />

@@ -8,13 +8,22 @@
 	import WeekPicker from '#lib/components/WeekPicker.svelte';
 	import { minorDigits, toMinor } from '#lib/format/money.ts';
 	import { clock, firstName, greeting, longDay } from '#lib/greeting.svelte.ts';
+	import { addDays } from '#lib/dates.ts';
 	import { buildForm } from '#lib/week/form.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	const initial = $derived(
-		data.needsSetup ? null : buildForm(data.weekStart, data.currency, data.types, data.saved)
+		data.needsSetup
+			? null
+			: buildForm(
+					// Until this page moves to pay periods, every period is a 7-day week.
+					{ start: data.weekStart, end: addDays(data.weekStart, 6) },
+					data.currency,
+					data.types,
+					data.saved
+				)
 	);
 
 	// The usual rate is in the Settings currency, so it only applies to weeks in that currency.

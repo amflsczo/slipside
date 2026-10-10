@@ -10,6 +10,8 @@ import {
 	type WeekTypes
 } from './form.ts';
 
+const WEEK = { start: '2026-10-05', end: '2026-10-11' };
+
 const types: WeekTypes = {
 	deductions: [{ name: 'Tax' }, { name: 'Insurance' }],
 	extras: [
@@ -35,7 +37,7 @@ const saved: SavedWeek = {
 
 describe('buildForm', () => {
 	it('builds a new week from the Settings lists', () => {
-		const form = buildForm('2026-10-05', 'GBP', types, null);
+		const form = buildForm(WEEK, 'GBP', types, null);
 
 		expect(form.net).toBe('');
 		expect(form.deductions.map((d) => d.name)).toEqual(['Tax', 'Insurance']);
@@ -49,7 +51,7 @@ describe('buildForm', () => {
 	});
 
 	it('shows a saved week as saved, then adds Settings items it does not have', () => {
-		const form = buildForm('2026-10-05', 'EUR', types, saved);
+		const form = buildForm(WEEK, 'EUR', types, saved);
 
 		expect(form.currency).toBe('GBP'); // the saved week's currency, not the current setting
 		expect(form.net).toBe('500.00');
@@ -68,7 +70,7 @@ describe('buildForm', () => {
 
 	it('shows amounts with the right decimals for the currency', () => {
 		const form = buildForm(
-			'2026-10-05',
+			WEEK,
 			'JPY',
 			{ ...types, extras: [] },
 			{
@@ -83,7 +85,7 @@ describe('buildForm', () => {
 
 describe('parseWeek', () => {
 	const filled = () => {
-		const form = buildForm('2026-10-05', 'GBP', types, null);
+		const form = buildForm(WEEK, 'GBP', types, null);
 		form.net = '500';
 		form.deductions[0]!.amount = '80';
 		form.deductions[1]!.amount = '30';
@@ -164,23 +166,23 @@ describe('parseWeek', () => {
 	});
 
 	it('rejects decimals in a currency without them', () => {
-		const form = buildForm('2026-10-05', 'JPY', types, null);
+		const form = buildForm(WEEK, 'JPY', types, null);
 		form.net = '1000.5';
 		const result = parseWeek(form);
 		expect(!result.ok && result.errors.net).toBe('Use a whole number, like 500.');
 	});
 
 	it('rejects anything that is not a week form (server input is untrusted)', () => {
-		const result = parseWeek({ weekStart: 'nope', currency: 'XYZ', net: 5 });
+		const result = parseWeek({ start: 'nope', end: '2026-10-11', currency: 'XYZ', net: 5 });
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
-		expect(Object.keys(result.errors)).toEqual(['weekStart', 'currency', 'net']);
+		expect(Object.keys(result.errors)).toEqual(['period', 'currency', 'net']);
 	});
 });
 
 describe('toWeekRecord', () => {
 	it('stores amounts as decimal strings and the unrounded rate', () => {
-		const form = buildForm('2026-10-05', 'GBP', types, null);
+		const form = buildForm(WEEK, 'GBP', types, null);
 		form.net = '500';
 		form.deductions[0]!.amount = '80';
 		form.deductions[1]!.amount = '30';
@@ -219,17 +221,12 @@ describe('toWeekRecord', () => {
 
 describe('mergeDraft', () => {
 	it('shows items unhidden in Settings after the draft was typed', () => {
-		const before = buildForm(
-			'2026-10-05',
-			'GBP',
-			{ ...types, deductions: [{ name: 'Tax' }] },
-			null
-		);
+		const before = buildForm(WEEK, 'GBP', { ...types, deductions: [{ name: 'Tax' }] }, null);
 		before.net = '500';
 		before.deductions[0]!.amount = '80';
 
 		// "Insurance" was unhidden in Settings since then.
-		const now = buildForm('2026-10-05', 'GBP', types, null);
+		const now = buildForm(WEEK, 'GBP', types, null);
 		const merged = mergeDraft(now, before);
 
 		expect(merged.net).toBe('500');
@@ -240,7 +237,7 @@ describe('mergeDraft', () => {
 	});
 
 	it('keeps typed rows for items hidden since, and one-off rows', () => {
-		const draft = buildForm('2026-10-05', 'GBP', types, null);
+		const draft = buildForm(WEEK, 'GBP', types, null);
 		draft.deductions[1]!.amount = '30'; // Insurance
 		draft.deductions.push({ name: 'Uniform', amount: '12', custom: true });
 		draft.days[0]!.hours = '8';
@@ -256,7 +253,7 @@ describe('mergeDraft', () => {
 
 		// Insurance and the OT rate were hidden since; nothing typed should be lost.
 		const now = buildForm(
-			'2026-10-05',
+			WEEK,
 			'GBP',
 			{ ...types, deductions: [{ name: 'Tax' }], otRates: [] },
 			null
@@ -278,7 +275,97 @@ describe('mergeDraft', () => {
 	});
 
 	it('changes nothing when the draft matches the form', () => {
-		const form = buildForm('2026-10-05', 'GBP', types, saved);
-		expect(mergeDraft(buildForm('2026-10-05', 'GBP', types, saved), form)).toEqual(form);
+		const form = buildForm(WEEK, 'GBP', types, saved);
+		expect(mergeDraft(buildForm(WEEK, 'GBP', types, saved), form)).toEqual(form);
+	});
+});
+
+describe('pay periods of any length', () => {
+	const period = (start: string, end: string) => ({ start, end });
+	const filledFor = (p: { start: string; end: string }) => {
+		const form = buildForm(p, 'GBP', types, null);
+		form.net = '100';
+		return form;
+	};
+
+	it('builds one day per date in the period', () => {
+		expect(buildForm(period('2026-10-15', '2026-10-15'), 'GBP', types, null).days).toEqual([
+			{ date: '2026-10-15', hours: '' }
+		]);
+		const fortnight = buildForm(period('2026-10-05', '2026-10-18'), 'GBP', types, null);
+		expect(fortnight.days).toHaveLength(14);
+		expect(fortnight.days.at(-1)!.date).toBe('2026-10-18');
+		const month = buildForm(period('2026-10-01', '2026-10-31'), 'GBP', types, null);
+		expect(month.days).toHaveLength(31);
+		expect([month.start, month.end]).toEqual(['2026-10-01', '2026-10-31']);
+	});
+
+	it('shows saved hours on their dates, whatever the length', () => {
+		const form = buildForm(period('2026-10-05', '2026-10-18'), 'GBP', types, {
+			...saved,
+			days: [{ date: '2026-10-17', hours: '6.00' }]
+		});
+		expect(form.days.find((d) => d.date === '2026-10-17')!.hours).toBe('6');
+		expect(form.days.filter((d) => d.hours)).toHaveLength(1);
+	});
+
+	it('parses a one-day payslip', () => {
+		const form = filledFor(period('2026-10-15', '2026-10-15'));
+		form.days[0]!.hours = '9';
+		const result = parseWeek(form);
+		expect(result.ok && [result.week.start, result.week.end]).toEqual(['2026-10-15', '2026-10-15']);
+		expect(result.ok && result.week.days).toEqual([{ date: '2026-10-15', hours: 9 }]);
+	});
+
+	it('scales the per-day extra limit with the period', () => {
+		const oneDay = filledFor(period('2026-10-15', '2026-10-15'));
+		oneDay.extras[0]!.quantity = '2';
+		const short = parseWeek(oneDay);
+		expect(!short.ok && short.errors['extras.0.quantity']).toBe('Use a number of days, 0 to 1.');
+
+		const fortnight = filledFor(period('2026-10-05', '2026-10-18'));
+		fortnight.extras[0]!.quantity = '10';
+		const long = parseWeek(fortnight);
+		expect(long.ok && long.week.extras[0]!.quantity).toBe(10);
+	});
+
+	it('scales the overtime hours limit with the period (24 per day)', () => {
+		const oneDay = filledFor(period('2026-10-15', '2026-10-15'));
+		oneDay.ot[0]!.hours = '25';
+		expect(parseWeek(oneDay).ok).toBe(false);
+
+		const month = filledFor(period('2026-10-01', '2026-10-31'));
+		month.ot[0]!.hours = '200';
+		const result = parseWeek(month);
+		expect(result.ok && result.week.ot[0]!.hours).toBe(200);
+	});
+
+	it('reports bad dates against the period', () => {
+		const backwards = filledFor(period('2026-10-05', '2026-10-11'));
+		backwards.end = '2026-10-01';
+		const result = parseWeek(backwards);
+		expect(!result.ok && result.errors.period).toBe("The end date can't be before the start date.");
+
+		const tooLong = filledFor(period('2026-08-01', '2026-10-01'));
+		tooLong.end = '2026-10-02'; // 63 days
+		const long = parseWeek(tooLong);
+		expect(!long.ok && long.errors.period).toBe('A payslip can cover up to 62 days.');
+	});
+
+	it('rejects a future start only when told what today is', () => {
+		const form = filledFor(period('2026-10-21', '2026-10-27'));
+		expect(parseWeek(form).ok).toBe(true); // the live payslip in the browser
+		const result = parseWeek(form, '2026-10-20'); // the server
+		expect(!result.ok && result.errors.period).toBe("A payslip can't start after today.");
+		expect(parseWeek(form, '2026-10-21').ok).toBe(true); // a period in progress
+	});
+
+	it('stores the period dates on the record', () => {
+		const form = filledFor(period('2026-10-05', '2026-10-18'));
+		const result = parseWeek(form);
+		if (!result.ok) throw new Error('expected a valid period');
+		const record = toWeekRecord(result.week, reversePayslip(toInput(result.week)));
+		expect([record.start, record.end]).toEqual(['2026-10-05', '2026-10-18']);
+		expect(record.days).toHaveLength(14);
 	});
 });

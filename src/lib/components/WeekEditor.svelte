@@ -16,7 +16,7 @@
 	import NumberInput from './NumberInput.svelte';
 	import PayslipPanel from './PayslipPanel.svelte';
 	import { reversePayslip } from '#lib/calc/reversePayslip.ts';
-	import { addDays, dayLabel, formatRange } from '#lib/dates.ts';
+	import { dayLabel, formatRange } from '#lib/dates.ts';
 	import {
 		currencySymbol,
 		formatMoney,
@@ -71,7 +71,7 @@
 	let draftTimer: ReturnType<typeof setTimeout> | undefined;
 
 	onMount(() => {
-		const draft = readDraft(owner, form.weekStart);
+		const draft = readDraft(owner, form.start);
 		if (draft) {
 			// Rows follow the current Settings; the draft only fills in what was typed.
 			const merged = mergeDraft(clone(initial), draft.form);
@@ -79,7 +79,7 @@
 				form = merged;
 				restoredAt = draft.savedAt;
 			} else {
-				clearDraft(owner, form.weekStart);
+				clearDraft(owner, form.start);
 			}
 		}
 		keepDraft = true;
@@ -90,7 +90,7 @@
 		if (!keepDraft) return;
 		const snapshot = $state.snapshot(form);
 		clearTimeout(draftTimer);
-		if (JSON.stringify(snapshot) === initialJson) clearDraft(owner, snapshot.weekStart);
+		if (JSON.stringify(snapshot) === initialJson) clearDraft(owner, snapshot.start);
 		else draftTimer = setTimeout(() => writeDraft(owner, snapshot), 300);
 	});
 
@@ -98,14 +98,14 @@
 	function dropDraft() {
 		keepDraft = false;
 		clearTimeout(draftTimer);
-		clearDraft(owner, form.weekStart);
+		clearDraft(owner, form.start);
 	}
 
 	function discard() {
 		form = clone(initial);
 		restoredAt = null;
 		attempted = false;
-		clearDraft(owner, form.weekStart);
+		clearDraft(owner, form.start);
 	}
 
 	// --- Live calculation ---
@@ -428,7 +428,7 @@
 										onchange={(e) => (row.quantity = e.currentTarget.checked ? '1' : '0')}
 									/>
 									<span class="truncate text-sm font-semibold text-ink">{row.name}</span>
-									<span class="badge shrink-0 badge-ghost badge-sm">Paid this week</span>
+									<span class="badge shrink-0 badge-ghost badge-sm">Paid this payslip</span>
 								</label>
 							{:else}
 								<p class="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
@@ -491,7 +491,7 @@
 											id={fid}
 											inputmode="numeric"
 											placeholder="0"
-											suffix="of 7"
+											suffix="of {form.days.length}"
 											bind:value={row.quantity}
 											invalid={!!err(`extras.${i}.quantity`)}
 										/>
@@ -524,7 +524,7 @@
 			<PayslipPanel
 				{payslip}
 				{currency}
-				period={formatRange(form.weekStart, addDays(form.weekStart, 6))}
+				period={formatRange(form.start, form.end)}
 				{emptyMessage}
 				{usualRate}
 				{tolerancePct}
@@ -568,7 +568,7 @@
 	use:enhance={submitDelete}
 	hidden
 >
-	<input type="hidden" name="weekStart" value={form.weekStart} />
+	<input type="hidden" name="weekStart" value={form.start} />
 </form>
 
 <ConfirmDialog
