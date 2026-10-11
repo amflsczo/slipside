@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	categoryTotals,
 	groupByDay,
+	monthSummary,
 	parseExpense,
 	spendingTotals,
 	toExpenseForm,
@@ -178,5 +179,34 @@ describe('totals', () => {
 			total: 1240 + 650 + 3500 + 2000 + 400 + 55000,
 			upcoming: 55000
 		});
+	});
+});
+
+describe('the month summary', () => {
+	const totals = { count: 3, total: 60000, upcoming: 55000 };
+	it('takes spending away from net pay received', () => {
+		expect(
+			monthSummary(
+				'GBP',
+				totals,
+				{ total: '837.60', count: 2 },
+				{ spent: { total: '410.00', count: 9 }, income: { total: '401.00', count: 1 } }
+			)
+		).toEqual({
+			income: 83760,
+			payslips: 2,
+			spent: 60000,
+			upcoming: 55000,
+			leftOver: 23760,
+			lastMonth: { income: 40100, spent: 41000, leftOver: -900 }
+		});
+	});
+
+	it('works with no payslips paid, and nothing last month', () => {
+		const summary = monthSummary('JPY', { count: 1, total: 500, upcoming: 0 }, null, {
+			spent: null,
+			income: null
+		});
+		expect(summary).toMatchObject({ income: 0, payslips: 0, leftOver: -500, lastMonth: null });
 	});
 });

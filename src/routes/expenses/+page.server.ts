@@ -5,6 +5,7 @@ import {
 	KEPT,
 	categoryTotals,
 	groupByDay,
+	monthSummary,
 	parseExpense,
 	spendingTotals,
 	toExpenseRecord,
@@ -34,6 +35,9 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 				? currencies[0]!
 				: data.general.currency;
 	const rows = all.filter((r) => r.currency === currency);
+	const totals = spendingTotals(rows);
+	const inCurrency = <T extends { currency: string }>(list: T[]) =>
+		list.find((row) => row.currency === currency) ?? null;
 
 	// A new expense lands in the month being viewed: today in this month, else its last
 	// (past) or first (future) day.
@@ -54,13 +58,13 @@ export const load: PageServerLoad = async ({ locals, url, cookies }) => {
 		/** The quick-add chips: visible categories, in Settings order. */
 		categories: data.categories.filter((c) => c.active).map(({ id, name }) => ({ id, name })),
 		days: groupByDay(rows),
-		totals: spendingTotals(rows),
+		totals,
 		byCategory: categoryTotals(rows),
-		income: data.income.find((i) => i.currency === currency) ?? null,
-		lastMonth: {
-			spent: data.lastMonth.spent.find((s) => s.currency === currency) ?? null,
-			income: data.lastMonth.income.find((i) => i.currency === currency) ?? null
-		}
+		/** Net pay received − spending, and last month's, for the summary slip. */
+		summary: monthSummary(currency, totals, inCurrency(data.income), {
+			spent: inCurrency(data.lastMonth.spent),
+			income: inCurrency(data.lastMonth.income)
+		})
 	};
 };
 

@@ -191,3 +191,44 @@ export function spendingTotals(rows: ExpenseRow[]): SpendingTotals {
 		upcoming: rows.filter((r) => r.upcoming).reduce((t, r) => t + r.amount, 0)
 	};
 }
+
+/** A month's money in and out, as the summary slip shows it (minor units). */
+export type MonthSummary = {
+	/** Net pay of the payslips paid this month. */
+	income: number;
+	payslips: number;
+	spent: number;
+	/** Planned bills (dated after today), included in `spent`. */
+	upcoming: number;
+	/** Income − spent; negative when more went out than came in. */
+	leftOver: number;
+	/** Last month's figures, or null when it had neither payslips nor expenses. */
+	lastMonth: { income: number; spent: number; leftOver: number } | null;
+};
+
+type SumRow = { total: string; count: number } | null;
+
+/** Builds the summary from the month query's sums (decimal strings) and the month's rows. */
+export function monthSummary(
+	currency: string,
+	totals: SpendingTotals,
+	income: SumRow,
+	lastMonth: { spent: SumRow; income: SumRow }
+): MonthSummary {
+	const digits = minorDigits(currency);
+	const minor = (row: SumRow) => (row ? (toMinor(row.total, digits) ?? 0) : 0);
+	const inThisMonth = minor(income);
+	const lastIncome = minor(lastMonth.income);
+	const lastSpent = minor(lastMonth.spent);
+	return {
+		income: inThisMonth,
+		payslips: income?.count ?? 0,
+		spent: totals.total,
+		upcoming: totals.upcoming,
+		leftOver: inThisMonth - totals.total,
+		lastMonth:
+			lastMonth.spent || lastMonth.income
+				? { income: lastIncome, spent: lastSpent, leftOver: lastIncome - lastSpent }
+				: null
+	};
+}

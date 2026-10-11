@@ -13,6 +13,7 @@
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ExpenseFields from '#lib/components/ExpenseFields.svelte';
 	import ExpenseSheet from '#lib/components/ExpenseSheet.svelte';
+	import MonthSlip from '#lib/components/MonthSlip.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import { addDays, dayLabel, monthLabel } from '#lib/dates.ts';
 	import { fromDraft, parseExpense, type ExpenseDraft, type ExpenseRow } from '#lib/expenses.ts';
@@ -31,6 +32,12 @@
 	};
 	const monthHref = (month: string) =>
 		month === data.thisMonth ? '/expenses' : `/expenses?month=${month}`;
+	/** "September", or "December 2025" across a new year. */
+	const lastMonthName = $derived.by(() => {
+		if (data.needsSetup) return '';
+		const label = monthLabel(data.previousMonth);
+		return data.previousMonth.slice(0, 4) === data.month.slice(0, 4) ? label.split(' ')[0]! : label;
+	});
 	const money = (minor: number) => (data.needsSetup ? '' : formatMoney(minor, data.currency));
 
 	// --- Quick add ---
@@ -179,11 +186,14 @@
 			{/if}
 		</div>
 
-		<div class="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-			<!-- Quick add: first on phones, beside the list on desktop. -->
+		<div
+			class="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[auto_1fr] lg:items-start"
+		>
+			<!-- Phones: quick add, the list, then the summary. Desktop: the list, with quick add and
+			     the summary beside it. -->
 			<section
 				id="quick-add"
-				class="rounded-3xl bg-card p-4 shadow-soft sm:p-5 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
+				class="rounded-3xl bg-card p-4 shadow-soft sm:p-5 lg:col-start-2 lg:row-start-1"
 				aria-labelledby="quick-add-title"
 			>
 				<h2
@@ -227,7 +237,7 @@
 			</section>
 
 			<!-- The month's expenses, by day. -->
-			<div class="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-start-1 lg:row-start-1">
+			<div class="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-start-1 lg:row-span-2 lg:row-start-1">
 				{#if data.days.length === 0}
 					<EmptyState
 						icon={Wallet}
@@ -289,6 +299,18 @@
 						</ul>
 					</section>
 				{/each}
+			</div>
+
+			<div class="min-w-0 lg:col-start-2 lg:row-start-2">
+				{#if data.totals.count > 0 || data.summary.payslips > 0}
+					<MonthSlip
+						title={monthLabel(data.month)}
+						{lastMonthName}
+						currency={data.currency}
+						summary={data.summary}
+						byCategory={data.byCategory}
+					/>
+				{/if}
 			</div>
 		</div>
 
