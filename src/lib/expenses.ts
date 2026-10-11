@@ -8,6 +8,8 @@ export const MAX_NOTE = 200;
 /** How far ahead a planned bill can be dated. */
 export const MAX_DAYS_AHEAD = 366;
 export const UNCATEGORISED = 'Uncategorised';
+/** The form's category value for "keep the deleted category's saved name". */
+export const KEPT = 'kept';
 
 /** What the add / edit form holds (strings, as typed). */
 export type ExpenseForm = {
@@ -29,6 +31,17 @@ export type ParsedExpense = {
 };
 
 export type ExpenseErrors = Partial<Record<keyof ExpenseForm, string>>;
+
+/** The page's form state: the category is the chosen chip's value ("" none, or KEPT). */
+export type ExpenseDraft = { amount: string; date: string; category: string; note: string };
+
+/** A draft as parseExpense reads it. */
+export const fromDraft = (draft: ExpenseDraft) => ({
+	date: draft.date,
+	amount: draft.amount,
+	categoryId: draft.category === KEPT ? null : draft.category,
+	note: draft.note
+});
 
 const str = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 

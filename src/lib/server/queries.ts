@@ -417,12 +417,37 @@ export function forUser(userId: string) {
 			};
 		},
 
-		/** The user's categories, for checking an expense on save (hidden ones included). */
-		expenseCategoryList: () =>
-			db
-				.select({ id: expenseCategories.id, name: expenseCategories.name })
-				.from(expenseCategories)
-				.where(eq(expenseCategories.userId, userId)),
+		/**
+		 * What checking an expense on save needs, in one round trip: the Settings currency and
+		 * the user's categories (hidden ones included, so an old expense can still be edited).
+		 */
+		async expenseContext() {
+			const [[general], categories] = await db.batch([
+				db
+					.select({ currency: settings.currency })
+					.from(settings)
+					.where(eq(settings.userId, userId))
+					.limit(1),
+				db
+					.select({ id: expenseCategories.id, name: expenseCategories.name })
+					.from(expenseCategories)
+					.where(eq(expenseCategories.userId, userId))
+			]);
+			return { currency: general?.currency ?? null, categories };
+		},
+
+		/**
+		 * An expense as stored: its currency (edits keep it) and saved category name (kept for a
+		 * deleted category). Null if it isn't this user's.
+		 */
+		async savedExpense(id: number) {
+			const [row] = await db
+				.select({ currency: expenses.currency, categoryName: expenses.categoryName })
+				.from(expenses)
+				.where(and(eq(expenses.userId, userId), eq(expenses.id, id)))
+				.limit(1);
+			return row ?? null;
+		},
 
 		async addExpense(record: ExpenseValues) {
 			await db.insert(expenses).values({ ...record, userId });
@@ -430,9 +455,11 @@ export function forUser(userId: string) {
 
 		/** Returns false if there was no such expense (or it isn't this user's). */
 		async updateExpense(id: number, record: ExpenseValues) {
+			// An expense keeps the currency it was added in.
+			const { currency: _keep, ...values } = record;
 			const rows = await db
 				.update(expenses)
-				.set({ ...record, updatedAt: sql`now()` })
+				.set({ ...values, updatedAt: sql`now()` })
 				.where(and(eq(expenses.userId, userId), eq(expenses.id, id)))
 				.returning({ id: expenses.id });
 			return rows.length > 0;

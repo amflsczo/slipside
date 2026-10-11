@@ -12,46 +12,48 @@ _Last updated: 2026-10-11_
 
 Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than always a week.
 
-| Phase | What | Status |
-|---|---|---|
-| 0 | Prep: week fix pushed, local `.env` on the Neon `dev` branch | ✅ Done |
-| 1 | Date rules and tests (`src/lib/period.ts`) | ✅ Committed |
-| 2 | Migration 0003: `weeks` → `pay_periods` (dev branch only) | ✅ Committed |
-| 3 | Form and validation for any period length | ✅ Committed |
-| 4 | Queries, server, `?period=` URLs, overlap checks | ✅ Committed |
-| 5 | Payslip page UI: date sheet, calendar hours grid, "Payslip" wording | ✅ Committed |
-| 6 | Settings: "How often are you usually paid?" replaces the week start day; migration 0004 drops `week_start_day` (dev branch only) | ✅ Committed |
-| 7 | Docs and naming cleanup: payslip names in the code, PLAN.md and DESIGN.md updated | ✅ Committed |
-| 8 | Release: back up, migrate production, push | ✅ Released 2026-10-10 |
+| Phase | What                                                                                                                             | Status                 |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 0     | Prep: week fix pushed, local `.env` on the Neon `dev` branch                                                                     | ✅ Done                |
+| 1     | Date rules and tests (`src/lib/period.ts`)                                                                                       | ✅ Committed           |
+| 2     | Migration 0003: `weeks` → `pay_periods` (dev branch only)                                                                        | ✅ Committed           |
+| 3     | Form and validation for any period length                                                                                        | ✅ Committed           |
+| 4     | Queries, server, `?period=` URLs, overlap checks                                                                                 | ✅ Committed           |
+| 5     | Payslip page UI: date sheet, calendar hours grid, "Payslip" wording                                                              | ✅ Committed           |
+| 6     | Settings: "How often are you usually paid?" replaces the week start day; migration 0004 drops `week_start_day` (dev branch only) | ✅ Committed           |
+| 7     | Docs and naming cleanup: payslip names in the code, PLAN.md and DESIGN.md updated                                                | ✅ Committed           |
+| 8     | Release: back up, migrate production, push                                                                                       | ✅ Released 2026-10-10 |
 
 > ✅ **Released 2026-10-10** at **https://slipside-tracker.vercel.app**. Production has migrations 0003 and 0004 and `main` is deployed. Backup branch in Neon: `backup-before-pay-periods`.
 
 ### History (planned and released 2026-10-10)
 
-| Phase | What | Status |
-|---|---|---|
-| H1 | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid | ✅ Released 2026-10-10 |
-| H2 | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra | ✅ Released 2026-10-10 |
-| H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ✅ Released 2026-10-10 |
-| H4 | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Released 2026-10-10 |
-| H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ✅ Released 2026-10-10 |
+| Phase | What                                                                                                                                                                                                                                     | Status                 |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| H1    | **"Paid on" date** on each payslip (optional, defaults to the end date); History counts a payslip in the month it was paid                                                                                                               | ✅ Released 2026-10-10 |
+| H2    | Data and rules, with tests: yearly query, month and year totals, change vs the previous payslip (net, plus the rate change when lengths differ), rate-check flag, totals per deduction and per extra                                     | ✅ Released 2026-10-10 |
+| H3    | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state                                                | ✅ Released 2026-10-10 |
+| H4    | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Released 2026-10-10 |
+| H5    | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release                                                                                                                                                      | ✅ Released 2026-10-10 |
 
 ### Next: Expenses (planned 2026-10-11)
 
-| Phase | What | Status |
-|---|---|---|
-| E1 | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals | ✅ Committed (0005 on dev only) |
-| E2 | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ⏳ Next |
-| E3 | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month | ⏳ |
-| E4 | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month | ⏳ |
-| E5 | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push | ⏳ |
+| Phase | What                                                                                                                                                                                                                    | Status                          |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| E1    | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals                        | ✅ Committed (0005 on dev only) |
+| E2    | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ✅ Committed                    |
+| E3    | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month                                                                                                             | ⏳ Next                         |
+| E4    | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month                                                                                | ⏳                              |
+| E5    | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push                                                                                                  | ⏳                              |
 
 ---
 
 ## Needs a decision
 
 ### 1. "Enter total hours instead" for long periods
+
 Periods over 7 days show one hours box per day (a calendar). The plan offered a single "total hours" box as an alternative for long periods, but it isn't built yet.
+
 - **Why it matters:** each day's hours are saved as a row, and History will later rely on those rows.
 - **Options:**
   - **(a)** Skip it. The calendar already handles 31 days.
@@ -60,7 +62,9 @@ Periods over 7 days show one hours box per day (a calendar). The plan offered a 
 - **Suggestion:** (a) for now. Revisit if typing each day becomes a pain.
 
 ### 2. "1 month" periods that start late in the month
+
 "1 month" runs to the day before the same date next month: Mar 1 → Mar 31, Oct 16 → Nov 15. From the 29th to the 31st it can come up short (Jan 31 → Feb 27).
+
 - **Options:**
   - **(a)** Keep it. You can always change the dates.
   - **(b)** Add an end-of-month rule: a start on the last day of a month runs to the second-to-last day of the next month.
@@ -68,7 +72,9 @@ Periods over 7 days show one hours box per day (a calendar). The plan offered a 
 - **Suggestion:** (a), unless you're paid monthly from a late-month start.
 
 ### 4. Template item called "Weekly bonus"
+
 The UK and US templates include an extra named **Weekly bonus**, of kind "per payslip". With flexible periods the name can read oddly.
+
 - **Options:**
   - **(a)** Rename it to "Bonus" in the templates. This only affects new setups; existing items keep their names.
   - **(b)** Leave it.
@@ -120,31 +126,34 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 ## Decided
 
-| Date | Decision |
-|---|---|
-| 2026-10-09 | Look: ledger / paper payslip style (warm paper, banknote green, serif figures, mono payslip lines). |
-| 2026-10-09 | App shell: dark "ledger spine" sidebar, icon rail on tablets, floating dock on phones. |
-| 2026-10-10 | Local development uses a Neon `dev` branch (auto-delete: never); production stays on the `production` branch. |
-| 2026-10-10 | Pay periods: 1 to 62 days, never overlapping, no future start (the end may be after today). |
-| 2026-10-10 | A new payslip suggests the day after the last saved payslip, for the usual length; the first payslip ends today. |
-| 2026-10-10 | Any payslip's start and end can be changed; gaps and earlier missed payslips are allowed. |
-| 2026-10-10 | Settings asks only "How often are you usually paid?" (day / week / 2 weeks / month), with no anchor dates. |
-| 2026-10-10 | Saved payslips are snapshots: never recalculated, never moved by the app; shortening one asks before dropping hours. |
-| 2026-10-10 | "Per week" extras are labelled "per payslip" (paid once per period); the stored value stays `per_week`. |
-| 2026-10-10 | Templates stay as starter packs only; named per-payslip "pay patterns" are deferred. |
-| 2026-10-10 | URLs: `/` is the next payslip to fill in, `/?period=<start>` is a payslip, and old `?week=` links redirect. |
-| 2026-10-10 | `settings.week_start_day` removed (migration 0004); existing users default to "Every week". |
-| 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. One topic shows at a time (a topic list beside it on desktop, a "Topic" dropdown on phones and tablets), guides have Previous / Next, and `/help#<topic>` opens a topic directly. |
-| 2026-10-10 | Smaller type scale used everywhere (body 12.5px; new `text-2xs` for overlines); Help is the 5th item in the phone dock; every clickable control shows the pointer cursor. |
-| 2026-10-10 | The action bar (status + Save) is the last card of the form, in the page flow, not a sticky floating bar. |
-| 2026-10-10 | Code uses payslip names (PayslipEditor, PeriodPicker, PayslipForm, parsePayslip, `src/lib/payslip/`); drafts move to a `slipside:payslip-draft:` key and old-key drafts are still read. The stored `per_week` value and the legacy `?week=` link stay. |
-| 2026-10-10 | Payslip form redesigned as one "ledger rows" card that mirrors the printed slip (label left, amount right, dashed section rules, live totals); unused parts are one compact line. Desktop page height went from about 2,030px to 1,154px. |
-| 2026-10-10 | Extras: name and total on top, inputs underneath; per day reads "£35 a day × 5 days" with "up to N days in this payslip" (no more "5 of 7"); per payslip uses a "Paid this time" toggle. |
-| 2026-10-10 | An ⓘ helper (InfoTip) explains "Paid this time". Placeholders and currency symbols use the body text size. Fixed: the phone 16px input rule was being overridden by daisyUI (typed text was 14px, so iOS zoomed); it now applies. |
-| 2026-10-10 | Typed text in fields is the body size (12.5px) on phones too, per the user's preference. To stop iOS zooming in on focus, `maximum-scale=1` is set on iPhone/iPad only (pinch-zoom still works there); Android and desktop keep normal zoom. |
-| 2026-10-10 | Payslip action bar: same width as the "Your payslip" card on wide screens, and minimal: a status dot + label, an icon-only Delete (still confirms) and the Update / Save button, in one row on every screen. Gross and rate removed (the slip shows them). |
-| 2026-10-10 | The "Updates as you type" pill is removed. The slip has **Save image** (PNG, 2×, slip shape on paper; share sheet on phones, download elsewhere). One-off deductions and bonuses added on a payslip stay on that payslip only; they are not added to Settings. |
-| 2026-10-10 | Vercel's `DATABASE_URL` (a Sensitive variable, so its value can't be viewed) points at the Neon **production** branch: confirmed by production waking when the live site was opened. |
-| 2026-10-10 | History plan: comparisons show the change in net **and** the rate change when payslip lengths differ; payslips count in the **month they were paid** (new "Paid on" field, built first); the chart shows **net pay** first; **one year at a time**; the chart is hand-drawn SVG (no library); a year breakdown totals each deduction and extra. History reads stored totals and never recalculates. |
-| 2026-10-10 | The History chart is a **line chart** (not bars, no area fill): points placed by pay date, a crosshair tooltip. History also has an **All time** view: all-time tiles, chart and breakdown, with one card per year linking to that year. |
+| Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-09 | Look: ledger / paper payslip style (warm paper, banknote green, serif figures, mono payslip lines).                                                                                                                                                                                                                                                                                                                                                                                            |
+| 2026-10-09 | App shell: dark "ledger spine" sidebar, icon rail on tablets, floating dock on phones.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-10-10 | Local development uses a Neon `dev` branch (auto-delete: never); production stays on the `production` branch.                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-10-10 | Pay periods: 1 to 62 days, never overlapping, no future start (the end may be after today).                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-10-10 | A new payslip suggests the day after the last saved payslip, for the usual length; the first payslip ends today.                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-10-10 | Any payslip's start and end can be changed; gaps and earlier missed payslips are allowed.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2026-10-10 | Settings asks only "How often are you usually paid?" (day / week / 2 weeks / month), with no anchor dates.                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2026-10-10 | Saved payslips are snapshots: never recalculated, never moved by the app; shortening one asks before dropping hours.                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-10-10 | "Per week" extras are labelled "per payslip" (paid once per period); the stored value stays `per_week`.                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2026-10-10 | Templates stay as starter packs only; named per-payslip "pay patterns" are deferred.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-10-10 | URLs: `/` is the next payslip to fill in, `/?period=<start>` is a payslip, and old `?week=` links redirect.                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-10-10 | `settings.week_start_day` removed (migration 0004); existing users default to "Every week".                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-10-10 | An in-app Help page at `/help` (guides, rules, your data, quick answers), readable without logging in; linked from the sidebar and the phone account menu. One topic shows at a time (a topic list beside it on desktop, a "Topic" dropdown on phones and tablets), guides have Previous / Next, and `/help#<topic>` opens a topic directly.                                                                                                                                                   |
+| 2026-10-10 | Smaller type scale used everywhere (body 12.5px; new `text-2xs` for overlines); Help is the 5th item in the phone dock; every clickable control shows the pointer cursor.                                                                                                                                                                                                                                                                                                                      |
+| 2026-10-10 | The action bar (status + Save) is the last card of the form, in the page flow, not a sticky floating bar.                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2026-10-10 | Code uses payslip names (PayslipEditor, PeriodPicker, PayslipForm, parsePayslip, `src/lib/payslip/`); drafts move to a `slipside:payslip-draft:` key and old-key drafts are still read. The stored `per_week` value and the legacy `?week=` link stay.                                                                                                                                                                                                                                         |
+| 2026-10-10 | Payslip form redesigned as one "ledger rows" card that mirrors the printed slip (label left, amount right, dashed section rules, live totals); unused parts are one compact line. Desktop page height went from about 2,030px to 1,154px.                                                                                                                                                                                                                                                      |
+| 2026-10-10 | Extras: name and total on top, inputs underneath; per day reads "£35 a day × 5 days" with "up to N days in this payslip" (no more "5 of 7"); per payslip uses a "Paid this time" toggle.                                                                                                                                                                                                                                                                                                       |
+| 2026-10-10 | An ⓘ helper (InfoTip) explains "Paid this time". Placeholders and currency symbols use the body text size. Fixed: the phone 16px input rule was being overridden by daisyUI (typed text was 14px, so iOS zoomed); it now applies.                                                                                                                                                                                                                                                              |
+| 2026-10-10 | Typed text in fields is the body size (12.5px) on phones too, per the user's preference. To stop iOS zooming in on focus, `maximum-scale=1` is set on iPhone/iPad only (pinch-zoom still works there); Android and desktop keep normal zoom.                                                                                                                                                                                                                                                   |
+| 2026-10-10 | Payslip action bar: same width as the "Your payslip" card on wide screens, and minimal: a status dot + label, an icon-only Delete (still confirms) and the Update / Save button, in one row on every screen. Gross and rate removed (the slip shows them).                                                                                                                                                                                                                                     |
+| 2026-10-10 | The "Updates as you type" pill is removed. The slip has **Save image** (PNG, 2×, slip shape on paper; share sheet on phones, download elsewhere). One-off deductions and bonuses added on a payslip stay on that payslip only; they are not added to Settings.                                                                                                                                                                                                                                 |
+| 2026-10-10 | Vercel's `DATABASE_URL` (a Sensitive variable, so its value can't be viewed) points at the Neon **production** branch: confirmed by production waking when the live site was opened.                                                                                                                                                                                                                                                                                                           |
+| 2026-10-10 | History plan: comparisons show the change in net **and** the rate change when payslip lengths differ; payslips count in the **month they were paid** (new "Paid on" field, built first); the chart shows **net pay** first; **one year at a time**; the chart is hand-drawn SVG (no library); a year breakdown totals each deduction and extra. History reads stored totals and never recalculates.                                                                                            |
+| 2026-10-10 | The History chart is a **line chart** (not bars, no area fill): points placed by pay date, a crosshair tooltip. History also has an **All time** view: all-time tiles, chart and breakdown, with one card per year linking to that year.                                                                                                                                                                                                                                                       |
 | 2026-10-11 | Expenses plan: each expense is **linked to its category** (renames carry over to past expenses; the name is also saved so deleting a category loses nothing); **future dates are allowed** (planned bills count in their month's totals and show "Upcoming"; capped at a year ahead); "income vs expenses" uses the **net pay** of payslips paid that month; the **year and All time views are built now** (E4); repeating expenses come later; quick add lives on the **Expenses page** only. |
+| 2026-10-11 | Expenses: an edited expense keeps the currency it was added in; one currency shown at a time (a picker appears when a month has several).                                                                                                                                                                                                                                                                                                                                                      |
+| 2026-10-11 | Expenses: editing an expense whose category was deleted keeps the saved name (shown as its own chip); a category hidden in Settings is still offered when editing its expenses.                                                                                                                                                                                                                                                                                                                |
+| 2026-10-11 | Quick add defaults the date to today in this month, the last day of a past month, or the first day of a future month; after adding, the date and category stay for the next one.                                                                                                                                                                                                                                                                                                               |

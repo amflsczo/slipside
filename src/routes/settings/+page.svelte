@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import ActionBar from '#lib/components/ActionBar.svelte';
 	import Button from '#lib/components/Button.svelte';
@@ -27,6 +28,11 @@
 		{ id: 'categories', label: 'Categories' }
 	] as const;
 	let tab = $state<(typeof TABS)[number]['id']>('general');
+	// A link like /settings#categories opens that tab.
+	onMount(() => {
+		const asked = TABS.find((t) => t.id === location.hash.slice(1));
+		if (asked) tab = asked.id;
+	});
 
 	let pending = $state(false);
 	const setPending = (p: boolean) => (pending = p);
