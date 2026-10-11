@@ -4,7 +4,7 @@ A running list of what still needs deciding, what must happen before a release, 
 
 **How to use it:** add an item whenever something comes up. When a question is answered, move it to [Decided](#decided) with the date and the answer. Tick off release items as they're done.
 
-_Last updated: 2026-10-10_
+_Last updated: 2026-10-11_
 
 ---
 
@@ -35,6 +35,16 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 | H3 | History list: year picker (+ currency if more than one), payslips grouped by month with totals; rows show dates and length, net, rate, change, ⚠ flag; tap opens the payslip; empty state | ✅ Released 2026-10-10 |
 | H4 | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Released 2026-10-10 |
 | H5 | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release | ✅ Released 2026-10-10 |
+
+### Next: Expenses (planned 2026-10-11)
+
+| Phase | What | Status |
+|---|---|---|
+| E1 | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals | ⏳ Next |
+| E2 | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ⏳ |
+| E3 | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month | ⏳ |
+| E4 | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month | ⏳ |
+| E5 | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push | ⏳ |
 
 ---
 
@@ -80,7 +90,8 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 ## Ideas for later
 
-- **Expenses page** (planned): quick add, monthly totals by category, income vs expenses.
+- **Repeating expenses** (rent, phone plan): e.g. "Repeat monthly" on an expense. Deferred from the Expenses plan.
+- **Quick add from elsewhere** (a "+" on the payslip page or in the dock). Quick add lives on the Expenses page only for now.
 - **Backup:** JSON export and import, CSV export (PLAN.md phase 7).
 - **Named pay patterns:** saved setups like "Regular week" or "Day gig", each with its own length and optionally its own deductions, chosen per payslip. This was deferred in favour of a single usual length.
 - **"Twice a month" pay length** (e.g. the 15th and the last day), common in the Philippines. It doesn't fit day / week / 2 weeks / month. Would need a fifth usual length with a calendar rule. For now, change the dates per payslip.
@@ -135,3 +146,4 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 | 2026-10-10 | Vercel's `DATABASE_URL` (a Sensitive variable, so its value can't be viewed) points at the Neon **production** branch: confirmed by production waking when the live site was opened. |
 | 2026-10-10 | History plan: comparisons show the change in net **and** the rate change when payslip lengths differ; payslips count in the **month they were paid** (new "Paid on" field, built first); the chart shows **net pay** first; **one year at a time**; the chart is hand-drawn SVG (no library); a year breakdown totals each deduction and extra. History reads stored totals and never recalculates. |
 | 2026-10-10 | The History chart is a **line chart** (not bars, no area fill): points placed by pay date, a crosshair tooltip. History also has an **All time** view: all-time tiles, chart and breakdown, with one card per year linking to that year. |
+| 2026-10-11 | Expenses plan: each expense is **linked to its category** (renames carry over to past expenses; the name is also saved so deleting a category loses nothing); **future dates are allowed** (planned bills count in their month's totals and show "Upcoming"; capped at a year ahead); "income vs expenses" uses the **net pay** of payslips paid that month; the **year and All time views are built now** (E4); repeating expenses come later; quick add lives on the **Expenses page** only. |
