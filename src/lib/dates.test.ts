@@ -7,6 +7,9 @@ import {
 	dayLabel,
 	formatRange,
 	isIsoDate,
+	isMonth,
+	monthBounds,
+	shiftMonth,
 	monthLabel,
 	shortDate,
 	shortRange,
@@ -17,6 +20,7 @@ describe('dates', () => {
 	it('validates ISO dates, including impossible ones', () => {
 		expect(isIsoDate('2026-10-08')).toBe(true);
 		expect(isIsoDate('2026-02-30')).toBe(false);
+		expect(isIsoDate('2026-13-01')).toBe(false); // an impossible month, not a crash
 		expect(isIsoDate('08/10/2026')).toBe(false);
 		expect(isIsoDate(20261008)).toBe(false);
 	});
@@ -73,5 +77,15 @@ describe('dates', () => {
 		expect(plain(shortRange('2026-09-28', '2026-10-04'))).toBe('Sep 28 – Oct 4');
 		expect(shortRange('2026-10-15', '2026-10-15')).toBe('Oct 15');
 		expect(monthLabel('2026-10')).toBe('October 2026');
+	});
+
+	it('works with whole months', () => {
+		expect(monthBounds('2026-10')).toEqual({ from: '2026-10-01', to: '2026-10-31' });
+		expect(monthBounds('2028-02')).toEqual({ from: '2028-02-01', to: '2028-02-29' });
+		expect(shiftMonth('2026-10', -1)).toBe('2026-09');
+		expect(shiftMonth('2026-12', 1)).toBe('2027-01');
+		expect(isMonth('2026-10')).toBe(true);
+		expect(isMonth('2026-13')).toBe(false);
+		expect(isMonth('Oct')).toBe(false);
 	});
 });

@@ -5,8 +5,12 @@ export type IsoDate = string;
 const toUtc = (iso: IsoDate) => new Date(`${iso}T00:00:00Z`);
 const toIso = (date: Date): IsoDate => date.toISOString().slice(0, 10);
 
-export const isIsoDate = (value: unknown): value is IsoDate =>
-	typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && toIso(toUtc(value)) === value;
+export const isIsoDate = (value: unknown): value is IsoDate => {
+	if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	// An impossible month (e.g. 13) is an invalid Date, which can't be formatted.
+	const date = toUtc(value);
+	return !Number.isNaN(date.getTime()) && toIso(date) === value;
+};
 
 /** Today's date in the given time zone (from the tz cookie); UTC when unknown. */
 export function todayIn(timeZone?: string, now = new Date()): IsoDate {
@@ -99,3 +103,16 @@ const monthYearFormat = new Intl.DateTimeFormat('en', {
 
 /** "2026-10" → "October 2026" */
 export const monthLabel = (month: string) => monthYearFormat.format(toUtc(`${month}-01`));
+
+/** "2026-10" → { from: "2026-10-01", to: "2026-10-31" } */
+export function monthBounds(month: string): { from: IsoDate; to: IsoDate } {
+	const from = `${month}-01`;
+	return { from, to: addDays(addMonths(from, 1), -1) };
+}
+
+/** "2026-10", -1 → "2026-09"; "2026-12", 1 → "2027-01" */
+export const shiftMonth = (month: string, by: number) => addMonths(`${month}-01`, by).slice(0, 7);
+
+/** A "YYYY-MM" month that really exists. */
+export const isMonth = (value: unknown): value is string =>
+	typeof value === 'string' && /^\d{4}-\d{2}$/.test(value) && isIsoDate(`${value}-01`);

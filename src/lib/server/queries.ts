@@ -1,12 +1,13 @@
 // User-scoped data access (PLAN.md section 6). There is no row-level security, so every
 // query in the app goes through `forUser(userId)`, which always filters by that user.
 // Multi-statement operations use db.batch(): one HTTP round trip, run as a transaction.
-import { and, asc, eq, inArray, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { and, asc, between, eq, inArray, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import { db } from './db';
 import {
 	deductionTypes,
 	expenseCategories,
+	expenses,
 	extraTypes,
 	otRates,
 	settings,
@@ -16,10 +17,14 @@ import {
 	payPeriodOt,
 	payPeriods
 } from './db/schema';
-import type { IsoDate } from '#lib/dates.ts';
+import { monthBounds, shiftMonth, type IsoDate } from '#lib/dates.ts';
+import type { toExpenseRecord } from '#lib/expenses.ts';
 import type { PayLength } from '#lib/period.ts';
 import { TEMPLATES, type ExtraKind, type TemplateId } from '#lib/templates.ts';
 import type { SavedPayslip, PayslipRecord } from '#lib/payslip/form.ts';
+
+/** One expense's database values, from toExpenseRecord. */
+type ExpenseValues = ReturnType<typeof toExpenseRecord>;
 
 export const LISTS = {
 	deductions: deductionTypes,
@@ -332,6 +337,114 @@ export function forUser(userId: string) {
 				deductionTotals,
 				extraTotals
 			};
+		},
+
+		/**
+		 * Everything the Expenses screen needs for one month, in one round trip: the currency,
+		 * every category (hidden ones too, for editing old expenses), the month's expenses with
+		 * each category's current name, the net pay received that month (payslips counted on the
+		 * day they were paid), and last month's spending and income, per currency.
+		 */
+		async loadExpensesMonth(month: string) {
+			const { from, to } = monthBounds(month);
+			const previous = monthBounds(shiftMonth(month, -1));
+			const paidOn = sql`coalesce(${payPeriods.payDate}, ${payPeriods.periodEnd})`;
+			const spent = (range: { from: string; to: string }) =>
+				db
+					.select({
+						currency: expenses.currency,
+						total: sql<string>`sum(${expenses.amount})::text`,
+						count: sql<number>`count(*)::int`
+					})
+					.from(expenses)
+					.where(and(eq(expenses.userId, userId), between(expenses.date, range.from, range.to)))
+					.groupBy(expenses.currency);
+			const income = (range: { from: string; to: string }) =>
+				db
+					.select({
+						currency: payPeriods.currency,
+						total: sql<string>`sum(${payPeriods.netPay})::text`,
+						count: sql<number>`count(*)::int`
+					})
+					.from(payPeriods)
+					.where(
+						and(eq(payPeriods.userId, userId), sql`${paidOn} between ${range.from} and ${range.to}`)
+					)
+					.groupBy(payPeriods.currency);
+
+			const [[general], categories, rows, monthIncome, lastSpent, lastIncome] = await db.batch([
+				db
+					.select({ currency: settings.currency })
+					.from(settings)
+					.where(eq(settings.userId, userId))
+					.limit(1),
+				db
+					.select({
+						id: expenseCategories.id,
+						name: expenseCategories.name,
+						active: expenseCategories.active
+					})
+					.from(expenseCategories)
+					.where(eq(expenseCategories.userId, userId))
+					.orderBy(...byOrder(expenseCategories)),
+				db
+					.select({
+						id: expenses.id,
+						date: expenses.date,
+						amount: expenses.amount,
+						currency: expenses.currency,
+						categoryId: expenses.categoryId,
+						// The category's name now (renames carry over), else the saved one.
+						categoryName: sql<
+							string | null
+						>`coalesce(${expenseCategories.name}, ${expenses.categoryName})`,
+						note: expenses.note
+					})
+					.from(expenses)
+					.leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
+					.where(and(eq(expenses.userId, userId), between(expenses.date, from, to))),
+				income({ from, to }),
+				spent(previous),
+				income(previous)
+			]);
+
+			return {
+				general: general ?? null,
+				categories,
+				expenses: rows,
+				income: monthIncome,
+				lastMonth: { spent: lastSpent, income: lastIncome }
+			};
+		},
+
+		/** The user's categories, for checking an expense on save (hidden ones included). */
+		expenseCategoryList: () =>
+			db
+				.select({ id: expenseCategories.id, name: expenseCategories.name })
+				.from(expenseCategories)
+				.where(eq(expenseCategories.userId, userId)),
+
+		async addExpense(record: ExpenseValues) {
+			await db.insert(expenses).values({ ...record, userId });
+		},
+
+		/** Returns false if there was no such expense (or it isn't this user's). */
+		async updateExpense(id: number, record: ExpenseValues) {
+			const rows = await db
+				.update(expenses)
+				.set({ ...record, updatedAt: sql`now()` })
+				.where(and(eq(expenses.userId, userId), eq(expenses.id, id)))
+				.returning({ id: expenses.id });
+			return rows.length > 0;
+		},
+
+		/** Returns false if there was no such expense (or it isn't this user's). */
+		async deleteExpense(id: number) {
+			const rows = await db
+				.delete(expenses)
+				.where(and(eq(expenses.userId, userId), eq(expenses.id, id)))
+				.returning({ id: expenses.id });
+			return rows.length > 0;
 		},
 
 		/** Everything the Settings screen needs, in one round trip. */

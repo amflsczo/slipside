@@ -40,8 +40,8 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 
 | Phase | What | Status |
 |---|---|---|
-| E1 | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals | ⏳ Next |
-| E2 | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ⏳ |
+| E1 | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals | ✅ Committed (0005 on dev only) |
+| E2 | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ⏳ Next |
 | E3 | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month | ⏳ |
 | E4 | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month | ⏳ |
 | E5 | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push | ⏳ |
@@ -111,6 +111,7 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 - **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. Expenses will need a guide, and the "Where is Expenses?" answer will need removing.
 
+- **Migration 0005 (expenses) is on the dev branch only.** At the Expenses release: back up production, run 0005, then push (in that order).
 - **Line endings:** Git warns "LF will be replaced by CRLF" on every commit. A `.gitattributes` with `* text=auto eol=lf` would make it consistent.
 - **Local `npm run build` fails on Windows** at the final Vercel step (`EPERM` creating a symlink). Turning on Windows Developer Mode fixes it. Vercel's own builds aren't affected.
 - **Migration 0003 is hand-written.** drizzle-kit can't generate renames without its interactive prompt. Future migrations generate normally (the snapshot was checked).

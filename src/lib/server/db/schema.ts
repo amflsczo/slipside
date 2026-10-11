@@ -188,3 +188,28 @@ export const payPeriodExtras = pgTable(
 	},
 	(t) => [index('pay_period_extras_period_idx').on(t.periodId)]
 );
+
+// Expenses: money going out. Each one is linked to its category, so renaming a category
+// carries over to past expenses; the name is also saved, so deleting a category loses nothing
+// (the link is cleared and the saved name stays). No category means "Uncategorised".
+export const expenses = pgTable(
+	'expenses',
+	{
+		id: id(),
+		userId: userId(),
+		date: date('date', { mode: 'string' }).notNull(),
+		amount: amount('amount'),
+		currency: text('currency').notNull(),
+		categoryId: integer('category_id').references(() => expenseCategories.id, {
+			onDelete: 'set null'
+		}),
+		categoryName: text('category_name'),
+		note: text('note'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		index('expenses_user_date_idx').on(t.userId, t.date),
+		check('expenses_amount_check', sql`${t.amount} > 0`)
+	]
+);
