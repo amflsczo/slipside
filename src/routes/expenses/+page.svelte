@@ -51,13 +51,87 @@
 	let attempted = $state(false);
 	let adding = $state(false);
 
-	// Another month: new expenses default to a date in it.
-	let shownMonth = untrack(() => (data.needsSetup ? '' : data.month));
+	// --- The list, a page at a time ---
+	// The first page shows; "Show more" adds a page, and from then on reaching the end of the
+	// list adds the next one. Whole days stay together, so a page can run a little over.
+	const PAGE = 10;
+	let limit = $state(PAGE);
+	let autoLoad = $state(false);
+	const visibleDays = $derived.by(() => {
+		if (data.needsSetup) return [];
+		const days = [];
+		let shown = 0;
+		for (const day of data.days) {
+			if (shown >= limit) break;
+			days.push(day);
+			shown += day.rows.length;
+		}
+		return days;
+	});
+	const hiddenCount = $derived(
+		data.needsSetup ? 0 : data.totals.count - visibleDays.reduce((n, day) => n + day.rows.length, 0)
+	);
+	function showMore() {
+		limit += PAGE;
+		autoLoad = true;
+	}
+	/** Adds the next page when this element (after the list) nears the end of the list's box. */
+	function loadOnScroll(node: HTMLElement) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((e) => e.isIntersecting)) return;
+				limit += PAGE;
+				// Look again once the page has drawn: still in view (a short page) loads another.
+				observer.unobserve(node);
+				tick().then(() => requestAnimationFrame(() => node.isConnected && observer.observe(node)));
+			},
+			{ root: node.closest('[data-scroller]'), rootMargin: '200px 0px' }
+		);
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
+	}
+
+	// The list scrolls inside its own box (no scrollbar); a fade at an edge shows there's
+	// more that way.
+	let fadeTop = $state(false);
+	let fadeBottom = $state(false);
+	function scrollFade(node: HTMLElement) {
+		const update = () => {
+			fadeTop = node.scrollTop > 4;
+			fadeBottom = node.scrollTop + node.clientHeight < node.scrollHeight - 4;
+		};
+		const resize = new ResizeObserver(update);
+		resize.observe(node);
+		if (node.firstElementChild) resize.observe(node.firstElementChild);
+		node.addEventListener('scroll', update, { passive: true });
+		update();
+		return {
+			destroy() {
+				resize.disconnect();
+				node.removeEventListener('scroll', update);
+			}
+		};
+	}
+	const fadeMask = $derived(
+		fadeTop || fadeBottom
+			? `linear-gradient(to bottom, ${fadeTop ? 'transparent, #000 2rem' : '#000'}, ${fadeBottom ? '#000 calc(100% - 3rem), transparent' : '#000'})`
+			: undefined
+	);
+
+	// Another month (or currency): new expenses default to a date in it, and the list starts
+	// from its first page again.
+	let shownMonth = untrack(() => (data.needsSetup ? '' : `${data.month} ${data.currency}`));
 	$effect(() => {
-		if (data.needsSetup || data.month === shownMonth) return;
-		shownMonth = data.month;
-		draft.date = data.defaultDate;
-		attempted = false;
+		if (data.needsSetup) return;
+		const key = `${data.month} ${data.currency}`;
+		if (key === shownMonth) return;
+		if (data.month !== shownMonth.split(' ')[0]) {
+			draft.date = data.defaultDate;
+			attempted = false;
+		}
+		shownMonth = key;
+		limit = PAGE;
+		autoLoad = false;
 	});
 
 	const parsed = $derived(
@@ -237,7 +311,7 @@
 			</section>
 
 			<!-- The month's expenses, by day. -->
-			<div class="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+			<div class="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
 				{#if data.days.length === 0}
 					<EmptyState
 						icon={Wallet}
@@ -248,57 +322,89 @@
 								? 'Planned bills dated this month show up here.'
 								: 'Nothing was added for this month.'}
 					/>
-				{/if}
-				{#each data.days as day (day.date)}
-					<section
-						class="overflow-hidden rounded-3xl bg-card shadow-soft"
-						aria-label="{dayHeading(day.date)}, {money(day.total)}"
+				{:else}
+					<!-- A fixed-height box that scrolls by itself, so the page doesn't grow. The padding
+					     keeps the cards' shadows from being cut off. -->
+					<div
+						data-scroller
+						use:scrollFade
+						class="-m-2 scrollbar-none max-h-[65dvh] overflow-y-auto p-2 sm:max-h-[70dvh] lg:max-h-[calc(100dvh-11rem)]"
+						style:mask-image={fadeMask}
+						style:-webkit-mask-image={fadeMask}
 					>
-						<header
-							class="flex items-baseline justify-between gap-3 border-b border-rule px-4 py-3 sm:px-6"
-						>
-							<h3 class="font-mono text-xs font-semibold tracking-[0.2em] text-ink uppercase">
-								{dayHeading(day.date)}
-							</h3>
-							<p class="font-mono text-sm font-semibold text-ink tabular-nums">
-								{money(day.total)}
-							</p>
-						</header>
-						<ul class="divide-y divide-rule">
-							{#each day.rows as row (row.id)}
-								<li>
-									<button
-										type="button"
-										class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-base-200/40 sm:px-6"
-										onclick={() => edit(row)}
-										aria-label="Edit {row.categoryName}{row.note ? `, ${row.note}` : ''}, {money(
-											row.amount
-										)}"
+						<div class="flex flex-col gap-4 sm:gap-5">
+							{#each visibleDays as day (day.date)}
+								<section
+									class="overflow-hidden rounded-3xl bg-card shadow-soft"
+									aria-label="{dayHeading(day.date)}, {money(day.total)}"
+								>
+									<header
+										class="flex items-baseline justify-between gap-3 border-b border-rule px-4 py-3 sm:px-6"
 									>
-										<div class="min-w-0 flex-1">
-											<p class="flex items-center gap-2 text-sm font-medium text-ink">
-												<span class="truncate">{row.categoryName}</span>
-												{#if row.upcoming}
-													<span
-														class="shrink-0 rounded-full bg-info/12 px-2 py-0.5 text-2xs font-semibold text-info"
-														>Upcoming</span
-													>
-												{/if}
-											</p>
-											{#if row.note}
-												<p class="truncate text-xs text-ink-muted">{row.note}</p>
-											{/if}
-										</div>
-										<p class="shrink-0 font-mono text-sm text-ink tabular-nums">
-											{money(row.amount)}
+										<h3 class="font-mono text-xs font-semibold tracking-[0.2em] text-ink uppercase">
+											{dayHeading(day.date)}
+										</h3>
+										<p class="font-mono text-sm font-semibold text-ink tabular-nums">
+											{money(day.total)}
 										</p>
-										<ChevronRight size={16} class="shrink-0 text-ink-muted" aria-hidden="true" />
-									</button>
-								</li>
+									</header>
+									<ul class="divide-y divide-rule">
+										{#each day.rows as row (row.id)}
+											<li>
+												<button
+													type="button"
+													class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-base-200/40 sm:px-6"
+													onclick={() => edit(row)}
+													aria-label="Edit {row.categoryName}{row.note
+														? `, ${row.note}`
+														: ''}, {money(row.amount)}"
+												>
+													<div class="min-w-0 flex-1">
+														<p class="flex items-center gap-2 text-sm font-medium text-ink">
+															<span class="truncate">{row.categoryName}</span>
+															{#if row.upcoming}
+																<span
+																	class="shrink-0 rounded-full bg-info/12 px-2 py-0.5 text-2xs font-semibold text-info"
+																	>Upcoming</span
+																>
+															{/if}
+														</p>
+														{#if row.note}
+															<p class="truncate text-xs text-ink-muted">{row.note}</p>
+														{/if}
+													</div>
+													<p class="shrink-0 font-mono text-sm text-ink tabular-nums">
+														{money(row.amount)}
+													</p>
+													<ChevronRight
+														size={16}
+														class="shrink-0 text-ink-muted"
+														aria-hidden="true"
+													/>
+												</button>
+											</li>
+										{/each}
+									</ul>
+								</section>
 							{/each}
-						</ul>
-					</section>
-				{/each}
+							{#if hiddenCount > 0}
+								{#if autoLoad}
+									<!-- Reaching here loads the next page. -->
+									<div use:loadOnScroll class="flex justify-center py-2" aria-hidden="true">
+										<span class="loading loading-sm loading-dots text-ink-muted"></span>
+									</div>
+								{:else}
+									<div class="flex flex-col items-center">
+										<Button variant="ghost" size="sm" onclick={showMore}>Show more</Button>
+										<p class="text-2xs text-ink-muted tabular-nums">
+											{data.totals.count - hiddenCount} of {data.totals.count}
+										</p>
+									</div>
+								{/if}
+							{/if}
+						</div>
+					</div>
+				{/if}
 			</div>
 
 			<div class="min-w-0 lg:col-start-2 lg:row-start-2">

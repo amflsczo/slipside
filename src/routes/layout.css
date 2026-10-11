@@ -237,6 +237,14 @@
 	border-bottom: 1.5px dotted var(--color-rule);
 }
 
+/* Scrolls without showing a scrollbar (pair with a fade so the overflow is still visible). */
+@utility scrollbar-none {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
 /* Safe areas for notches and home indicators. */
 @utility pb-safe {
 	padding-bottom: env(safe-area-inset-bottom);
