@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	categoryTotals,
+	buildMonths,
 	groupByDay,
+	groupMonthsByYear,
+	mergeCategoryTotals,
+	monthRange,
+	rangeSummary,
 	monthSummary,
 	parseExpense,
 	spendingTotals,
@@ -208,5 +213,80 @@ describe('the month summary', () => {
 			income: null
 		});
 		expect(summary).toMatchObject({ income: 0, payslips: 0, leftOver: -500, lastMonth: null });
+	});
+});
+
+describe('year and all time', () => {
+	const spent = [
+		{ month: '2026-09', currency: 'GBP', total: '18.00', upcoming: '0', count: 1 },
+		{ month: '2026-10', currency: 'GBP', total: '682.39', upcoming: '550.00', count: 5 },
+		{ month: '2025-12', currency: 'GBP', total: '40.00', upcoming: '0', count: 2 },
+		{ month: '2026-08', currency: 'PHP', total: '500.00', upcoming: '0', count: 1 }
+	];
+	const income = [
+		{ month: '2026-10', currency: 'GBP', total: '932.60', count: 3 },
+		{ month: '2026-07', currency: 'GBP', total: '400.00', count: 1 }
+	];
+
+	it('runs a year from January, to this month or a later planned bill', () => {
+		expect(monthRange(2026, '2026-10', spent, 'GBP')).toEqual({ from: '2026-01', to: '2026-10' });
+		expect(monthRange(2025, '2026-10', spent, 'GBP')).toEqual({ from: '2025-01', to: '2025-12' });
+		const planned = [...spent, { month: '2026-12', currency: 'GBP' }];
+		expect(monthRange(2026, '2026-10', planned, 'GBP')).toEqual({ from: '2026-01', to: '2026-12' });
+		expect(monthRange(2027, '2026-10', spent, 'GBP')).toBeNull();
+	});
+
+	it('runs all time from the first month with anything in the currency', () => {
+		expect(monthRange(null, '2026-10', [...spent, ...income], 'GBP')).toEqual({
+			from: '2025-12',
+			to: '2026-10'
+		});
+		expect(monthRange(null, '2026-10', [], 'GBP')).toBeNull();
+	});
+
+	it('fills every month, with what was spent and received', () => {
+		const months = buildMonths('GBP', spent, income, { from: '2026-07', to: '2026-10' });
+		expect(months.map((m) => [m.month, m.spent, m.income, m.leftOver])).toEqual([
+			['2026-07', 0, 40000, 40000],
+			['2026-08', 0, 0, 0],
+			['2026-09', 1800, 0, -1800],
+			['2026-10', 68239, 93260, 25021]
+		]);
+		expect(months[3]).toMatchObject({ count: 5, upcoming: 55000, payslips: 3 });
+	});
+
+	it('adds months up by year, and into one summary', () => {
+		const months = buildMonths('GBP', spent, income, { from: '2025-12', to: '2026-10' });
+		expect(groupMonthsByYear(months).map((y) => [y.year, y.spent, y.income, y.count])).toEqual([
+			[2026, 70039, 133260, 6],
+			[2025, 4000, 0, 2]
+		]);
+		expect(rangeSummary(months)).toEqual({
+			income: 133260,
+			payslips: 4,
+			spent: 74039,
+			upcoming: 55000,
+			leftOver: 59221,
+			lastMonth: null
+		});
+	});
+
+	it('merges category sums, keeping deleted categories by name', () => {
+		expect(
+			mergeCategoryTotals(
+				[
+					{ currency: 'GBP', categoryId: 1, categoryName: 'Food', total: '10.00', count: 2 },
+					{ currency: 'GBP', categoryId: null, categoryName: 'Gym', total: '20.00', count: 1 },
+					{ currency: 'GBP', categoryId: null, categoryName: 'gym ', total: '5.00', count: 1 },
+					{ currency: 'GBP', categoryId: null, categoryName: null, total: '1.00', count: 1 },
+					{ currency: 'PHP', categoryId: 1, categoryName: 'Food', total: '99.00', count: 1 }
+				],
+				'GBP'
+			)
+		).toEqual([
+			{ key: 'name:gym', name: 'Gym', total: 2500, count: 2 },
+			{ key: 'id:1', name: 'Food', total: 1000, count: 2 },
+			{ key: 'none', name: 'Uncategorised', total: 100, count: 1 }
+		]);
 	});
 });

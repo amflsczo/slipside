@@ -9,10 +9,10 @@
 		summary,
 		byCategory
 	}: {
-		/** e.g. "October 2026". */
+		/** e.g. "October 2026", "2026" or "All time". */
 		title: string;
-		/** e.g. "September". */
-		lastMonthName: string;
+		/** e.g. "September", to compare with; leave out for a year or all time. */
+		lastMonthName?: string;
 		currency: string;
 		summary: MonthSummary;
 		/** Spending per category, largest first. */
@@ -43,7 +43,7 @@
 	</div>
 {/snippet}
 
-<!-- The month as one printed slip: net pay received − spending = left over. -->
+<!-- A month (or year) as one printed slip: net pay received − spending = left over. -->
 <section class="drop-shadow-soft" aria-labelledby="month-slip-title">
 	<div class="rounded-t-3xl bg-card px-4 pt-4 pb-9 slip-edge sm:px-6 sm:pt-6">
 		<h2
@@ -92,7 +92,9 @@
 			{#if !summary.payslips}
 				<p>Payslips count in the month they were paid.</p>
 			{/if}
-			{#if last}
+			{#if lastMonthName === undefined}
+				<!-- A year or all time: no comparison. -->
+			{:else if last}
 				<p>
 					Spent {compare(summary.spent, last.spent, 'more', 'less')}{last.spent
 						? ` (${money(last.spent)})`

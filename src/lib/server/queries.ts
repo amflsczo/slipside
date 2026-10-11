@@ -340,6 +340,78 @@ export function forUser(userId: string) {
 		},
 
 		/**
+		 * Spending and income per month for a year (or all time, when `year` is null), in one
+		 * round trip: per month and currency, what was spent (and how much of it is dated after
+		 * `today`) and the net pay received; spending per category over the whole range; and
+		 * the years that have expenses.
+		 */
+		async loadExpensesRange(year: number | null, today: IsoDate) {
+			const month = (column: AnyColumn | SQL) => sql<string>`to_char(${column}, 'YYYY-MM')`;
+			const paidOn = sql`coalesce(${payPeriods.payDate}, ${payPeriods.periodEnd})`;
+			const inYear = (column: AnyColumn | SQL) =>
+				year === null
+					? sql`true`
+					: sql`${column} between ${`${year}-01-01`} and ${`${year}-12-31`}`;
+			const spentIn = and(eq(expenses.userId, userId), inYear(expenses.date));
+			const categoryName = sql<
+				string | null
+			>`coalesce(${expenseCategories.name}, ${expenses.categoryName})`;
+
+			const [[general], spent, income, byCategory, years] = await db.batch([
+				db
+					.select({ currency: settings.currency })
+					.from(settings)
+					.where(eq(settings.userId, userId))
+					.limit(1),
+				db
+					.select({
+						month: month(expenses.date),
+						currency: expenses.currency,
+						total: sql<string>`sum(${expenses.amount})::text`,
+						upcoming: sql<string>`coalesce(sum(${expenses.amount}) filter (where ${expenses.date} > ${today}), 0)::text`,
+						count: sql<number>`count(*)::int`
+					})
+					.from(expenses)
+					.where(spentIn)
+					.groupBy(month(expenses.date), expenses.currency),
+				db
+					.select({
+						month: month(paidOn),
+						currency: payPeriods.currency,
+						total: sql<string>`sum(${payPeriods.netPay})::text`,
+						count: sql<number>`count(*)::int`
+					})
+					.from(payPeriods)
+					.where(and(eq(payPeriods.userId, userId), inYear(paidOn)))
+					.groupBy(month(paidOn), payPeriods.currency),
+				db
+					.select({
+						currency: expenses.currency,
+						categoryId: expenses.categoryId,
+						categoryName,
+						total: sql<string>`sum(${expenses.amount})::text`,
+						count: sql<number>`count(*)::int`
+					})
+					.from(expenses)
+					.leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
+					.where(spentIn)
+					.groupBy(expenses.currency, expenses.categoryId, categoryName),
+				db
+					.selectDistinct({ year: sql<number>`extract(year from ${expenses.date})::int` })
+					.from(expenses)
+					.where(eq(expenses.userId, userId))
+			]);
+
+			return {
+				general: general ?? null,
+				spent,
+				income,
+				byCategory,
+				years: years.map((r) => r.year)
+			};
+		},
+
+		/**
 		 * Everything the Expenses screen needs for one month, in one round trip: the currency,
 		 * every category (hidden ones too, for editing old expenses), the month's expenses with
 		 * each category's current name, the net pay received that month (payslips counted on the

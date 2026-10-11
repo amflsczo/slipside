@@ -13,6 +13,7 @@
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ExpenseFields from '#lib/components/ExpenseFields.svelte';
 	import ExpenseSheet from '#lib/components/ExpenseSheet.svelte';
+	import ExpenseViews from '#lib/components/ExpenseViews.svelte';
 	import MonthSlip from '#lib/components/MonthSlip.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import { addDays, dayLabel, monthLabel } from '#lib/dates.ts';
@@ -213,8 +214,9 @@
 			{#snippet action()}<Button href="/settings">Go to Settings</Button>{/snippet}
 		</EmptyState>
 	{:else}
-		<!-- Month picker, with the month's total. -->
+		<!-- View and month picker, with the month's total. -->
 		<div class="form-surface flex flex-wrap items-center gap-2">
+			<ExpenseViews current="month" year={Number(data.month.slice(0, 4))} />
 			<div class="flex items-center rounded-xl bg-card shadow-soft">
 				<a
 					href={monthHref(data.previousMonth)}

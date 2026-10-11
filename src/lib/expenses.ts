@@ -1,7 +1,7 @@
 // Expenses: money going out. Validation and totals (pure); the queries live in
 // #lib/server/queries.ts. Each expense is linked to its category (renames carry over) and
 // keeps the category's name too, so a deleted category still shows; none = "Uncategorised".
-import { addDays, isIsoDate, type IsoDate } from './dates.ts';
+import { addDays, isIsoDate, shiftMonth, type IsoDate } from './dates.ts';
 import { fromMinor, minorDigits, toMinor } from './format/money.ts';
 
 export const MAX_NOTE = 200;
@@ -161,17 +161,47 @@ export type CategoryTotal = { key: string; name: string; total: number; count: n
  * renamed category stays one line); unlinked ones by their saved name; the rest together.
  */
 export function categoryTotals(rows: ExpenseRow[]): CategoryTotal[] {
+	return addUpCategories(rows.map((row) => ({ ...row, count: 1 })));
+}
+
+/** Adds up per-category sums from the database (decimal strings) for one currency. */
+export function mergeCategoryTotals(
+	rows: {
+		currency: string;
+		categoryId: number | null;
+		categoryName: string | null;
+		total: string;
+		count: number;
+	}[],
+	currency: string
+): CategoryTotal[] {
+	const digits = minorDigits(currency);
+	return addUpCategories(
+		rows
+			.filter((row) => row.currency === currency)
+			.map((row) => ({
+				categoryId: row.categoryId,
+				categoryName: row.categoryName ?? UNCATEGORISED,
+				amount: toMinor(row.total, digits) ?? 0,
+				count: row.count
+			}))
+	);
+}
+
+function addUpCategories(
+	parts: { categoryId: number | null; categoryName: string; amount: number; count: number }[]
+): CategoryTotal[] {
 	const groups = new Map<string, CategoryTotal>();
-	for (const row of rows) {
+	for (const part of parts) {
 		const key =
-			row.categoryId !== null
-				? `id:${row.categoryId}`
-				: row.categoryName === UNCATEGORISED
+			part.categoryId !== null
+				? `id:${part.categoryId}`
+				: part.categoryName === UNCATEGORISED
 					? 'none'
-					: `name:${row.categoryName.trim().toLowerCase()}`;
-		const group = groups.get(key) ?? { key, name: row.categoryName, total: 0, count: 0 };
-		group.total += row.amount;
-		group.count += 1;
+					: `name:${part.categoryName.trim().toLowerCase()}`;
+		const group = groups.get(key) ?? { key, name: part.categoryName, total: 0, count: 0 };
+		group.total += part.amount;
+		group.count += part.count;
 		groups.set(key, group);
 	}
 	return [...groups.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
@@ -230,5 +260,118 @@ export function monthSummary(
 			lastMonth.spent || lastMonth.income
 				? { income: lastIncome, spent: lastSpent, leftOver: lastIncome - lastSpent }
 				: null
+	};
+}
+
+// --- Year and All time ---
+
+/** One month's sums from the database (decimal strings), per currency. */
+type MonthSum = { month: string; currency: string; total: string; count: number };
+
+export type MonthPoint = {
+	/** "2026-10" */
+	month: string;
+	spent: number;
+	count: number;
+	/** Planned bills (dated after today), included in `spent`. */
+	upcoming: number;
+	/** Net pay of the payslips paid that month. */
+	income: number;
+	payslips: number;
+	leftOver: number;
+};
+
+/**
+ * Every month from `from` to `to` (both "YYYY-MM"), with what was spent and received in
+ * `currency`; months with nothing are zero, so the chart's line doesn't skip them.
+ */
+export function buildMonths(
+	currency: string,
+	spent: (MonthSum & { upcoming: string })[],
+	income: MonthSum[],
+	range: { from: string; to: string }
+): MonthPoint[] {
+	const digits = minorDigits(currency);
+	const minor = (value: string) => toMinor(value, digits) ?? 0;
+	const out: MonthPoint[] = [];
+	for (let month = range.from; month <= range.to; month = shiftMonth(month, 1)) {
+		const s = spent.find((r) => r.month === month && r.currency === currency);
+		const i = income.find((r) => r.month === month && r.currency === currency);
+		const point = {
+			month,
+			spent: s ? minor(s.total) : 0,
+			count: s?.count ?? 0,
+			upcoming: s ? minor(s.upcoming) : 0,
+			income: i ? minor(i.total) : 0,
+			payslips: i?.count ?? 0
+		};
+		out.push({ ...point, leftOver: point.income - point.spent });
+	}
+	return out;
+}
+
+/**
+ * The months to show. A year: January to December for a past year; this year runs to this
+ * month (or later, when bills are planned). All time: the first month with anything in
+ * `currency` to the last (at least this month). Null when there's nothing at all.
+ */
+export function monthRange(
+	year: number | null,
+	thisMonth: string,
+	months: { month: string; currency: string }[],
+	currency: string
+): { from: string; to: string } | null {
+	const used = months
+		.filter((r) => r.currency === currency)
+		.map((r) => r.month)
+		.sort();
+	const last = used.at(-1);
+	if (year === null) {
+		if (!used.length) return null;
+		return { from: used[0]!, to: last! > thisMonth ? last! : thisMonth };
+	}
+	const from = `${year}-01`;
+	const inYear = used.filter((m) => m.startsWith(`${year}-`)).at(-1);
+	const thisYear = Number(thisMonth.slice(0, 4));
+	if (year < thisYear) return { from, to: `${year}-12` };
+	if (year === thisYear) return { from, to: inYear && inYear > thisMonth ? inYear : thisMonth };
+	return inYear ? { from, to: inYear } : null;
+}
+
+export type YearGroup = {
+	year: number;
+	spent: number;
+	income: number;
+	leftOver: number;
+	count: number;
+	upcoming: number;
+};
+
+/** Months added up per year, newest year first. */
+export function groupMonthsByYear(points: MonthPoint[]): YearGroup[] {
+	const years = new Map<number, YearGroup>();
+	for (const p of points) {
+		const year = Number(p.month.slice(0, 4));
+		const g = years.get(year) ?? { year, spent: 0, income: 0, leftOver: 0, count: 0, upcoming: 0 };
+		g.spent += p.spent;
+		g.income += p.income;
+		g.leftOver += p.leftOver;
+		g.count += p.count;
+		g.upcoming += p.upcoming;
+		years.set(year, g);
+	}
+	return [...years.values()].sort((a, b) => b.year - a.year);
+}
+
+/** A range's months as one summary, in the slip's shape (no comparison). */
+export function rangeSummary(points: MonthPoint[]): MonthSummary {
+	const sum = (pick: (p: MonthPoint) => number) => points.reduce((t, p) => t + pick(p), 0);
+	return {
+		income: sum((p) => p.income),
+		payslips: sum((p) => p.payslips),
+		spent: sum((p) => p.spent),
+		upcoming: sum((p) => p.upcoming),
+		leftOver: sum((p) => p.leftOver),
+		lastMonth: null
 	};
 }
