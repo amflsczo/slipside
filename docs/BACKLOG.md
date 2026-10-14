@@ -36,15 +36,15 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 | H4    | Year summary tiles; a hand-drawn SVG line chart (net pay per payslip by default, switch to Rate / Hours, table for screen readers); a **year breakdown** in the printed-slip style (earnings by item, gross, each deduction, net, hours) | ✅ Released 2026-10-10 |
 | H5    | Help guide and quick answer for History, DESIGN.md, backlog, browser check, release                                                                                                                                                      | ✅ Released 2026-10-10 |
 
-### Next: Expenses (planned 2026-10-11)
+### Expenses (planned 2026-10-11, released 2026-10-14)
 
-| Phase | What                                                                                                                                                                                                                    | Status                          |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| E1    | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals                        | ✅ Committed (0005 on dev only) |
-| E2    | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ✅ Committed                    |
-| E3    | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month                                                                                                             | ✅ Committed                    |
-| E4    | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month                                                                                | ✅ Committed                    |
-| E5    | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push                                                                                                  | 🟡 Docs done; release next      |
+| Phase | What                                                                                                                                                                                                                    | Status                 |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| E1    | Data and rules, with tests: migration 0005 `expenses` (date, amount, currency, linked category + saved name, note, timestamps); validation (dates up to a year ahead); month and category totals                        | ✅ Released 2026-10-14 |
+| E2    | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ✅ Released 2026-10-14 |
+| E3    | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month                                                                                                             | ✅ Released 2026-10-14 |
+| E4    | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month                                                                                | ✅ Released 2026-10-14 |
+| E5    | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push                                                                                                  | ✅ Released 2026-10-14 |
 
 ---
 
@@ -117,7 +117,7 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 - **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. (Expenses got its guide, rules and quick answers on 2026-10-14.)
 
-- **Migration 0005 (expenses) is on the dev branch only.** At the Expenses release: back up production, run 0005, then push (in that order).
+- **Expenses released 2026-10-14:** production has migration 0005. A backup branch of production was made in Neon first. Delete it, and `backup-before-pay-periods`, once the live site has been fine for a week or so.
 - **Line endings:** Git warns "LF will be replaced by CRLF" on every commit. A `.gitattributes` with `* text=auto eol=lf` would make it consistent.
 - **Local `npm run build` fails on Windows** at the final Vercel step (`EPERM` creating a symlink). Turning on Windows Developer Mode fixes it. Vercel's own builds aren't affected.
 - **Migration 0003 is hand-written.** drizzle-kit can't generate renames without its interactive prompt. Future migrations generate normally (the snapshot was checked).
