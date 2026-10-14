@@ -16,6 +16,7 @@
 	import Rocket from '@lucide/svelte/icons/rocket';
 	import Scale from '@lucide/svelte/icons/scale';
 	import ShieldCheck from '@lucide/svelte/icons/shield-check';
+	import Wallet from '@lucide/svelte/icons/wallet';
 	import BrandMark from '#lib/components/BrandMark.svelte';
 	import Button from '#lib/components/Button.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -121,6 +122,22 @@
 			note: 'A payslip counts in the month it was **paid**. If it was paid after its end date, set **Paid on** on the payslip.'
 		},
 		{
+			id: 'expenses',
+			title: 'Track your spending',
+			icon: Wallet,
+			group: 'Guides',
+			summary: 'Add what you spend and see what’s left of your pay each month.',
+			steps: [
+				'Open **Expenses**.',
+				'Under **Add an expense**, type the amount, pick a category and tap **Add expense**. The date starts as today.',
+				'The date and category stay, so you can add the next one straight away.',
+				'Tap an expense in the list to change it, or tap the bin to delete it.',
+				'Use **‹** and **›** to change month. The slip shows net pay in, spending by category, and what’s **Left over**.',
+				'Tap **Year** or **All time** for a chart of spending per month. Tap a month or year to open it.'
+			],
+			note: 'You can add a bill dated up to a year ahead. It shows as **Upcoming** and counts in its own month. Categories come from **Settings** → **Categories**.'
+		},
+		{
 			id: 'rate',
 			title: 'Spot pay problems',
 			icon: Gauge,
@@ -158,8 +175,11 @@
 				'A new payslip starts **the day after your last one**, for your usual length. You can change its dates.',
 				'Changing **How often are you usually paid?** only changes the dates suggested for new payslips.',
 				'**Saved payslips don’t change** when you edit Settings. Renaming or hiding an item, or changing your currency, only affects new payslips.',
-				'Each payslip keeps **the currency it was saved in**. Amounts are never converted between currencies.',
-				'**Deleting a payslip is permanent.**'
+				'Each payslip and expense keeps **the currency it was saved in**. Amounts are never converted between currencies.',
+				'An expense can be dated **up to a year ahead**. Future expenses show as **Upcoming** and count in the month they’re dated.',
+				'**Left over** is the net pay of payslips **paid** that month, minus that month’s expenses.',
+				'Renaming a category renames it on past expenses too. Hiding it only removes it from **Add an expense**.',
+				'**Deleting a payslip or an expense is permanent.**'
 			]
 		},
 		{
@@ -169,7 +189,7 @@
 			group: 'Reference',
 			summary: 'Where your entries are kept.',
 			bullets: [
-				'Your payslips and settings are saved to your account when you tap **Save**.',
+				'Your payslips and settings are saved to your account when you tap **Save**. Expenses are saved as soon as you add them.',
 				'**Unsaved changes are kept on this device only**, so a reload doesn’t lose them. Save to see them on your other devices.',
 				'On a shared device, **log out** when you’re done (account menu → **Log out**).',
 				'Light or dark theme is set **per device**.'
@@ -230,7 +250,22 @@
 					q: 'Why do some History rows also show a rate change?',
 					a: 'When a payslip covers a different number of days from the one before, net pay alone can mislead, so the change in hourly rate is shown too.'
 				},
-				{ q: 'Where is Expenses?', a: 'It’s coming in a later update.' }
+				{
+					q: 'Why does Left over show no net pay?',
+					a: 'No payslip was **paid** that month. A payslip counts in the month of its **Paid on** date, or its end date if that’s blank.'
+				},
+				{
+					q: 'What does “Upcoming” mean on an expense?',
+					a: 'It’s dated after today, like a bill you know is coming. It already counts in that month’s totals.'
+				},
+				{
+					q: 'A category is missing from Add an expense.',
+					a: 'It may be hidden. Go to **Settings** → **Categories** and tap the eye to show it again.'
+				},
+				{
+					q: 'Where are my expenses in another currency?',
+					a: 'Expenses show one currency at a time. If you’ve used more than one, pick it from the currency menu at the top of **Expenses**.'
+				}
 			]
 		}
 	];

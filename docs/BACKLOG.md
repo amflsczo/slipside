@@ -4,7 +4,7 @@ A running list of what still needs deciding, what must happen before a release, 
 
 **How to use it:** add an item whenever something comes up. When a question is answered, move it to [Decided](#decided) with the date and the answer. Tick off release items as they're done.
 
-_Last updated: 2026-10-11_
+_Last updated: 2026-10-14_
 
 ---
 
@@ -44,7 +44,7 @@ Done: **flexible pay periods.** A payslip covers 1 to 62 days, rather than alway
 | E2    | Expenses page: month picker; quick add (amount, category chips from Settings, date defaulting to today, note); list grouped by day with day totals, "Upcoming" tag on future dates; tap to edit or delete; empty states | ✅ Committed                    |
 | E3    | Month summary slip: net pay received that month − expenses = left over; spending by category; vs last month                                                                                                             | ✅ Committed                    |
 | E4    | Year and All time views like History: spending per month (line chart), category breakdown for the year, month cards that open each month                                                                                | ✅ Committed                    |
-| E5    | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push                                                                                                  | ⏳ Next                         |
+| E5    | Help guide and quick answers, DESIGN.md, backlog, browser check; release: back up production, run migration 0005, push                                                                                                  | 🟡 Docs done; release next      |
 
 ---
 
@@ -115,7 +115,7 @@ The UK and US templates include an extra named **Weekly bonus**, of kind "per pa
 
 ## Tidy-ups (technical)
 
-- **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. Expenses will need a guide, and the "Where is Expenses?" answer will need removing.
+- **Keep the Help page in step** ([src/routes/help/+page.svelte](../src/routes/help/+page.svelte)): update its guides, rules and quick answers whenever a feature changes. (Expenses got its guide, rules and quick answers on 2026-10-14.)
 
 - **Migration 0005 (expenses) is on the dev branch only.** At the Expenses release: back up production, run 0005, then push (in that order).
 - **Line endings:** Git warns "LF will be replaced by CRLF" on every commit. A `.gitattributes` with `* text=auto eol=lf` would make it consistent.

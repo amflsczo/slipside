@@ -552,6 +552,7 @@ A daisyUI `badge font-medium` with the status class from §3, `badge-sm` by defa
 ### Action bar (forms and details)
 
 `rounded-3xl bg-card p-4 sm:px-6 shadow-soft`: the **last card of the form**, in the page flow. It doesn't float or stick.
+
 - **Keep it minimal, one row on every screen:** a save state (a small coloured dot plus "Unsaved changes" / "Saved" / "Not saved yet", in `text-xs`) on the left; on the right, secondary actions as icon buttons (e.g. a trash icon with `aria-label`, red on hover, which still confirms) and the main button. No totals or summaries in the bar.
 - **Next to a side panel** (the payslip page from `xl`), it sits in the form's column at the form card's width; on phones it comes last, after the panel.
 
@@ -653,7 +654,9 @@ A native `<dialog>` like ConfirmDialog: a **bottom sheet on phones** (`max-sm:mb
 - Apply (accent) is disabled while there's a problem or nothing changed.
 
 ### Payslip form (ledger rows)
+
 The entry side mirrors the printed slip: **one card**, `form-surface rounded-3xl bg-card shadow-soft`, headed "YOUR PAYSLIP" (`font-mono tracking-[0.2em] uppercase`) with a "How to fill this in" link to Help.
+
 - Sections are split by dashed hairlines (`border-t border-dashed border-rule px-4 py-3.5 sm:px-6`) and titled in `font-mono text-2xs uppercase tracking-widest text-ink-muted`. No per-section descriptions.
 - **Rows:** `grid grid-cols-[minmax(0,1fr)_8.5rem] sm:grid-cols-[minmax(0,1fr)_10rem]`: label on the left, a right-aligned amount on the right (`h-9`, `[&_input]:text-right`). A short note sits under a label as `block text-xs text-ink-muted` (e.g. "Take-home amount", "Per day").
 - Section headings carry live totals (deductions in `text-negative` with "−", total hours) and small accent "+ Add" pills.
@@ -672,18 +675,34 @@ The reverse payslip looks printed: `drop-shadow-soft` on the wrapper, `slip-edge
 - Before net pay is entered, faded placeholder lines and one hint.
 
 ### History page
+
 One year at a time (a native year select, plus currency when more than one was used), or **All time**: the same tiles, chart and breakdown over every payslip, with one card per year (net, payslips, gross, average rate, hours) that opens that year. From `lg`, the month list and the year breakdown sit side by side (`lg:grid-cols-[minmax(0,1fr)_22rem]`, the breakdown sticky); on phones the breakdown comes last.
+
 - **Summary tiles:** one card of four StatTiles (net, average rate weighted by hours, hours + overtime, payslips).
 - **Month cards:** ledger-style headers ("OCTOBER 2026 · £932.60 · 3 payslips") over tappable rows: dates and length, rate and "paid <date>" on the left; net (mono) and the change since the previous payslip on the right, green up and clay down. When the lengths differ, the rate change follows. A "Rate high/low" pill marks rates outside the tolerance; screen readers get the change as one sentence.
 - **Year breakdown:** the printed-slip look (torn edge, leaders, double rule under net) for the year's totals, with each extra and deduction added up by name.
 
+### Expenses page
+
+Three views as a pill of links (**Month · Year · All time**, `ExpenseViews`), so each has its own address: `/expenses?month=YYYY-MM`, `/expenses/overview?year=YYYY` and `?year=all`. A toolbar row holds the view pill, ‹ month › (or a year select), a currency select when more than one is used, and the total on the right ("£412.50 spent · incl. £80.00 upcoming").
+
+- **Month, from `lg`:** the list on the left; **Add an expense** and the month slip stacked on the right (`lg:grid-cols-[minmax(0,1fr)_22rem]`). On phones: quick add, the list, then the slip.
+- **Quick add** (`ExpenseFields`): amount, date (defaults to today, or the edge of the month being viewed), category as chips from Settings plus "No category", and an optional note. After adding, the date and category stay and focus returns to the amount.
+- **List:** one card per day ("TODAY", "SAT · OCT 10") with the day total; rows show the category, note, an info-coloured **Upcoming** pill for future dates, and the amount. The list scrolls in its own fixed-height box (no scrollbar, edges fade when there's more); 10 expenses show at first, "Show more" adds 10, then reaching the end loads the next 10.
+- **Edit sheet** (`ExpenseSheet`): the same fields in a date-sheet-style dialog (bottom sheet on phones), with Delete behind a ConfirmDialog. A hidden or deleted category stays available as a chip for that expense.
+- **Month slip** (`MonthSlip`): the printed-slip look. "In" is net pay of payslips paid that month; "Out" lists categories largest first in `text-negative`; a rule above **Spent** and a double rule under **Left over** (negative in `text-negative`). Notes underneath: upcoming bills, and the comparison with last month. The same slip sums a year or all time, without the comparison.
+- **Year and All time:** the spending chart, then month cards (or year cards) with spent, count and left over, opening that month (or year), beside the slip.
+
 ### Charts
+
 Follow the dataviz rules: one series and one axis at a time (Net / Rate / Hours switch). History uses a **line**: points placed by pay date (so gaps in time show), a 2px line with round joins (no area fill), 8px dots with a 2px card-colour ring (every point up to 24 payslips; beyond that only the hovered and latest), and a break in the line where a value is missing. Gridlines are solid 1px `base-300` with clean round ticks; month labels sit at month starts (plus the first payslip's month); January shows the year, and labels closer than ~34px are dropped (years win). There is one direct label, on the latest value, placed where the line isn't. A crosshair snaps to the nearest payslip with a tooltip (the whole plot is the hit area), clicking opens that payslip, and "Show as a table" is the fallback.
+
+- Expenses uses the same line for **spending per month**: every month in the range evenly spaced (empty months are zero), month labels at least ~34px apart with the year on January, the latest value labelled at the end, and clicking a point opens that month. "Show as a table" lists every month.
 - Marks use the `chart` token: `#1e7c50` light, `#46a876` dark. These are brand-green steps that pass the palette validator (the `sidebar-active` green is too muted for a mark). Text never uses the chart colour.
 
 ### Help page
 
-One topic at a time. From `lg`: a sticky grouped list (Guides, Reference) beside the topic card, as ARIA tabs with arrow keys. Below `lg`: a native "Topic" `<select>` with `<optgroup>`s. The open topic is the URL hash (`/help#dates`). Guides show "Guide N of 7", numbered steps (accent circles) with on-screen words in **bold**, an optional note, and Previous / Next at the bottom. Keep every step one short sentence.
+One topic at a time. From `lg`: a sticky grouped list (Guides, Reference) beside the topic card, as ARIA tabs with arrow keys. Below `lg`: a native "Topic" `<select>` with `<optgroup>`s. The open topic is the URL hash (`/help#dates`). Guides show "Guide N of 9", numbered steps (accent circles) with on-screen words in **bold**, an optional note, and Previous / Next at the bottom. Keep every step one short sentence.
 
 ### Review panel
 
